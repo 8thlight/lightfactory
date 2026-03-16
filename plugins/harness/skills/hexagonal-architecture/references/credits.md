@@ -1,1 +1,1 @@
-Adapted from Lada Kessler's AI augmented patterns. TODO: add link to repo when not on a plane :)
+Adapted from Lada Kessler's AI augmented patterns, https://github.com/lexler/skill-factory

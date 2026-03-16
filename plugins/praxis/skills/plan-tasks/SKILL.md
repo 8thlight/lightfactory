@@ -2,7 +2,6 @@
 name: plan-tasks
 description: Plan phase of RPI methodology. Consumes research artifact or topic and produces compact implementation plan with test specs and Agent Context blocks. Activates naturally inside plan mode for non-trivial work, or invoke explicitly with /plan-tasks. Use after research or to start planning a non-trivial feature.
 triggers:
-  - "draft a plan"
   - "draft plan"
   - "implementation plan"
   - "plan the implementation"
@@ -81,7 +80,7 @@ Ask the user to clarify if needed:
 Write the plan to the Claude Code session plan file. This is the plan mode's native output — the user sees it for approval before exiting plan mode.
 
 **Required sections:**
-- **Metadata** — Include `tracker: yaks|beads|native` to record which tracker will be used
+- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used
 - **Context** — Why this change is being made, summarizing research findings
 - **Goal** — 1-2 sentence description of what we're building and why
 - **Acceptance Criteria** — Testable outcomes as checklist
