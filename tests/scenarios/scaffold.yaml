@@ -1,0 +1,150 @@
+skill: scaffold
+version: "2026-03-06"
+category: structured-output
+
+# Triggering tests for the scaffold skill.
+#
+# The testable unit is the description field:
+#   "Scaffold a DDD project from Gherkin feature files. Supports multiple languages
+#    via subtype dispatch. Use when scaffolding projects, creating domain-driven design
+#    structures, or generating project boilerplate from acceptance tests."
+#
+# Probe with: "When would you use the scaffold skill?"
+
+triggering:
+  positive:
+    # Direct trigger phrases from the triggers array — expanded to multi-word
+    - "scaffold a new TypeScript project from these Gherkin feature files"
+    - "scaffold typescript DDD project structure for the order management domain"
+    - "scaffold project layout following domain-driven design principles"
+
+    # Phrases aligned with "creating domain-driven design structures"
+    - "create a DDD hexagonal project structure from my acceptance tests"
+    - "generate domain-driven design folder layout with bounded contexts"
+    - "set up hexagonal architecture directories for a TypeScript DDD project"
+
+    # Phrases aligned with "generating project boilerplate from acceptance tests"
+    - "generate project boilerplate from these Gherkin feature files"
+    - "create the initial project scaffolding based on my acceptance test scenarios"
+    - "build out the DDD directory structure so I can start implementing features"
+
+    # Phrases emphasizing domain modeling from feature files
+    - "read my feature files and scaffold the bounded context directories"
+    - "generate the aggregate, value-object, and repository stubs from these scenarios"
+    - "I have Gherkin scenarios — scaffold the TypeScript project structure for them"
+    - "create the domain, application, and infrastructure layers from my feature specs"
+
+  negative:
+    # Should trigger research instead (exploration before scaffolding)
+    - "research how hexagonal architecture is implemented in similar TypeScript projects"
+    - "explore best practices for domain-driven design before I start a new project"
+    - "investigate how bounded contexts are typically structured in DDD projects"
+
+    # Should trigger plan-tasks instead (planning, not generation)
+    - "create an implementation plan for the new order management bounded context"
+    - "draft a roadmap for migrating this codebase to hexagonal architecture"
+    - "write an implementation plan for adding a new domain to the project"
+
+    # Should trigger implement instead (executing from an existing plan)
+    - "implement the feature from the plan-tasks plan we created"
+    - "execute the task graph from the yaks task graph"
+    - "build the payment service according to the plan we already have"
+
+    # Should trigger tdd instead (writing tests, not scaffolding structure)
+    - "write failing unit tests for the OrderAggregate using TDD"
+    - "let's do TDD on the new discount code validator"
+    - "write tests first for the repository port interface"
+
+    # Should trigger reflect instead (retrospective, not scaffolding)
+    - "reflect on the architecture decisions we made in this session"
+    - "do a retrospective on the bounded context boundaries we chose"
+
+    # Completely unrelated
+    - "fix the null pointer exception in the OrderService constructor"
+    - "rename the variable totalCost to totalOrderValue throughout the codebase"
+    - "what is the difference between an aggregate and a value object in DDD?"
+
+    # Ambiguous: creating a single file, not scaffolding a project
+    - "create a new TypeScript file for the order repository implementation"
+
+functional:
+  - id: scaffold-01
+    description: Generates correct hexagonal directory structure with domain, application, and infrastructure layers
+    grading: code
+    given: |
+      A directory containing one or more Gherkin feature files. No src/ directory exists yet.
+    when: "scaffold a TypeScript DDD project structure from these Gherkin feature files"
+    then:
+      - "Directory src/shared-kernel/ exists"
+      - "At least one bounded context directory exists under src/ (e.g., src/<context>/)"
+      - "Directory src/<context>/domain/aggregates/ exists"
+      - "Directory src/<context>/domain/value-objects/ exists"
+      - "Directory src/<context>/domain/repositories/ exists"
+      - "Directory src/<context>/domain/events/ exists"
+      - "Directory src/<context>/application/ exists"
+      - "Directory src/<context>/infrastructure/ exists"
+      - "File src/shared-kernel/event-bus.ts exists"
+      - "src/shared-kernel/event-bus.ts contains 'DomainEvent'"
+      - "src/shared-kernel/event-bus.ts contains 'EventBus'"
+    notes: "The exact context name must match the aggregate root identified in the Gherkin scenarios, not a generic name like 'context'"
+
+  - id: scaffold-02
+    description: Gherkin feature files map to bounded contexts — no modules created that no scenario references
+    grading: llm-judge
+    given: |
+      Two Gherkin feature files: one describing order placement (with Order aggregate) and one
+      describing inventory tracking (with Product aggregate). No other feature files exist.
+    when: "scaffold typescript DDD project from these feature files"
+    then:
+      - "Two bounded context directories are created: one for orders, one for inventory/products"
+      - "No third bounded context directory is created that has no corresponding feature file"
+      - "Aggregate files are created only at paths that the feature files' imports reference"
+      - "No speculative modules are scaffolded that no scenario imports"
+    notes: "Common failure mode is inventing extra contexts or modules not grounded in the Gherkin scenarios"
+
+  - id: scaffold-03
+    description: TypeScript code templates from references are applied — aggregates and use cases follow required shape
+    grading: code
+    given: |
+      A Gherkin feature file with a 'Create Order' scenario that references an Order aggregate.
+    when: "scaffold typescript DDD project structure from the feature file"
+    then:
+      - "Aggregate file in src/<context>/domain/aggregates/ ends with '-aggregate.ts'"
+      - "Repository port file in src/<context>/domain/repositories/ ends with '-repository.ts'"
+      - "At least one application use case file exists in src/<context>/application/"
+      - "Use case file does not contain a 'class' keyword (use cases are functions, not classes)"
+      - "Use case function returns a discriminated union with 'success' field"
+      - "Domain event file in src/<context>/domain/events/ ends with '-event.ts'"
+    notes: "The use-case-as-function requirement from SKILL.md architectural rules is a common miss for models that default to class-based patterns"
+
+  - id: scaffold-04
+    description: All four fitness test files are generated in the fitness/ directory
+    grading: code
+    given: |
+      A Gherkin feature file with at least one scenario. TypeScript target language.
+    when: "scaffold typescript project structure from the feature file"
+    then:
+      - "File fitness/architecture.test.ts exists"
+      - "File fitness/naming.test.ts exists"
+      - "File fitness/complexity.test.ts exists"
+      - "File fitness/coupling.test.ts exists"
+      - "fitness/architecture.test.ts contains 'infrastructure'"
+      - "fitness/architecture.test.ts contains 'domain'"
+      - "fitness/naming.test.ts contains '-aggregate.ts'"
+      - "fitness/naming.test.ts contains '-repository.ts'"
+    notes: "Fitness tests must be generated at the start of scaffolding per the SKILL.md anti-patterns section — not deferred to the end"
+
+  - id: scaffold-05
+    description: Domain purity maintained — no infrastructure or application imports in the domain layer
+    grading: code
+    given: |
+      A fully scaffolded TypeScript DDD project generated from a Gherkin feature file
+      with an Order aggregate, a CreateOrder use case, and an InMemoryOrderRepository.
+    when: "scaffold typescript DDD project from the feature file"
+    then:
+      - "No file under src/<context>/domain/ contains an import path containing '/infrastructure/'"
+      - "No file under src/<context>/domain/ contains an import path containing '/application/'"
+      - "Repository port interface file lives in src/<context>/domain/repositories/ (not in infrastructure/)"
+      - "Infrastructure adapter file in src/<context>/infrastructure/ imports from the domain repository port"
+      - "Application use case imports the repository port interface, not the infrastructure adapter directly"
+    notes: "Layer purity is enforced by the fitness/architecture.test.ts file — this functional test checks the generated source files before the fitness tests are run"

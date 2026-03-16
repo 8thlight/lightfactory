@@ -1,0 +1,127 @@
+skill: diagram
+version: "2026-03-06"
+category: structured-output
+
+# Triggering tests for the diagram skill.
+#
+# The testable unit is the description field:
+#   "Creates architecture diagrams using LikeC4 (structural C4, dynamic flows) or
+#    Mermaid (data flow diagrams). Use when creating C4 diagrams, architecture diagrams,
+#    sequence diagrams, data flow diagrams, or any system visualization."
+#
+# Probe with: "When would you use the diagram skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array — expanded to multi-word phrases
+    - "create a C4 architecture diagram for the payment service"
+    - "generate a system diagram showing all our microservices and their dependencies"
+    - "draw a container diagram for the order processing system"
+    - "create a C4 component diagram breaking down the authentication service"
+    - "draw a C4 deployment diagram for how we deploy to AWS"
+    - "create a data flow diagram showing how user data moves through our pipeline"
+    - "draw a sequence diagram showing how a checkout request flows through services"
+    - "create a LikeC4 model for the reporting subsystem"
+    - "show the dynamic flows of how a login request propagates through the system"
+    - "produce an architecture diagram as code for the inventory service"
+    - "generate a DFD showing data transformation in the ETL pipeline"
+    - "create a system visualization of the service interactions between notification and email"
+
+  negative:
+    # Should trigger hexagonal-architecture instead (code scaffolding / project structure)
+    - "scaffold a hexagonal architecture for the new billing service"
+    - "set up ports and adapters structure for the authentication module"
+    - "generate the folder structure for a clean architecture project"
+
+    # Should trigger research instead (exploration / understanding existing code)
+    - "research how the current service dependencies are structured before we refactor"
+    - "explore the codebase to understand how our services communicate"
+    - "investigate what the existing module boundaries are before I reorganize them"
+
+    # Should trigger draft instead (planning an implementation)
+    - "create an implementation plan for adding the new reporting service"
+    - "draft a plan for decomposing the monolith into microservices"
+    - "write a design document for the new API gateway feature"
+
+    # Should trigger scaffold instead (generate project boilerplate)
+    - "scaffold a new microservice with the standard project layout"
+    - "generate boilerplate for a new Python package using our conventions"
+
+    # Completely unrelated
+    - "fix the NullPointerException in the OrderService constructor"
+    - "write unit tests for the PaymentProcessor class"
+    - "rename this variable to something more descriptive"
+    - "what is the capital of France?"
+
+functional:
+  - id: diagram-01
+    description: Correctly dispatches to likec4-c4 subtype for structural C4 diagrams and reads all three reference files
+    grading: llm-judge
+    given: |
+      A project with no existing .likec4 files. The user wants a structural C4 diagram.
+    when: "create a C4 container diagram for our e-commerce platform — it has a web frontend, an API gateway, an order service, and a PostgreSQL database"
+    then:
+      - "Skill selects the likec4-c4 subtype (not likec4-dynamic or data-flow)"
+      - "Skill calls Read on references/likec4-c4/dsl-syntax.md before generating any DSL"
+      - "Skill calls Read on references/likec4-c4/view-examples.md before generating any DSL"
+      - "Skill calls Read on references/likec4-c4/style-guide.md before generating any DSL"
+      - "All three reference file reads occur before the Write tool call that produces the diagram"
+      - "Skill does NOT read any files from references/likec4-dynamic/ or references/data-flow/"
+    notes: "Loading references from the wrong subtype directory is a known failure mode — the skill must select the correct subtype first."
+
+  - id: diagram-02
+    description: Correctly dispatches to data-flow subtype for DFD requests and reads all data-flow reference files
+    grading: llm-judge
+    given: |
+      A project with no existing architecture docs. The user wants a data flow diagram.
+    when: "create a data flow diagram showing how customer order data moves and transforms through our order processing pipeline — from the web frontend through validation, pricing, inventory check, and finally persistence"
+    then:
+      - "Skill selects the data-flow subtype (not likec4-c4 or likec4-dynamic)"
+      - "Skill calls Read on references/data-flow/dfd-notation.md before generating any Mermaid"
+      - "Skill calls Read on references/data-flow/dfd-examples.md before generating any Mermaid"
+      - "Both reference file reads occur before the Write tool call that produces the diagram"
+      - "Skill does NOT read any files from references/likec4-c4/ or references/likec4-dynamic/"
+    notes: "The skill must not conflate a DFD request with a sequence diagram request — 'data movement and transformation' maps to data-flow, not likec4-dynamic."
+
+  - id: diagram-03
+    description: Generated LikeC4 DSL has valid top-level block structure in the correct order
+    grading: code
+    given: |
+      A project with no existing .likec4 files.
+    when: "create a C4 context diagram for a SaaS platform — it has customers, an admin portal, a core API, and two external payment providers"
+    then:
+      - "A .likec4 file is written under docs/architecture/"
+      - "File contains a 'specification {' block"
+      - "File contains a 'model {' block"
+      - "File contains a 'views {' block"
+      - "The specification block appears before the model block in the file"
+      - "The model block appears before the views block in the file"
+      - "File does NOT contain duplicate element identifier declarations"
+    notes: "Block ordering is load-bearing for LikeC4 DSL validity. The validator should check line positions of each block header, not just presence."
+
+  - id: diagram-04
+    description: Dynamic view routing falls back to likec4-c4 when no .likec4 model files exist yet
+    grading: llm-judge
+    given: |
+      A project with no existing .likec4 files anywhere in the repository (Glob returns no results).
+    when: "show me a dynamic view of how a password reset request flows through the system"
+    then:
+      - "Skill detects that no .likec4 model files exist (Glob for **/*.likec4 and **/*.c4 returns empty)"
+      - "Skill routes to likec4-c4 subtype first instead of likec4-dynamic"
+      - "Skill explains to the user that a structural model must be created before a dynamic view"
+      - "Skill generates a likec4-c4 model file (specification, model, views blocks) before or instead of a dynamic view"
+      - "Skill does NOT attempt to write a dynamic view that references non-existent model element identifiers"
+    notes: "This tests the LikeC4 Model Dependency rule from Step 3. Skipping this check leads to broken DSL that references undefined elements."
+
+  - id: diagram-05
+    description: Step 6 review summary is presented and user is asked for feedback before skill completes
+    grading: llm-judge
+    given: |
+      A project. The diagram has been generated and written to disk.
+    when: "create a component diagram showing the internal structure of our authentication service — it has a REST handler, a JWT validator, a session store interface, and a user repository"
+    then:
+      - "After writing the diagram file, skill presents a summary covering: diagram type and scope, count and kinds of elements included, key relationships modeled, and which file was written"
+      - "Skill asks the user whether they want to adjust scope, add styling, drill into a sub-system, or create a variant"
+      - "Skill does NOT terminate without asking for user feedback"
+      - "If the user requests changes, the skill revises the file and presents the summary again"
+    notes: "Skipping the review step is a common failure mode for faster models. The summary must cover all four items listed in Step 6 of the skill."

@@ -1,0 +1,16 @@
+{
+  "description": "LightFactory Praxis plugin hooks for plan-mode-native RPI workflow",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check .light/sessions/ for any research artifact (*-research.md). If one exists and is relevant to the current task, mention it so the planning phase can build on it."
+          }
+        ]
+      }
+    ]
+  }
+}

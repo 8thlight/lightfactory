@@ -1,0 +1,10 @@
+{
+  "name": "harness",
+  "version": "1.13.0",
+  "description": "Agentic engineering skills for harness engineering patterns and best practices.",
+  "author": {
+    "name": "Eric Olson"
+  },
+  "repository": "https://github.com/agentpatterns/lightfactory",
+  "hooks": "./hooks/hooks.json"
+}

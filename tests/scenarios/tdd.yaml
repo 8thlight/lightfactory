@@ -1,0 +1,149 @@
+skill: tdd
+version: "2026-02-24"
+category: structured-output
+
+# Triggering tests for the tdd skill.
+#
+# The testable unit is the description field:
+#   "Boundary-focused TDD workflow enforcing L3/L4 altitude testing,
+#    property-based tests, and phase separation. Use when implementing features
+#    that require writing tests and code."
+#
+# Probe with: "When would you use the tdd skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "let's do TDD on this new discount code validator"
+    - "use test driven development to build the payment processor"
+    - "red green refactor the new authentication middleware"
+    - "write tests first for the order total calculation"
+
+    # Phrases aligned with "boundary-focused TDD workflow" and L3/L4 altitude
+    - "write failing tests for the core discount logic before implementing it"
+    - "I want to drive the design of this module through tests"
+    - "start with the tests — let them guide the implementation"
+
+    # Phrases emphasizing phase separation / ZOMBIES coverage
+    - "walk me through writing tests for every edge case in the cart validator"
+    - "help me do a thorough test-first implementation of the refund flow"
+
+    # Edge case: user mentions "property-based" — clearly tdd territory
+    - "write property-based tests for the coupon code generator"
+
+    # Edge case: user asks for tests + code in the same breath
+    - "implement the discount feature with tests — test first"
+
+  negative:
+    # Should trigger research instead (exploration, not test-writing)
+    - "research how the existing testing patterns work in this codebase"
+    - "explore the codebase to understand what test utilities are available"
+    - "investigate the architecture before we write any tests"
+
+    # Should trigger draft instead (planning test specs, not writing them)
+    - "write a plan with test specifications for each phase"
+    - "create an implementation plan that includes behavioral test specs"
+    - "draft the test boundaries before implementation"
+
+    # Should trigger implement instead (orchestrating agents, not writing tests manually)
+    - "execute the yaks task graph — Agent 1 will write the tests"
+    - "run the agent-test step from the yaks epic"
+    - "build from plan using isolated agents for each TDD phase"
+
+    # Should trigger reflect instead
+    - "retrospective on the TDD session we just finished"
+    - "reflect on what the tests revealed about our architecture"
+
+    # Adding tests to existing code — not a TDD workflow trigger
+    - "add unit tests for the existing OrderService class"
+    - "increase test coverage for the payment module"
+
+    # Completely unrelated
+    - "fix the failing test in PaymentServiceTest"
+    - "delete this test — it's flaky"
+    - "what is the difference between unit and integration tests?"
+
+    # Ambiguous edge case: "test" alone without test-first intent
+    - "test the discount code feature end to end"
+
+    # Should trigger pair instead (guided learning about TDD, not executing TDD)
+    - "guide me through TDD on this feature — I want to learn the process"
+    - "teach me how to do test-driven development step by step"
+
+functional:
+  - id: tdd-01
+    description: Creates tdd-session-log.md as the first file written to disk before any test or production code
+    grading: code
+    given: |
+      A project with no existing tdd-session-log.md. No test files for the target module yet.
+      The user wants to implement a discount code validator using TDD.
+    when: "let's do TDD on this new discount code validator"
+    then:
+      - "File tdd-session-log.md exists in the project root"
+      - "tdd-session-log.md is created before any test file is written"
+      - "tdd-session-log.md contains at least one [PLAN] entry listing planned tests"
+      - "Claude announces the mode at the start: 'Using TDD skill in mode: auto' or 'mode: human'"
+    notes: "Session log creation order matters — it must precede [TEST] comments and all production code."
+
+  - id: tdd-02
+    description: TEST comments written as first code artifact — before any production code — with ZOMBIES annotations
+    grading: code
+    given: |
+      A fresh TDD session for a simple calculator add() function.
+      No existing source files for the module.
+    when: "use test driven development to build the payment processor"
+    then:
+      - "A file contains [TEST] comment lines before any function or class definition"
+      - "Each [TEST] comment includes a ZOMBIES letter annotation (e.g., '<- Z', '<- O')"
+      - "No production function or class body appears in any file before the [TEST] comments are written"
+      - "tdd-session-log.md [PLAN] entry is present before the first [TEST] comment appears on disk"
+    notes: "Order of file writes is the key assertion — test comments are the design artifact."
+
+  - id: tdd-03
+    description: Every ZOMBIES letter (Z, O, M, B, I, E, S) appears at least once across the test plan
+    grading: code
+    given: |
+      A TDD session for a non-trivial module with multiple behaviors (e.g., a coupon code validator
+      that handles empty input, single codes, multiple codes, boundary lengths, the public API surface,
+      invalid format errors, and basic valid input).
+    when: "write tests first for the order total calculation"
+    then:
+      - "[TEST] comments include at least one annotation '<- Z' (Zero)"
+      - "[TEST] comments include at least one annotation '<- O' (One)"
+      - "[TEST] comments include at least one annotation '<- M' (Many)"
+      - "[TEST] comments include at least one annotation '<- B' (Boundary)"
+      - "[TEST] comments include at least one annotation '<- I' (Interface)"
+      - "[TEST] comments include at least one annotation '<- E' (Exception)"
+      - "[TEST] comments include at least one annotation '<- S' (Simple)"
+    notes: "If any letter is missing after initial planning, the skill must add a covering test before proceeding."
+
+  - id: tdd-04
+    description: Phase separation enforced — failing test written and confirmed before implementation begins
+    grading: llm-judge
+    given: |
+      A TDD session for a new add() method that does not yet exist.
+      The first [TEST] comment has been converted to a real test.
+    when: "red green refactor the new authentication middleware"
+    then:
+      - "Claude writes the test and runs it — observing a compilation error (class/method does not exist)"
+      - "Claude adds minimal code to compile and re-runs — observing an assertion failure"
+      - "tdd-session-log.md contains a [RED-PREDICT] entry before the test is run"
+      - "tdd-session-log.md contains a [RED-CONFIRM] entry with the actual failure message"
+      - "Production implementation code is NOT written until [RED-CONFIRM] has been logged"
+      - "tdd-session-log.md contains a [GREEN] entry only after tests pass"
+    notes: "Two-step RED phase is required: compile-fail first, then assertion-fail. Skipping directly to green is an anti-pattern."
+
+  - id: tdd-05
+    description: No production code written without a test requiring it — simplification step removes unjustified code
+    grading: llm-judge
+    given: |
+      A TDD session mid-stream. Agent has just made tests pass by writing implementation code.
+      Some of the implementation code does more than the failing test strictly required.
+    when: "start with the tests — let them guide the implementation"
+    then:
+      - "After tests go green, Claude asks for each line: 'Does a failing test require this?'"
+      - "Any code not justified by a test is deleted or a new [TEST] comment is added to cover it"
+      - "Tests are re-run after each simplification step"
+      - "tdd-session-log.md contains [REFACTOR] entries describing refactorings applied"
+      - "Claude announces 'Starting refactoring stage' before refactoring and 'Refactoring complete' when done"
+    notes: "Simplification discipline is a core TDD contract — gold-plating without tests is an anti-pattern."

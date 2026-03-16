@@ -1,0 +1,135 @@
+skill: adr
+version: "2026-03-06"
+category: structured-output
+
+# Triggering tests for the adr skill.
+#
+# The testable unit is the description field:
+#   "Guides writing minimal Architecture Decision Records (ADRs). Use when recording
+#    architectural decisions, documenting design choices, capturing technical decisions
+#    with context and alternatives, or when user mentions ADR, architecture decision,
+#    or decision record."
+#
+# Probe with: "When would you use the adr skill?"
+
+triggering:
+  positive:
+    # Direct trigger phrases from the triggers array
+    - "write an architecture decision record for switching to PostgreSQL"
+    - "create an ADR for adopting event sourcing in the order service"
+    - "I need a decision record for our choice to use Kafka over RabbitMQ"
+    - "document an architectural decision about moving to a monorepo"
+
+    # Phrases aligned with the description's "documenting design choices" intent
+    - "we decided to use JWT for authentication — help me capture that decision formally"
+    - "document the design choice to use Redis for session storage with context and alternatives"
+    - "document our design choice to use GraphQL over REST with context and alternatives"
+    - "record the technical decision to migrate from REST to gRPC with reasons and consequences"
+
+    # Phrases that emphasize the advice process / stakeholder context
+    - "we need to record the decision to adopt a service mesh — multiple teams are affected"
+    - "write up the ADR for dropping support for IE11 before we ship the next release"
+    - "help me document the architectural decision to split the monolith into microservices"
+    - "create a formal decision record for our choice of infrastructure-as-code tooling"
+
+  negative:
+    # Should trigger research instead (exploration, not recording)
+    - "research which message queue would be best for our event-driven architecture"
+    - "explore how other teams have implemented event sourcing before we decide anything"
+    - "investigate the tradeoffs between Kafka and RabbitMQ for our use case"
+
+    # Should trigger draft instead (planning, not recording)
+    - "create an implementation plan for migrating to PostgreSQL"
+    - "draft a plan for breaking the monolith into services over the next quarter"
+    - "write an implementation roadmap for the gRPC migration"
+
+    # Should trigger technical-writer instead (design docs, not ADRs)
+    - "write a design document for the new payments service"
+    - "create a technical spec for the authentication overhaul"
+
+    # Should trigger reflect instead (retrospective, not decision capture)
+    - "let's do a retrospective on the database migration we just finished"
+    - "reflect on what went wrong with the monolith split"
+
+    # Completely unrelated — code changes, bugs, feature work
+    - "fix the null pointer exception in the order processor"
+    - "add a new endpoint to the user service"
+    - "rename this function to be more descriptive"
+    - "why is the CI pipeline failing on the integration tests?"
+
+    # Near-miss: mentions a decision but is asking for guidance, not recording
+    - "help me decide whether to use PostgreSQL or MySQL for the new service"
+
+functional:
+  - id: adr-01
+    description: Creates ADR file at correct path with zero-padded sequential number and kebab-case title
+    grading: code
+    given: |
+      A project with a docs/decisions/ directory containing one existing ADR:
+      docs/decisions/0001-use-postgresql-for-persistence.md
+    when: "write an ADR for adopting event sourcing in the order history service"
+    then:
+      - "File exists at docs/decisions/0002-*.md (next sequential number, zero-padded to 4 digits)"
+      - "Filename is kebab-case with no uppercase letters"
+      - "File contains heading: # ADR-0002:"
+      - "Heading uses an imperative verb phrase (e.g., 'Adopt Event Sourcing...')"
+      - "File contains: **Status:** Proposed"
+      - "File contains: **Date:** with a date in YYYY-MM-DD format"
+    notes: "Skill must glob docs/decisions/ to determine the next number. If it hardcodes 0001 that is a failure."
+
+  - id: adr-02
+    description: All required template sections are present and non-empty
+    grading: code
+    given: |
+      A project with an empty docs/decisions/ directory.
+    when: "create an ADR for switching from REST to gRPC for internal service communication"
+    then:
+      - "File contains section: ## Context"
+      - "File contains section: ## Decision"
+      - "File contains section: ## Options Considered"
+      - "File contains section: ## Consequences"
+      - "Context section contains at least 2 sentences"
+      - "Decision section uses active voice starting with 'We will' or 'We adopt'"
+      - "Options Considered section contains at least 2 options"
+      - "Consequences section contains at least one Good: and one Bad: entry"
+    notes: "Missing or empty sections are the most common failure mode. All four core sections must be substantive."
+
+  - id: adr-03
+    description: Y-statement is constructed internally and Decision section reflects it accurately
+    grading: llm-judge
+    given: |
+      A project. The user provides a decision topic with enough context to construct a Y-statement.
+    when: "write an ADR for using Redis as a distributed cache to handle session state across our horizontally scaled API servers — we considered storing sessions in a database but that added too much latency"
+    then:
+      - "The Decision section can be mapped to a valid Y-statement: 'In the context of [X], facing [Y], we decided for [Z], to achieve [Q], accepting [R]'"
+      - "The Context section captures the force (horizontal scaling / session state distribution)"
+      - "The Options Considered section includes at least the database-backed session alternative"
+      - "The Consequences Bad entry acknowledges an accepted tradeoff (e.g., cache invalidation complexity, Redis operational overhead)"
+      - "The Decision section does NOT say 'X was chosen' — it uses active voice"
+    notes: "The Y-statement is a forcing function, not a required output section. Judge whether the written ADR logically satisfies the Y-statement structure."
+
+  - id: adr-04
+    description: Decision filter is applied — trivial decisions are declined, not recorded
+    grading: llm-judge
+    given: |
+      A project. The user asks for an ADR about a trivial implementation detail.
+    when: "write an ADR for renaming the getUserById function to fetchUserById"
+    then:
+      - "Skill does NOT create any file in docs/decisions/"
+      - "Skill explains why the decision does not qualify (does not meet Harmel-Law signals)"
+      - "Explanation references at least one of: 'requires consulting multiple people', 'new technology', 'conflicts with architectural principle', 'affects team autonomy'"
+      - "Skill optionally offers to help with a qualifying decision instead"
+    notes: "This is the filter gate. If the skill writes an ADR for a function rename, that is a clear failure of the decision filter."
+
+  - id: adr-05
+    description: Superseding an existing ADR sets correct status references in both old and new ADRs
+    grading: code
+    given: |
+      A project with docs/decisions/0003-use-rest-for-internal-apis.md already existing with Status: Accepted.
+    when: "we've decided to move from REST to gRPC for internal services — write the new ADR and note that it supersedes ADR-0003"
+    then:
+      - "New file exists at docs/decisions/0004-*.md"
+      - "New ADR contains: **Status:** Proposed"
+      - "New ADR contains a reference to ADR-0003 (e.g., 'Supersedes ADR-0003')"
+      - "Existing file docs/decisions/0003-use-rest-for-internal-apis.md has its Status updated to: Superseded by ADR-0004"
+    notes: "Immutability of accepted ADRs is a core principle — the old ADR's status must be updated to Superseded, not deleted or rewritten."

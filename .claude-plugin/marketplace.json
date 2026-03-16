@@ -1,0 +1,34 @@
+{
+  "name": "lightfactory",
+  "owner": {
+    "name": "Eric Olson"
+  },
+  "metadata": {
+    "description": "Agentic engineering skills codifying patterns and best practices including TDD, harness engineering, refactoring, architecture patterns, and AI development workflows",
+    "version": "1.13.0"
+  },
+  "plugins": [
+    {
+      "name": "praxis",
+      "source": "./plugins/praxis",
+      "description": "Agentic engineering skills codifying patterns and best practices including TDD, refactoring, architecture patterns, diagramming, scaffolding, and AI development workflows.",
+      "version": "1.13.0",
+      "author": {
+        "name": "Eric Olson"
+      },
+      "repository": "https://github.com/agentpatterns/lightfactory",
+      "category": "agentic-engineering"
+    },
+    {
+      "name": "harness",
+      "source": "./plugins/harness",
+      "description": "Agentic engineering skills for harness engineering patterns and best practices including TDD, architecture patterns, scaffolding, and tool building.",
+      "version": "1.13.0",
+      "author": {
+        "name": "Eric Olson"
+      },
+      "repository": "https://github.com/agentpatterns/lightfactory",
+      "category": "harness-engineering"
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+skill: refactor
+version: "2026-02-24"
+category: structured-output
+
+# Triggering tests for the refactor skill.
+#
+# The testable unit is the description field:
+#   "Refactoring process with test safety. Invoke immediately when user or
+#    document mentions refactoring, or proactively when code gets too complex
+#    or messy."
+#
+# Probe with: "When would you use the refactor skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "refactor the OrderService class — it's getting too complex"
+    - "do a refactoring pass on the payment module before we add new features"
+    - "clean up code in the authentication middleware"
+
+    # Phrases aligned with "code gets too complex or messy" proactive intent
+    - "this code has grown messy — it's hard to follow and needs a cleanup pass"
+    - "the checkout flow has too many nested conditionals — can you improve it?"
+    - "the UserRepository code is complex — proactively refactor it for readability"
+
+    # Phrases emphasizing test safety concern
+    - "clean up the validation logic code but don't break any test"
+    - "this module is messy — proactively clean it up while keeping tests green"
+    - "restructure the cart service code without changing any behavior"
+
+    # Phrases targeting specific code quality concerns
+    - "the code in this module is messy — rename variables to be clearer"
+    - "there's a lot of dead code in the discount calculator — remove it"
+    - "the invoice module has complex duplicated code — extract the formatting logic into helpers"
+    - "the methods in PaymentProcessor are doing too many things — split them up"
+
+    # Edge case: "clean up" that clearly means structural improvement
+    - "clean up the database layer — there are too many responsibilities in one class"
+
+  negative:
+    # Should trigger research instead (exploring before changing)
+    - "research how the existing order flow works before we touch it"
+    - "investigate the authentication module to understand what's there"
+    - "explore the payment codebase — I want to understand the patterns first"
+
+    # Should trigger draft instead (planning a feature, not improving existing code)
+    - "create a plan for adding discount code support to the checkout flow"
+    - "draft an implementation plan for the new notification system"
+    - "write a roadmap for the OAuth integration feature"
+
+    # Should trigger craft instead (executing a feature plan)
+    - "implement the feature from the yaks task graph"
+    - "execute the implementation plan we drafted yesterday"
+    - "build out the discount validator as described in the plan"
+
+    # Should trigger tdd instead (writing new tests before new behavior)
+    - "write failing tests first for the new discount code validator"
+    - "do TDD on the new payment processor"
+    - "red green refactor the cart total — start from scratch with tests"
+
+    # Should trigger reflect instead (post-session retrospective)
+    - "retrospective on the refactoring session we just finished"
+    - "reflect on what we learned from today's cleanup work"
+    - "what improvements should we capture in the skill from this session?"
+
+    # Should trigger pair instead (code review / advisory, not active refactoring)
+    - "review this code and tell me what you think"
+    - "what's wrong with this implementation?"
+    - "give me feedback on how I structured this class"
+
+    # Completely unrelated tasks
+    - "fix this null pointer exception in the OrderService"
+    - "why is the test suite failing on CI?"
+    - "explain what the strategy pattern is"
+
+    # Ambiguous edge case: "tidy" could mean formatting only, not structural refactoring
+    - "run the formatter on all files"
+
+    # Ambiguous edge case: adding tests is not refactoring
+    - "add more test coverage to the checkout module"
+
+functional:
+  - id: refactor-01
+    description: Creates REFACTORING_SUMMARY.md in the project root with all required initial sections
+    grading: code
+    given: |
+      A project with a src/ directory containing at least one module with moderate complexity.
+      No REFACTORING_SUMMARY.md exists. The user has specified a target module.
+    when: "refactor the OrderService class — it's getting too complex"
+    then:
+      - "File REFACTORING_SUMMARY.md exists in the project root"
+      - "File contains section: ## Baseline"
+      - "File contains section: ## Steps"
+      - "## Baseline section lists the files in scope"
+      - "## Baseline section includes a test result (PASS or FAIL with test count)"
+    notes: "REFACTORING_SUMMARY.md must be created during Prep, before any refactoring starts. A missing file means Prep was skipped."
+
+  - id: refactor-02
+    description: Runs tests before AND after each individual refactoring step
+    grading: code
+    given: |
+      A project with a working test suite (./test.sh exits 0). The refactor skill is active
+      and at least two refactoring steps have been completed.
+    when: "clean up the validation module — there are several opportunities to simplify"
+    then:
+      - "REFACTORING_SUMMARY.md contains at least two ## Step entries"
+      - "Each Step entry includes a line matching 'Test result: PASS'"
+      - "No Step entry is missing a test result line"
+      - "The ## Baseline section also contains a test result line"
+    notes: "Test results must appear for every step, not just the final summary. Missing test results indicate the skill skipped the safety check."
+
+  - id: refactor-03
+    description: Every commit message follows the '- r <refactoring>' format
+    grading: code
+    given: |
+      A project with git initialized and at least one passing test. The skill has performed
+      at least three individual refactoring steps and committed each one.
+    when: "refactor the payment module — extract methods, rename variables, remove dead code"
+    then:
+      - "All commits produced during the session have messages matching the pattern: ^- r .+"
+      - "No commit message uses a different format (e.g., 'refactor:', 'chore:', free-form text)"
+      - "Each distinct refactoring step has its own commit (not batched into one commit)"
+      - "REFACTORING_SUMMARY.md Steps section contains one entry per commit"
+    notes: "The '- r' prefix is a hard format requirement. Sonnet may drift to conventional commit style — watch for 'refactor: ...' messages."
+
+  - id: refactor-04
+    description: Does not add new behavior or change test assertions during refactoring
+    grading: llm-judge
+    given: |
+      A project where the user asks for refactoring but the code has a clear missing feature
+      (e.g., no input validation on a public method). The test suite passes before refactoring.
+    when: "refactor the UserRepository — it's messy and hard to follow, clean it up"
+    then:
+      - "No new functionality is added to production code (no new public methods, no new business logic)"
+      - "No test assertions are changed, removed, or added beyond import/rename updates"
+      - "Test data in test files is unchanged"
+      - "If the skill notices a missing feature, it documents it in REFACTORING_SUMMARY.md rather than implementing it"
+      - "The test suite still passes after all refactoring steps"
+    notes: "This is the hardest behavioral constraint to enforce. The skill must distinguish structural changes from behavioral ones."
+    judge_prompt: |
+      You are evaluating whether the refactor skill correctly avoided adding new behavior.
+
+      The session context: the user asked for a refactoring pass on UserRepository. The code
+      had an obvious gap (no input validation on a public method) but the user did not ask
+      for new features.
+
+      Score each dimension from 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Behavior isolation (1-3): Did the skill avoid adding new behavior?
+        1 = New functionality was implemented (new public methods, new validation, new business logic)
+        2 = One borderline structural change that could be interpreted as behavioral
+        3 = All changes are purely structural; no new behavior was added
+
+      Dimension 2 — Test policy (1-3): Did the skill leave test assertions untouched?
+        1 = Test assertions, test data, or test logic was modified beyond import/rename updates
+        2 = One test file had a minor comment or whitespace change not strictly required
+        3 = Test assertions and test data are byte-for-byte unchanged; only import paths updated
+
+      Dimension 3 — Gap documentation (1-3): Were noticed gaps documented instead of fixed?
+        1 = A noticed gap was silently fixed without user input
+        2 = A gap was mentioned in output but not documented in REFACTORING_SUMMARY.md
+        3 = Any noticed gaps are documented in REFACTORING_SUMMARY.md under a clear notes section
+
+      Dimension 4 — Test safety (1-3): Did the test suite pass after each step?
+        1 = At least one step was committed without confirming tests pass
+        2 = Tests were run but a failure was committed and not immediately reverted
+        3 = Tests passed before and after every individual commit
+
+      Total score (sum of all dimensions): pass if >= 9 out of 12.
+      Return: PASS or FAIL, the total score, and one sentence per dimension explaining the score.
+
+  - id: refactor-05
+    description: REFACTORING_SUMMARY.md Final section is complete with all required fields after the session ends
+    grading: code
+    given: |
+      A refactoring session has completed. The skill has performed at least three steps and
+      entered the Final Evaluation stage. No more improvements were found and the summary
+      stage has been reached.
+    when: "refactor the discount calculation module — extract helpers, improve naming, remove dead code"
+    then:
+      - "REFACTORING_SUMMARY.md exists in the project root"
+      - "File contains section: ## Final"
+      - "## Final section contains a 'Total steps:' line with a number"
+      - "## Final section contains a 'Files touched:' line listing at least one file"
+      - "## Final section contains an 'All commits:' line listing commit messages"
+      - "## Final section contains a 'Final test result: PASS' line"
+      - "All commit messages listed in 'All commits:' match the pattern: ^- r .+"
+    notes: "An incomplete ## Final section (missing Total steps, Files touched, or Final test result) means the Summary stage was skipped or abbreviated."

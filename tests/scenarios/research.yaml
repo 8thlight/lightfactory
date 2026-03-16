@@ -1,0 +1,131 @@
+skill: research
+version: "2026-02-24"
+category: structured-output
+
+# Triggering tests for the research skill.
+#
+# The testable unit is the description field:
+#   "Research phase of RPI methodology. Spawns parallel subagents for codebase
+#    exploration AND web/pattern research, then synthesizes findings for user
+#    review. Produces compact research artifact. Use at the start of non-trivial
+#    features."
+#
+# Probe with: "When would you use the research skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "research how authentication is implemented in this codebase"
+    - "explore codebase to understand the order processing flow"
+    - "investigate how the plugin system works before I add a new one"
+
+    # Phrases aligned with the description's "start of non-trivial features" intent
+    - "I want to add discount codes to orders — where should I start?"
+    - "before implementing OAuth support, help me understand what's already here"
+    - "I need to add a new payment provider — research how the existing ones are integrated"
+    - "do a deep dive into how the caching layer works before we refactor it"
+
+    # Phrases that emphasize parallel subagent / synthesis intent
+    - "look at the codebase and the web to understand best practices for rate limiting"
+    - "explore the existing validation patterns and find external best practices"
+
+    # Edge case: user says "quick look" — should still trigger research (Quick depth)
+    - "just do a quick look at how file uploads are handled before I add PDF support"
+
+  negative:
+    # Should trigger draft instead (planning, not exploration)
+    - "create an implementation plan for adding discount codes"
+    - "draft a plan for the OAuth feature using the research artifact"
+    - "write an implementation roadmap for the payment refactor"
+
+    # Should trigger implement instead (execution, not exploration)
+    - "execute the plan from the plan-tasks skill"
+    - "implement the feature from the yaks task graph"
+    - "build from the plan we created yesterday"
+
+    # Should trigger tdd instead (test-writing, not exploration)
+    - "write tests first for the new discount code validator"
+    - "let's do TDD on the new payment processor"
+
+    # Should trigger reflect instead (post-session, not pre-session)
+    - "let's do a retrospective on what we built today"
+    - "reflect on what we learned from this session"
+
+    # Completely unrelated
+    - "fix this null pointer exception in OrderService"
+    - "what's the weather in Seattle?"
+    - "rename this variable to be more descriptive"
+
+    # Ambiguous edge case: "investigate" could mean debug, not research phase
+    - "investigate why the tests are failing"
+
+functional:
+  - id: research-01
+    description: Produces a valid research artifact at the correct path with all required sections
+    grading: code
+    given: |
+      A project with a .light/ directory. No prior research artifacts exist.
+    when: "research how authentication is implemented in this codebase before I add OAuth support"
+    then:
+      - "File exists at .light/YYYY-MM-DD-*-research.md (where topic slug is kebab-case)"
+      - "File contains section: ## Summary"
+      - "File contains section: ## Relevant Files"
+      - "File contains section: ## Existing Patterns"
+      - "File contains section: ## Web Research"
+      - "File contains section: ## Open Questions"
+      - "File contains section: ## Next Steps"
+      - "File is approximately 150–250 lines (target ~200)"
+    notes: "Topic slug must be descriptive and kebab-case (e.g., add-oauth-support, not 'auth')"
+
+  - id: research-02
+    description: All agents are dispatched in a single parallel message, not sequentially
+    grading: llm-judge
+    given: |
+      A project with multiple modules. Research scope implies at least 2 codebase areas and 1 web topic.
+    when: "research how to add a webhooks system — look at the existing event system and find best practices"
+    then:
+      - "Multiple Task tool calls appear in a single message (not spread across multiple turns)"
+      - "At least one Task call targets codebase exploration (Explore subagent type)"
+      - "At least one Task call targets web research (general-purpose subagent type)"
+      - "No sequential dispatch pattern: agent A dispatched, awaited, then agent B dispatched"
+    notes: "Haiku may dispatch agents one at a time — this is a known failure mode to watch for"
+
+  - id: research-03
+    description: Web Research section includes confidence levels (High/Medium/Low) on every finding
+    grading: code
+    given: |
+      A project where the feature involves an external library or pattern not present in the codebase.
+    when: "research best practices for implementing rate limiting before I add it to the API"
+    then:
+      - "File contains section: ## Web Research"
+      - "Every web finding in the Web Research section is labeled with High, Medium, or Low confidence"
+      - "No web finding appears without a confidence level marker"
+      - "At least one finding is present in the Web Research section"
+    notes: "Low-confidence findings should appear in Open Questions if not corroborated by codebase evidence"
+
+  - id: research-04
+    description: AskUserQuestion is called to present findings for user review before completing
+    grading: llm-judge
+    given: |
+      A project. Skill has synthesized findings and written the artifact to disk.
+    when: "research how the plugin system works before I add a new skill"
+    then:
+      - "AskUserQuestion is called with a summary of key findings (3–5 bullet points)"
+      - "AskUserQuestion message includes the artifact file path"
+      - "Skill waits for user response before marking research complete"
+      - "If user requests edits, the artifact is updated and AskUserQuestion is called again"
+    notes: "Some models skip the AskUserQuestion step and go straight to next-steps output — watch for this"
+
+  - id: research-05
+    description: Hard stop after next-steps output — no code, planning, or further tool calls
+    grading: llm-judge
+    given: |
+      Research artifact has been written and user has approved it.
+    when: "research how discount codes are handled, then go ahead and draft the plan too"
+    then:
+      - "Skill presents the Research Complete block with artifact path and ordered next steps"
+      - "Skill does NOT invoke /plan-tasks or create any plan file"
+      - "Skill does NOT write any code files"
+      - "Skill does NOT create any yaks tasks or task graphs"
+      - "No further tool calls occur after the next-steps output is presented"
+    notes: "This tests the phase boundary enforcement. Sonnet and Opus typically respect the STOP instruction; Haiku may continue"

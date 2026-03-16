@@ -1,0 +1,865 @@
+# Promptfoo eval configuration for implement skill scenarios
+# Generated from tests/scenarios/*.yaml
+# Run: cd tests/evals && promptfoo eval
+# View: promptfoo view
+
+description: implement skill functional evals
+
+providers:
+  - id: exec:claude --print "{{prompt}}"
+    label: claude-cli
+
+# ---------------------------------------------------------------------------
+# RESEARCH skill scenarios
+# ---------------------------------------------------------------------------
+tests:
+
+  # research-01: Produces a valid research artifact at the correct path with all required sections
+  - description: "[research-01] Produces valid research artifact with all required sections"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. No prior research artifacts exist.
+
+        TASK: research how authentication is implemented in this codebase before I add OAuth support
+    assert:
+      - type: icontains
+        value: ".light/"
+      - type: regex
+        value: "\\d{4}-\\d{2}-\\d{2}-[a-z0-9-]+-research\\.md"
+      - type: icontains
+        value: "## Summary"
+      - type: icontains
+        value: "## Relevant Files"
+      - type: icontains
+        value: "## Existing Patterns"
+      - type: icontains
+        value: "## Web Research"
+      - type: icontains
+        value: "## Open Questions"
+      - type: icontains
+        value: "## Next Steps"
+    metadata:
+      skill: research
+      grading: code
+
+  # research-02: All agents are dispatched in a single parallel message, not sequentially
+  - description: "[research-02] Agents dispatched in parallel, not sequentially"
+    vars:
+      prompt: |
+        GIVEN: A project with multiple modules. Research scope implies at least 2 codebase areas and 1 web topic.
+
+        TASK: research how to add a webhooks system — look at the existing event system and find best practices
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the research skill dispatched agents in parallel.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Parallel dispatch (1-3): Did multiple Task tool calls appear in a single message?
+            1 = Agents were dispatched sequentially across multiple turns
+            2 = Some parallelism but not all agents batched together
+            3 = Multiple Task calls issued in a single message (true parallel dispatch)
+
+          Dimension 2 — Codebase exploration (1-3): Was at least one Task call for codebase exploration?
+            1 = No codebase exploration agent was dispatched
+            2 = Codebase exploration was mentioned but dispatch is unclear
+            3 = At least one Task call clearly targeted codebase exploration
+
+          Dimension 3 — Web research (1-3): Was at least one Task call for web research?
+            1 = No web research agent was dispatched
+            2 = Web research was mentioned but dispatch is unclear
+            3 = At least one Task call clearly targeted web research or best practices
+
+          Dimension 4 — No sequential await pattern (1-3): Did the skill avoid the sequential dispatch anti-pattern?
+            1 = Clear sequential pattern: agent A dispatched, awaited, then agent B dispatched
+            2 = Partially sequential but some batching evident
+            3 = No sequential await pattern detected; all agents launched together
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+  # research-03: Web Research section includes confidence levels on every finding
+  - description: "[research-03] Web Research section includes confidence levels on every finding"
+    vars:
+      prompt: |
+        GIVEN: A project where the feature involves an external library or pattern not present in the codebase.
+
+        TASK: research best practices for implementing rate limiting before I add it to the API
+    assert:
+      - type: icontains
+        value: "## Web Research"
+      - type: regex
+        value: "(?i)(High|Medium|Low)"
+      - type: llm-rubric
+        value: |
+          Evaluate whether every web finding in the Web Research section is labeled with a confidence level (High, Medium, or Low).
+          PASS if all web findings have a confidence label and at least one finding is present.
+          FAIL if any finding lacks a confidence label or the Web Research section is empty.
+    metadata:
+      skill: research
+      grading: code
+
+  # research-04: AskUserQuestion is called to present findings for user review before completing
+  - description: "[research-04] AskUserQuestion called with findings summary before completing"
+    vars:
+      prompt: |
+        GIVEN: A project. Skill has synthesized findings and written the artifact to disk.
+
+        TASK: research how the plugin system works before I add a new skill
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the research skill correctly used AskUserQuestion before completing.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — AskUserQuestion usage (1-3): Was AskUserQuestion (or equivalent user-facing question) called?
+            1 = No user question was presented; skill completed silently
+            2 = A summary was presented but not as an explicit question/prompt for user input
+            3 = AskUserQuestion was called with a summary of key findings
+
+          Dimension 2 — Findings summary quality (1-3): Did the question include 3-5 bullet points of key findings?
+            1 = No bullet points or fewer than 3 findings listed
+            2 = Findings present but fewer than 3 or more than 5 bullet points
+            3 = Exactly 3-5 bullet point findings included in the question
+
+          Dimension 3 — Artifact path included (1-3): Did the question include the artifact file path?
+            1 = No artifact path mentioned in the question
+            2 = Artifact path mentioned in the response but not in the question itself
+            3 = Artifact file path is included within the AskUserQuestion message
+
+          Dimension 4 — Waits for response (1-3): Did the skill wait for user response before marking complete?
+            1 = Skill completed and moved on without waiting for user input
+            2 = Skill paused but completion was ambiguous
+            3 = Skill explicitly waited for user response before proceeding or concluding
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+  # research-05: Hard stop after next-steps output — no code, planning, or further tool calls
+  - description: "[research-05] Hard stop after next-steps — no code, planning, or further tool calls"
+    vars:
+      prompt: |
+        GIVEN: Research artifact has been written and user has approved it.
+
+        TASK: research how discount codes are handled, then go ahead and draft the plan too
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the research skill enforced its phase boundary and stopped after presenting next steps.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Next-steps output (1-3): Did the skill present a Research Complete block with next steps?
+            1 = No next-steps or Research Complete block presented
+            2 = Next steps mentioned but informal, not a structured block
+            3 = Research Complete block with artifact path and ordered next steps was presented
+
+          Dimension 2 — No draft invocation (1-3): Did the skill refrain from invoking draft or creating plan files?
+            1 = Draft was invoked or a plan file was created
+            2 = Draft was not invoked but planning content was generated inline
+            3 = No draft invocation and no plan file was created
+
+          Dimension 3 — No code written (1-3): Did the skill refrain from writing any code files?
+            1 = Code files were written
+            2 = Code snippets suggested but no files written
+            3 = No code files were written
+
+          Dimension 4 — Hard stop enforced (1-3): Did the skill stop after presenting next steps with no further tool calls?
+            1 = Additional tool calls occurred after the next-steps output
+            2 = Skill stopped but with some residual output that blurred the boundary
+            3 = Clean stop — no further tool calls after next-steps output was presented
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# DRAFT skill scenarios
+# ---------------------------------------------------------------------------
+
+  # draft-01: Produces a valid plan file at the correct path with all required sections
+  - description: "[draft-01] Produces valid plan file with all required sections"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. A research artifact exists at
+        .light/2026-02-24-add-discount-codes-research.md with summary findings.
+
+        TASK: draft .light/2026-02-24-add-discount-codes-research.md
+    assert:
+      - type: regex
+        value: ".light/2026-02-24-add-discount-codes-plan\\.md"
+      - type: icontains
+        value: "## Goal"
+      - type: icontains
+        value: "## Acceptance Criteria"
+      - type: icontains
+        value: "## Files to Create"
+      - type: icontains
+        value: "## Files to Modify"
+      - type: icontains
+        value: "## Implementation Phases"
+      - type: icontains
+        value: "## Constraints"
+      - type: icontains
+        value: "## Out of Scope"
+    metadata:
+      skill: draft
+      grading: code
+
+  # draft-02: Every TDD implementation phase includes an Agent Context block with required fields
+  - description: "[draft-02] Every TDD implementation phase includes a complete Agent Context block"
+    vars:
+      prompt: |
+        GIVEN: A project with application code. Research artifact describes a feature spanning
+        multiple layers (core logic + HTTP route).
+
+        TASK: create an implementation plan for adding a discount code validator — include TDD phases
+    assert:
+      - type: icontains
+        value: "#### Agent Context"
+      - type: icontains
+        value: "Files to"
+      - type: icontains
+        value: "Test spec"
+      - type: icontains
+        value: "Test command"
+      - type: icontains
+        value: "RED gate"
+      - type: icontains
+        value: "GREEN gate"
+      - type: icontains
+        value: "Architectural constraints"
+    metadata:
+      skill: draft
+      grading: code
+
+  # draft-03: TDD phases are decomposed into exactly 3 yaks tasks (Write Tests, Implement, Validate)
+  - description: "[draft-03] TDD phases decomposed into exactly 3 yaks tasks with correct dependencies"
+    vars:
+      prompt: |
+        GIVEN: A project where yaks is available (yx list returns results without error).
+        Research artifact describes a feature with at least one TDD layer.
+
+        TASK: plan the implementation of a discount code feature with TDD phases
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the draft skill correctly decomposed TDD phases into yaks tasks.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Yaks epic creation (1-3): Was a yaks epic created for the feature?
+            1 = No yaks epic was created
+            2 = Epic mentioned but creation is ambiguous
+            3 = A yaks epic was explicitly created for the feature
+
+          Dimension 2 — TDD issue triplet (1-3): Did each TDD phase produce exactly 3 yaks tasks (Write Tests, Implement, Validate)?
+            1 = Fewer than 3 tasks per TDD phase or tasks have wrong names
+            2 = 3 tasks created but naming or structure is off
+            3 = Exactly 3 tasks per TDD phase: Write Tests, Implement, Validate
+
+          Dimension 3 — Dependency chain (1-3): Are task dependencies correct (Write Tests → Implement → Validate)?
+            1 = No dependencies set between tasks
+            2 = Some dependencies set but chain is incomplete
+            3 = Write Tests blocks Implement; Implement blocks Validate
+
+          Dimension 4 — Non-TDD phases (1-3): Do non-TDD phases (schema, infrastructure) produce exactly 1 yak?
+            1 = Non-TDD phases also produce 3 tasks (incorrect)
+            2 = Non-TDD phases produce 1-2 tasks (partially correct)
+            3 = Non-TDD phases produce exactly 1 yak each
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: draft
+      grading: llm-judge
+
+  # draft-04: Each yak context is self-contained and does not reference the plan file
+  - description: "[draft-04] Yak contexts are self-contained and do not reference the plan file"
+    vars:
+      prompt: |
+        GIVEN: A project where yaks is available. Draft has completed and created a yaks epic with tasks.
+
+        TASK: draft a plan for adding webhook support to the notification system
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the draft skill created self-contained yak contexts.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Full Agent Context inline (1-3): Does each yak contain the full Agent Context inline?
+            1 = Tasks reference the plan file instead of including Agent Context
+            2 = Most tasks have inline context but one or more link back to the plan
+            3 = Every yak contains full Agent Context inline without referencing .light/
+
+          Dimension 2 — No plan file references (1-3): Do any tasks contain phrases like "see plan file" or "refer to .light/"?
+            1 = One or more tasks contain explicit plan file references
+            2 = No direct links but context implies the plan file is required
+            3 = No yak context references the plan file in any way
+
+          Dimension 3 — Standalone executability (1-3): Could an agent execute each phase reading only the yak context?
+            1 = Agent would need the plan file to understand what to do
+            2 = Agent could probably proceed but missing some context
+            3 = Each yak is fully self-contained; no external file needed
+
+          Dimension 4 — Agent Context completeness (1-3): Do inline Agent Context blocks include all required fields?
+            1 = Missing 3+ required fields (Files, Test spec, Test command, RED gate, GREEN gate, Constraints)
+            2 = Missing 1-2 required fields
+            3 = All required Agent Context fields present in every yak
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: draft
+      grading: llm-judge
+
+  # draft-05: Attempts tracker fallback chain when yaks is unavailable (beads then native tasks)
+  - description: "[draft-05] Attempts tracker fallback chain when yaks is unavailable"
+    vars:
+      prompt: |
+        GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
+        No .beads/config.yaml exists. No native task tool is configured.
+
+        TASK: plan the implementation of user profile photo uploads
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the draft skill correctly walked the three-tier tracker fallback chain.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Yaks detection and stop (1-3): Did the skill detect yaks is unavailable and stop issuing yx commands?
+            1 = yx commands were issued after the availability check
+            2 = No yx commands but no evidence of an explicit detection step
+            3 = Skill detected yaks unavailability and issued no further yx commands
+
+          Dimension 2 — Beads detection attempted (1-3): Did the skill check for .beads/config.yaml before moving on?
+            1 = No beads detection attempted
+            2 = Beads mentioned but no explicit check for .beads/config.yaml
+            3 = Skill explicitly checked for .beads/config.yaml as the second fallback tier
+
+          Dimension 3 — Native task tool attempted (1-3): Did the skill attempt TaskCreate before falling back to inline?
+            1 = No attempt to use TaskCreate
+            2 = TaskCreate mentioned but not clearly attempted
+            3 = Skill attempted TaskCreate as the third fallback tier before producing inline graph
+
+          Dimension 4 — Inline graph as final fallback (1-3): Does the plan contain an Inline Task Graph section as the final fallback?
+            1 = No Inline Task Graph section present
+            2 = Inline graph present but fallback ordering is unclear
+            3 = ## Inline Task Graph section is present and is clearly the last resort after all trackers failed
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: draft
+      grading: llm-judge
+
+  # draft-06: Falls back to beads when yaks is unavailable but beads is initialized
+  - description: "[draft-06] Falls back to beads when yaks unavailable but beads is initialized"
+    vars:
+      prompt: |
+        GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
+        A .beads/config.yaml file exists (beads is initialized).
+
+        TASK: plan the implementation of user profile photo uploads
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the draft skill correctly fell back to beads when yaks was unavailable.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Yaks detection and stop (1-3): Did the skill detect yaks is unavailable and stop issuing yx commands?
+            1 = yx commands were issued after the availability check
+            2 = No yx commands but no evidence of an explicit detection step
+            3 = Skill detected yaks unavailability and issued no further yx commands
+
+          Dimension 2 — Beads detection (1-3): Did the skill detect .beads/config.yaml and select beads as the tracker?
+            1 = Skill did not detect or use beads
+            2 = Beads mentioned but selection based on config file is unclear
+            3 = Skill detected .beads/config.yaml and explicitly chose beads as the tracker
+
+          Dimension 3 — beads:epic and beads:create used (1-3): Were beads:epic and beads:create commands used?
+            1 = Neither beads:epic nor beads:create was used
+            2 = One of the two commands was used but not both
+            3 = Both beads:epic and beads:create were used to create the epic and tasks
+
+          Dimension 4 — No yx commands after detection (1-3): Were all yx commands absent after the initial detection fails?
+            1 = yx commands appear after the detection failure
+            2 = No yx commands but the boundary is ambiguous
+            3 = No yx commands appear anywhere after the initial availability check
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: draft
+      grading: llm-judge
+
+  # draft-07: Falls back to native tasks when neither yaks nor beads is available
+  - description: "[draft-07] Falls back to native TaskCreate when neither yaks nor beads available"
+    vars:
+      prompt: |
+        GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
+        No .beads/config.yaml exists (beads not initialized).
+
+        TASK: plan the implementation of user profile photo uploads
+    assert:
+      - type: icontains
+        value: "TaskCreate"
+      - type: regex
+        value: "Write Tests|Implement|Validate"
+    metadata:
+      skill: draft
+      grading: code
+
+# ---------------------------------------------------------------------------
+# implement skill scenarios
+# ---------------------------------------------------------------------------
+
+  # craft-01: Creates craft-execution-log.md with structured entries at start of every session
+  - description: "[craft-01] Creates craft-execution-log.md with structured entries"
+    vars:
+      prompt: |
+        GIVEN: A project with a yaks epic containing three tasks: P1 Write Test, P1 Implement, P1 Validate.
+        No craft-execution-log.md exists yet. The user has a complete plan ready to execute.
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: "craft-execution-log.md"
+      - type: icontains
+        value: "[DISPATCHED]"
+      - type: regex
+        value: "\\[GATE (PASS|FAIL)\\]"
+      - type: icontains
+        value: "[CLOSED]"
+      - type: regex
+        value: "agent-test|agent-impl|agent-validate"
+    metadata:
+      skill: craft
+      grading: code
+
+  # craft-02: Gate pass path — RED, GREEN, VALIDATE all pass, issue closed
+  - description: "[craft-02] Full gate pass path — RED, GREEN, VALIDATE all pass, issue closed"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with a single TDD phase: P1 Write Test, P1 Implement, P1 Validate.
+        Agent 1 writes tests that fail (RED gate passes).
+        Agent 2 writes implementation that makes tests pass (GREEN gate passes).
+        Agent 3 runs full suite — tsc, vitest, biome all exit 0 (VALIDATE gate passes).
+
+        TASK: implement the feature from the yaks task graph
+    assert:
+      - type: regex
+        value: "\\[GATE PASS\\].*RED|RED.*\\[GATE PASS\\]"
+      - type: regex
+        value: "\\[GATE PASS\\].*GREEN|GREEN.*\\[GATE PASS\\]"
+      - type: regex
+        value: "\\[GATE PASS\\].*VALIDATE|VALIDATE.*\\[GATE PASS\\]"
+      - type: icontains
+        value: "[CLOSED]"
+    metadata:
+      skill: craft
+      grading: code
+
+  # craft-03: RED gate fail causes hard stop — does not proceed to implementation
+  - description: "[craft-03] RED gate fail causes hard stop — implementation not dispatched"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P1 Write Test and P1 Implement tasks.
+        Agent 1 writes tests that pass immediately (feature already exists or tests are tautological).
+        The RED gate check detects that the tests pass before any implementation code is written.
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill correctly enforced the RED gate hard stop.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — RED gate FAIL logged (1-3): Does craft-execution-log.md contain a [GATE FAIL] entry for RED gate?
+            1 = No [GATE FAIL] entry for RED gate
+            2 = Failure mentioned informally but not as a [GATE FAIL] log entry
+            3 = [GATE FAIL] entry for RED gate with a reason is present
+
+          Dimension 2 — Hard stop enforced (1-3): Did Claude stop and report the failure to the user?
+            1 = Claude continued to P1 Implement despite RED gate failure
+            2 = Claude paused but the stop was unclear or implicit
+            3 = Claude explicitly stopped and reported the RED gate failure to the user
+
+          Dimension 3 — P1 Implement not dispatched (1-3): Was the P1 Implement issue NOT dispatched?
+            1 = [DISPATCHED] entry for agent-impl appears in the log
+            2 = No dispatch but ambiguous whether the decision was deliberate
+            3 = No [DISPATCHED] entry for agent-impl; issue left open for user decision
+
+          Dimension 4 — Explanation quality (1-3): Did the explanation mention tautological tests or pre-existing feature?
+            1 = No explanation given for the failure
+            2 = Failure reported but cause not identified
+            3 = Explanation mentions that the test is tautological or the feature already exists
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: craft
+      grading: llm-judge
+
+  # craft-04: GREEN gate fail proceeds to validation — enters remediation via dynamic task creation
+  - description: "[craft-04] GREEN gate fail proceeds to validation and enters remediation"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P1 Write Test, P1 Implement, P1 Validate tasks.
+        Agent 1 writes failing tests (RED passes).
+        Agent 2 cannot make tests pass (GREEN gate fails).
+        Agent 3 reports full failure output.
+
+        TASK: implement the feature from the yaks task graph
+    assert:
+      - type: icontains
+        value: "[GATE FAIL]"
+      - type: icontains
+        value: "[REMEDIATION]"
+      - type: regex
+        value: "attempt 1|attempt-1"
+      - type: regex
+        value: "Remediate|remediation"
+      - type: regex
+        value: "Re-Validate|re-validate|revalidate"
+    metadata:
+      skill: craft
+      grading: code
+
+  # craft-05: Lint fast path — biome-only VALIDATE failure auto-fixed without creating remediation tasks
+  - description: "[craft-05] Lint fast path — biome-only failure auto-fixed without remediation tasks"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic where Agent 3's VALIDATE run finds: tsc exits 0, vitest exits 0, but biome exits 1
+        (lint errors only — no type errors, no test failures).
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill correctly handled a biome-only lint failure using the fast path.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — No [REMEDIATION] entry (1-3): Does the log NOT contain a [REMEDIATION] entry for this phase?
+            1 = [REMEDIATION] entry is present (fast path was not used)
+            2 = Remediation was mentioned informally but no formal [REMEDIATION] log entry
+            3 = No [REMEDIATION] entry; fast path was correctly applied
+
+          Dimension 2 — biome auto-fix invoked (1-3): Did Claude run biome check --write --unsafe?
+            1 = No biome auto-fix command was run
+            2 = A biome fix was run but without --write --unsafe flags
+            3 = biome check --write --unsafe was invoked to auto-fix lint issues
+
+          Dimension 3 — Re-run after fix (1-3): Was the full VALIDATE gate re-run after auto-fix?
+            1 = No re-run after auto-fix
+            2 = Re-run mentioned but it is unclear if all checks (tsc, vitest, biome) were included
+            3 = Full VALIDATE gate (tsc + vitest + biome) was re-run after auto-fix
+
+          Dimension 4 — No remediation tasks created (1-3): Were no new remediation yaks tasks created?
+            1 = Remediation and re-validation tasks were created unnecessarily
+            2 = One unnecessary task was created
+            3 = No new remediation or re-validation yaks tasks were created
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: craft
+      grading: llm-judge
+
+  # craft-06: Remediation limit — escalates to user after 2 failed remediation attempts
+  - description: "[craft-06] Escalates to user after 2 failed remediation attempts"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic where Agent 3 finds failures, remediation attempt 1 is dispatched and re-validation
+        still fails, remediation attempt 2 is dispatched and re-validation still fails.
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill correctly escalated to the user after 2 failed remediation attempts.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Two remediation entries (1-3): Does the log contain [REMEDIATION] entries for attempt 1 and attempt 2?
+            1 = Fewer than 2 [REMEDIATION] entries
+            2 = 2 entries present but not clearly labeled attempt 1 and attempt 2
+            3 = [REMEDIATION] entries for both attempt 1 and attempt 2 are present
+
+          Dimension 2 — [BLOCKED] entry (1-3): Does the log contain a [BLOCKED] entry after attempt 2 fails?
+            1 = No [BLOCKED] entry
+            2 = Blocked state mentioned informally without a [BLOCKED] log entry
+            3 = [BLOCKED] entry appears in the log after attempt 2 fails
+
+          Dimension 3 — User escalation (1-3): Did Claude stop and ask the user for guidance?
+            1 = Claude attempted a third remediation automatically
+            2 = Claude stopped but did not ask for guidance
+            3 = Claude stopped and explicitly asked the user for guidance
+
+          Dimension 4 — Yaks task updated (1-3): Was the blocked task updated to blocked status in yaks?
+            1 = No yaks status update was performed
+            2 = A status update was mentioned but not confirmed
+            3 = The blocked task was explicitly updated to blocked status in yaks
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: craft
+      grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# TDD skill scenarios
+# ---------------------------------------------------------------------------
+
+  # tdd-01: Creates tdd-session-log.md as the first file written to disk before any test or production code
+  - description: "[tdd-01] Creates tdd-session-log.md before any test or production code"
+    vars:
+      prompt: |
+        GIVEN: A project with no existing tdd-session-log.md. No test files for the target module yet.
+        The user wants to implement a discount code validator using TDD.
+
+        TASK: let's do TDD on this new discount code validator
+    assert:
+      - type: icontains
+        value: "tdd-session-log.md"
+      - type: icontains
+        value: "[PLAN]"
+      - type: regex
+        value: "mode: auto|mode: human|Using TDD skill"
+    metadata:
+      skill: tdd
+      grading: code
+
+  # tdd-02: TEST comments written as first code artifact — before any production code — with ZOMBIES annotations
+  - description: "[tdd-02] [TEST] comments written before production code, with ZOMBIES annotations"
+    vars:
+      prompt: |
+        GIVEN: A fresh TDD session for a simple calculator add() function. No existing source files for the module.
+
+        TASK: use test driven development to build the payment processor
+    assert:
+      - type: icontains
+        value: "[TEST]"
+      - type: regex
+        value: "<- Z|<- O|<- M|<- B|<- I|<- E|<- S"
+      - type: icontains
+        value: "[PLAN]"
+    metadata:
+      skill: tdd
+      grading: code
+
+  # tdd-03: Every ZOMBIES letter appears at least once across the test plan
+  - description: "[tdd-03] Every ZOMBIES letter appears at least once in the test plan"
+    vars:
+      prompt: |
+        GIVEN: A TDD session for a non-trivial module with multiple behaviors (e.g., a coupon code validator
+        that handles empty input, single codes, multiple codes, boundary lengths, the public API surface,
+        invalid format errors, and basic valid input).
+
+        TASK: write tests first for the order total calculation
+    assert:
+      - type: icontains
+        value: "<- Z"
+      - type: icontains
+        value: "<- O"
+      - type: icontains
+        value: "<- M"
+      - type: icontains
+        value: "<- B"
+      - type: icontains
+        value: "<- I"
+      - type: icontains
+        value: "<- E"
+      - type: icontains
+        value: "<- S"
+    metadata:
+      skill: tdd
+      grading: code
+
+  # tdd-04: Phase separation enforced — failing test written and confirmed before implementation begins
+  - description: "[tdd-04] Phase separation enforced — RED confirmed before implementation"
+    vars:
+      prompt: |
+        GIVEN: A TDD session for a new add() method that does not yet exist.
+        The first [TEST] comment has been converted to a real test.
+
+        TASK: red green refactor the new authentication middleware
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the TDD skill correctly enforced phase separation (RED before GREEN).
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Two-step RED phase (1-3): Did Claude demonstrate compile failure then assertion failure?
+            1 = No RED phase observed; went directly to implementation
+            2 = RED phase present but only one step (either compile or assertion, not both)
+            3 = Two-step RED: compile error observed first, then assertion failure after minimal stub added
+
+          Dimension 2 — [RED-PREDICT] logged (1-3): Does tdd-session-log.md contain a [RED-PREDICT] entry before the test is run?
+            1 = No [RED-PREDICT] entry
+            2 = Prediction mentioned informally without a formal log entry
+            3 = [RED-PREDICT] entry present in tdd-session-log.md before the test was run
+
+          Dimension 3 — [RED-CONFIRM] logged (1-3): Does the log contain a [RED-CONFIRM] entry with the actual failure message?
+            1 = No [RED-CONFIRM] entry
+            2 = Confirmation present but without the actual failure message
+            3 = [RED-CONFIRM] entry with actual failure output present
+
+          Dimension 4 — Implementation after RED-CONFIRM (1-3): Was production code written only after [RED-CONFIRM]?
+            1 = Production code was written before RED was confirmed
+            2 = Order unclear from the output
+            3 = [RED-CONFIRM] is logged before any production implementation code appears
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: tdd
+      grading: llm-judge
+
+  # tdd-05: No production code written without a test requiring it — simplification step removes unjustified code
+  - description: "[tdd-05] Simplification step removes unjustified code after tests go green"
+    vars:
+      prompt: |
+        GIVEN: A TDD session mid-stream. Agent has just made tests pass by writing implementation code.
+        Some of the implementation code does more than the failing test strictly required.
+
+        TASK: start with the tests — let them guide the implementation
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the TDD skill correctly applied simplification discipline after tests went green.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Simplification review (1-3): Did Claude ask for each code line whether a failing test requires it?
+            1 = No simplification review performed after tests went green
+            2 = Some review performed but not systematic line-by-line
+            3 = Systematic review: for each piece of code, Claude checked whether a failing test required it
+
+          Dimension 2 — Unjustified code removed or covered (1-3): Was unjustified code deleted or covered by a new [TEST]?
+            1 = Unjustified code was left in place
+            2 = Some unjustified code removed but not all
+            3 = All unjustified code was either deleted or a new [TEST] comment was added to cover it
+
+          Dimension 3 — [REFACTOR] entries logged (1-3): Does tdd-session-log.md contain [REFACTOR] entries?
+            1 = No [REFACTOR] entries in the session log
+            2 = Refactoring mentioned but no formal [REFACTOR] log entries
+            3 = [REFACTOR] entries describing refactorings applied are present in tdd-session-log.md
+
+          Dimension 4 — Stage announcements (1-3): Did Claude announce refactoring start and completion?
+            1 = No stage announcements
+            2 = One announcement present (start or completion, not both)
+            3 = Claude announced both "Starting refactoring stage" and "Refactoring complete"
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: tdd
+      grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# REFLECT skill scenarios
+# ---------------------------------------------------------------------------
+
+  # reflect-01: Reflection artifact contains Agent Dispatch Manifest table with all 4 required agent rows
+  - description: "[reflect-01] Reflection artifact contains Agent Dispatch Manifest with all 4 agent rows"
+    vars:
+      prompt: |
+        GIVEN: A git repository with at least 5 commits. The .light/ directory exists with at least
+        one recent plan file. CLAUDE.md is present at the project root. The reflect skill is loaded.
+
+        TASK: reflect on the session — we just finished implementing the OAuth feature
+    assert:
+      - type: regex
+        value: ".light/\\d{4}-\\d{2}-\\d{2}-[a-z0-9-]+-reflection\\.md"
+      - type: icontains
+        value: "## Agent Dispatch Manifest"
+      - type: icontains
+        value: "Git Historian"
+      - type: icontains
+        value: "Artifact Scout"
+      - type: icontains
+        value: "Context Reader"
+      - type: icontains
+        value: "Skill Inspector"
+    metadata:
+      skill: reflect
+      grading: code
+
+  # reflect-02: Improvement proposals are capped at 5, priority-ordered, with all required fields
+  - description: "[reflect-02] Improvement proposals capped at 5, priority-ordered, with all required fields"
+    vars:
+      prompt: |
+        GIVEN: A project with git history showing a recent craft session. The session involved multiple
+        tool calls, at least one re-try or correction, and a final passing test suite. The reflect skill is loaded.
+
+        TASK: retrospective — we just finished the payment refactor session and there was noticeable friction around how the implement skill handles remediation
+    assert:
+      - type: regex
+        value: "## Improvement Proposals|## Proposals"
+      - type: icontains
+        value: "P1"
+      - type: regex
+        value: "Type:.*skill-update|Type:.*claude-md|Type:.*hook|Type:.*plan-template|Type:.*new-skill"
+      - type: icontains
+        value: "Priority:"
+      - type: icontains
+        value: "Target"
+      - type: icontains
+        value: "Rationale"
+    metadata:
+      skill: reflect
+      grading: code
+
+  # reflect-03: Improvement proposals are actionable, relevant to the session, and avoid invented problems
+  - description: "[reflect-03] Proposals are actionable, session-relevant, and avoid invented problems"
+    vars:
+      prompt: |
+        GIVEN: A project with the following simulated session context:
+        - git log shows 3 commits in the last hour: "craft: implement discount validator",
+          "craft: fix failing test for edge case", "craft: add integration test"
+        - craft-execution-log.md shows one remediation cycle (a lint error that was auto-fixed)
+        - No existing AskUserQuestion hook in .claude/settings.json
+        - The implement skill's SKILL.md does not mention the lint fast-path behavior in its anti-patterns section
+
+        TASK: reflect on the craft session — the lint auto-fix step caused confusion because it wasn't documented anywhere
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating a reflect skill output. The session context included:
+          - 3 craft commits (implement discount validator, fix failing test for edge case, add integration test)
+          - One lint auto-fix remediation cycle documented in craft-execution-log.md
+          - The lint fast-path behavior is absent from the implement skill.md anti-patterns section
+          - No AskUserQuestion hook exists in .claude/settings.json
+
+          Score each dimension from 1-3, then compute the total. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Relevance (1-3): Are proposals grounded in the actual session context?
+            1 = Proposals are generic or reference files not in the session context
+            2 = Most proposals reference session artifacts but one or more feel invented
+            3 = All proposals are directly traceable to session evidence
+
+          Dimension 2 — Actionability (1-3): Are proposals specific enough to implement without further clarification?
+            1 = Proposals are vague ("improve the skill", "add more context")
+            2 = Most proposals are actionable but one is underspecified
+            3 = Every proposal has a clear Target file and a Proposed change that could be implemented immediately
+
+          Dimension 3 — Anti-pattern adherence (1-3): Does the output avoid the anti-patterns listed in the skill?
+            1 = Multiple anti-patterns violated (invented problems, bundled proposals, sweeping rewrites)
+            2 = One anti-pattern violation (e.g., slightly over-broad proposal)
+            3 = No anti-pattern violations; proposals are small and targeted
+
+          Dimension 4 — Proposal count (1-3): Is the number of proposals appropriate?
+            1 = More than 5 proposals (violates the cap constraint)
+            2 = Exactly 5 proposals (at the cap, acceptable)
+            3 = 3-4 proposals (focused; signal over noise)
+
+          Total score (sum of all dimensions): pass if >= 9 out of 12.
+          Return: PASS or FAIL, the total score, and one sentence per dimension explaining the score.
+    metadata:
+      skill: reflect
+      grading: llm-judge

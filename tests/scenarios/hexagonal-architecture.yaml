@@ -1,0 +1,349 @@
+skill: hexagonal-architecture
+version: "2026-03-06"
+category: behavioral
+
+# Triggering tests for the hexagonal-architecture skill.
+#
+# The testable unit is the description field:
+#   "Applies hexagonal (ports & adapters) architecture. Use when designing
+#    application structure, separating domain from infrastructure, creating
+#    testable boundaries, or when user mentions ports, adapters, hexagonal,
+#    or clean architecture."
+#
+# Probe with: "When would you use the hexagonal-architecture skill?"
+
+triggering:
+  positive:
+    # Direct trigger phrases from the triggers array
+    - "help me apply hexagonal architecture to this service"
+    - "structure this using ports and adapters"
+    - "I want to follow clean architecture for the new billing module"
+    - "how should I model the domain boundaries for this feature?"
+
+    # Phrases emphasizing separation of domain from infrastructure
+    - "my repository classes are leaking database details into my domain model — how do I fix this?"
+    - "I need to make my domain layer independent of the Spring framework"
+    - "how do I separate my business logic from the persistence layer?"
+    - "design the order service so we can swap out the database adapter without touching domain logic"
+
+    # Phrases emphasizing testable boundaries
+    - "I want to be able to test my use cases without a real database — how should I structure it?"
+    - "help me create clean seams in the codebase so we can use test doubles for external services"
+    - "structure the payment service so the domain is independently testable"
+
+    # Phrases about naming and structural conventions
+    - "what naming convention should I use for DTOs that map between the API and the domain?"
+    - "should this class be a View, a Response, or a Dbo — and how do I implement the mapping?"
+
+    # Phrasings tied to the skill's architectural diagram / layer responsibilities
+    - "I keep confusing what belongs in the application layer vs the domain — can you clarify?"
+
+    # Edge case: user describes an anti-pattern and wants guidance
+    - "my use cases are calling each other and it's getting hard to manage — is this an architecture problem?"
+
+  negative:
+    # Should trigger scaffold instead (generating boilerplate structure, not architectural guidance)
+    - "scaffold a new Spring Boot microservice with a standard project layout"
+    - "generate the boilerplate directory structure for a new Node.js service"
+    - "create the initial file structure for the billing module"
+
+    # Should trigger research instead (exploring before designing)
+    - "research how the existing codebase handles the payment domain before I refactor it"
+    - "explore the current service structure to understand what patterns are already in use"
+    - "investigate how the authentication module is organized before we redesign it"
+
+    # Should trigger draft instead (planning, not architectural guidance)
+    - "draft an implementation plan for extracting the domain model from the OrderService"
+    - "create a roadmap for the hexagonal refactor based on what we found"
+
+    # Should trigger diagram instead (visualizing existing structure, not designing new)
+    - "generate a diagram showing how the current layers in this service relate to each other"
+    - "draw the dependency graph for the payment module"
+
+    # Should trigger refactor instead (mechanical code changes, not architectural design)
+    - "move the validation logic from the controller into a separate class"
+    - "rename all these DAO classes to use the Repository suffix"
+    - "extract this inline SQL into a dedicated query class"
+
+    # Completely unrelated
+    - "fix the NullPointerException in the UserService constructor"
+    - "what does the git rebase command do?"
+    - "add a health check endpoint to the API"
+
+    # Ambiguous: "architecture" without hexagonal intent — likely a general design question
+    - "what architecture should I use for a new microservice?"
+
+    # Ambiguous: "domain" in the context of domain naming, not DDD
+    - "what domain should I register for the new product?"
+
+functional:
+  - id: hexarch-01
+    description: Correctly classifies components as inside vs outside the hexagon using the Core Decision Rule
+    grading: llm-judge
+    given: |
+      A user is designing a new OrderService. They present five candidate components and ask
+      which belong inside vs outside the hexagon:
+        1. An Order entity with total-calculation logic
+        2. A Spring @Repository class backed by JPA
+        3. A PlaceOrderUseCase that orchestrates domain objects
+        4. An OrderController annotated with @RestController
+        5. An OrderEmailNotifier that calls an external SMTP server
+    when: "I'm applying hexagonal architecture to the OrderService — which of these components belong inside the hexagon and which are adapters?"
+    then:
+      - "Order entity is placed INSIDE the hexagon (domain layer, no I/O)"
+      - "Spring @Repository class is placed OUTSIDE the hexagon (adapter — depends on JPA/framework)"
+      - "PlaceOrderUseCase is placed INSIDE the hexagon (application layer, no I/O)"
+      - "OrderController is placed OUTSIDE the hexagon (adapter — HTTP I/O)"
+      - "OrderEmailNotifier is placed OUTSIDE the hexagon (adapter — out-of-process SMTP I/O)"
+      - "Rationale references the Core Decision Rule: 'Does it do I/O or run out-of-process?'"
+      - "Response distinguishes between domain layer and application layer as both being inside the hexagon"
+    judge_prompt: |
+      You are evaluating the output of the hexagonal-architecture skill.
+
+      SESSION CONTEXT:
+      The user presented 5 components and asked which belong inside vs outside the hexagon.
+      Components: Order entity (pure logic), Spring @Repository (JPA-backed), PlaceOrderUseCase
+      (orchestration, no I/O), OrderController (@RestController), OrderEmailNotifier (external SMTP).
+
+      SKILL OUTPUT TO EVALUATE: {SKILL_OUTPUT}
+
+      Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Correctness (1-3): Are all 5 components classified correctly?
+        1 = 2 or more components misclassified
+        2 = Exactly 1 component misclassified
+        3 = All 5 components correctly classified
+
+      Dimension 2 — Decision Rule usage (1-3): Does the response cite or apply the Core Decision Rule?
+        1 = No reference to I/O or out-of-process criterion
+        2 = Rule mentioned once but not consistently applied to each component
+        3 = Core Decision Rule explicitly applied to each component's classification
+
+      Dimension 3 — Layer distinction (1-3): Does the response correctly distinguish domain vs application as both inside the hexagon?
+        1 = Conflates domain and application, or says only domain is inside
+        2 = Acknowledges both layers exist but does not clearly distinguish their responsibilities
+        3 = Clearly explains that both domain (what CAN happen) and application (HOW things happen) are inside the hexagon
+
+      Dimension 4 — Dependency direction (1-3): Is the inward-only dependency rule communicated?
+        1 = No mention of dependency direction
+        2 = Dependency direction implied but not stated
+        3 = Explicitly states that dependencies flow inward only; adapters depend on ports, not the reverse
+
+      Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    notes: "The most common failure mode is calling the application layer an adapter or failing to mention that PlaceOrderUseCase is inside the hexagon."
+
+  - id: hexarch-02
+    description: Applies correct naming conventions for DTOs and mapping methods
+    grading: llm-judge
+    given: |
+      A user has a Member domain entity and needs to create:
+        1. A DTO for the API response (displaying member data to the client)
+        2. A DTO for an incoming API request to create a member
+        3. A database persistence entity for the members table
+      They want to know what to name each class and how to implement the mapping.
+    when: "I'm building a member management feature using hexagonal architecture. What should I name the DTO classes and how do I implement the mapping between them and the domain entity?"
+    then:
+      - "API response DTO is named MemberView or MemberResponse (not MemberDto or MemberData)"
+      - "Incoming request DTO is named CreateMemberRequest (not MemberDto or CreateMemberDto)"
+      - "Database persistence entity is named MemberDbo (not MemberEntity or MemberPersistence)"
+      - "Domain → DTO mapping uses a static from(domain) factory method (e.g., MemberView.from(member))"
+      - "DTO → Domain mapping uses an as*() instance method (e.g., request.asMember())"
+      - "Explanation distinguishes the purpose of each DTO type (display vs incoming vs persistence)"
+    judge_prompt: |
+      You are evaluating the output of the hexagonal-architecture skill on naming conventions.
+
+      SESSION CONTEXT:
+      The user asked how to name DTOs (API response, incoming request, database entity) for a
+      Member domain entity and how to implement the mappings.
+
+      SKILL OUTPUT TO EVALUATE: {SKILL_OUTPUT}
+
+      Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Naming correctness (1-3): Are all three DTO names correct per the skill's conventions?
+        1 = Two or more names are wrong (e.g., MemberDto, MemberEntity)
+        2 = One name is wrong or uses an acceptable variant not in the spec
+        3 = All three names match the spec: *View/*Response, *Request, *Dbo
+
+      Dimension 2 — Mapping direction correctness (1-3): Are from() and as*() applied in the right direction?
+        1 = Directions are reversed (e.g., as*() used for Domain→DTO)
+        2 = One direction is ambiguous or inconsistently explained
+        3 = from(domain) correctly maps Domain→DTO; as*() correctly maps DTO→Domain
+
+      Dimension 3 — Completeness (1-3): Are all three DTO types addressed with both name and mapping?
+        1 = One or more DTO types are missing entirely
+        2 = All types named but one mapping method is missing
+        3 = All three types fully addressed with name and mapping pattern
+
+      Dimension 4 — Purpose distinction (1-3): Does the response explain why each DTO type is distinct?
+        1 = No explanation of purpose differences
+        2 = Purposes mentioned but not clearly tied to architectural role
+        3 = Each DTO's role in the architecture (display, input, persistence) is clearly explained
+
+      Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    notes: "Watch for models that use 'MemberDto' as a generic name or that reverse the from()/as*() convention."
+
+  - id: hexarch-03
+    description: Detects and explains domain-imports-infrastructure anti-pattern
+    grading: llm-judge
+    given: |
+      The user shares this code snippet from their Order domain entity:
+
+        import org.springframework.data.jpa.domain.AbstractAuditable;
+        import com.stripe.model.PaymentIntent;
+
+        public class Order extends AbstractAuditable<User, Long> {
+            private PaymentIntent stripePayment;
+            // ... business logic
+        }
+
+      They ask if there are any architectural issues with this code.
+    when: "Can you review this Order domain entity and tell me if there are any hexagonal architecture issues?"
+    then:
+      - "Identifies that Order extending AbstractAuditable is an anti-pattern (domain depends on Spring/JPA framework)"
+      - "Identifies that storing a PaymentIntent field is an anti-pattern (third-party type leaking into domain)"
+      - "Names the relevant anti-pattern from the skill: Domain Scope Pollution"
+      - "Recommends keeping external types (StripePayment, JPA abstractions) in adapters"
+      - "Recommends mapping external types to domain types at the boundary"
+      - "Does NOT recommend using hexagonal architecture for simple CRUD apps (not relevant here)"
+    judge_prompt: |
+      You are evaluating the output of the hexagonal-architecture skill on anti-pattern detection.
+
+      SESSION CONTEXT:
+      The user shared an Order domain entity that:
+        1. Extends org.springframework.data.jpa.domain.AbstractAuditable (Spring/JPA dependency in domain)
+        2. Holds a com.stripe.model.PaymentIntent field (third-party type in domain)
+
+      SKILL OUTPUT TO EVALUATE: {SKILL_OUTPUT}
+
+      Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Anti-pattern identification (1-3): Are both anti-patterns detected?
+        1 = Only one (or neither) anti-pattern identified
+        2 = Both identified but one explanation is vague or incorrect
+        3 = Both anti-patterns clearly identified with correct explanation
+
+      Dimension 2 — Naming / taxonomy (1-3): Does the response name the relevant anti-pattern from the skill?
+        1 = No reference to the anti-pattern taxonomy in the skill
+        2 = Anti-pattern described but not named (e.g., "this is bad" without naming it)
+        3 = Explicitly names "Domain Scope Pollution" or "domain importing infrastructure"
+
+      Dimension 3 — Remediation specificity (1-3): Does the response give concrete guidance for fixing both issues?
+        1 = Only vague guidance ("remove the dependency") without explaining how
+        2 = Concrete fix for one issue; vague on the other
+        3 = Both issues have concrete remediation: move to adapter, map at boundary, use a domain-owned abstraction
+
+      Dimension 4 — No spurious recommendations (1-3): Does the response stay focused on the actual issues?
+        1 = Introduces unrelated recommendations (e.g., refactoring the business logic, adding tests)
+        2 = One minor off-topic recommendation included
+        3 = Response is tightly focused on the two anti-patterns present in the code
+
+      Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    notes: "Models sometimes miss the AbstractAuditable anti-pattern and focus only on the Stripe type. Both must be flagged."
+
+  - id: hexarch-04
+    description: Recommends against hexagonal architecture for simple scripts and prototypes
+    grading: llm-judge
+    given: |
+      A user describes a small utility script: a standalone Python script that reads a CSV file,
+      transforms the rows, and writes the results to another CSV file. No external services,
+      no database, no framework. They ask if they should apply hexagonal architecture.
+    when: "I'm writing a Python script to transform CSV data — should I use hexagonal architecture to structure it?"
+    then:
+      - "Recommends NOT using hexagonal architecture for this use case"
+      - "Cites the 'When NOT to Use' guidance from the skill (small/simple projects, CRUD-based, overhead not worth it)"
+      - "Gives a clear reason: the overhead is not justified for a simple script with no external infrastructure to decouple"
+      - "Does not prescribe ports, adapters, or layer structure for this use case"
+      - "May suggest a simpler alternative structure appropriate for the script's scale"
+    judge_prompt: |
+      You are evaluating the output of the hexagonal-architecture skill.
+
+      SESSION CONTEXT:
+      The user asked whether to use hexagonal architecture for a small standalone Python CSV
+      transformation script. No database, no external services, no framework involved.
+
+      SKILL OUTPUT TO EVALUATE: {SKILL_OUTPUT}
+
+      Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Correct recommendation (1-3): Does the response correctly advise against hexagonal architecture?
+        1 = Recommends applying hexagonal architecture (wrong answer)
+        2 = Ambiguous — hedges without a clear recommendation
+        3 = Clearly recommends NOT using hexagonal architecture for this case
+
+      Dimension 2 — Justification quality (1-3): Is the "When NOT to Use" guidance cited or clearly applied?
+        1 = No justification given for the recommendation
+        2 = Justification given but does not reference the skill's "When NOT to Use" criteria
+        3 = Explicitly references small/simple project criteria or overhead-vs-benefit tradeoff
+
+      Dimension 3 — No over-engineering (1-3): Does the response avoid prescribing hexagonal patterns for this script?
+        1 = Response still describes ports, adapters, or layer structure for the script
+        2 = Avoids prescribing full hexagonal but still suggests unnecessary abstraction layers
+        3 = Response is appropriately minimal; no ports/adapters/layers recommended
+
+      Dimension 4 — Helpfulness (1-3): Does the response leave the user with a clear path forward?
+        1 = Ends with just "don't use it" — no alternative guidance
+        2 = Vague alternative suggested (e.g., "just keep it simple")
+        3 = Offers a concrete, appropriately simple structure for the script's scale
+
+      Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    notes: "This tests the 'When NOT to Use' boundary. Some models will apply the skill regardless of context."
+
+  - id: hexarch-05
+    description: Correctly assigns layer responsibilities for a realistic feature decomposition
+    grading: llm-judge
+    given: |
+      A user is designing a subscription billing feature and lists these responsibilities:
+        1. Enforce that a subscription cannot be renewed if it is already active (business rule)
+        2. Coordinate the steps: check subscription status, charge payment, send confirmation email
+        3. Translate the HTTP POST /subscriptions/renew request into a domain command
+        4. Persist the updated subscription record to the database
+        5. Call the Stripe API to charge the customer
+      They ask which architectural layer each responsibility belongs to.
+    when: "I'm building a subscription renewal feature using hexagonal architecture. Which layer should handle each of these responsibilities?"
+    then:
+      - "Business rule enforcement (cannot renew active subscription) is assigned to the Domain layer"
+      - "Orchestration of steps (check, charge, email) is assigned to the Application layer"
+      - "HTTP request translation is assigned to the Adapters layer (inbound adapter / controller)"
+      - "Database persistence is assigned to the Adapters layer (outbound adapter / repository)"
+      - "Stripe API call is assigned to the Adapters layer (outbound adapter)"
+      - "Response correctly distinguishes Domain (what CAN happen) from Application (HOW things happen)"
+      - "Response notes that the Application layer depends on ports (interfaces), not the adapter implementations directly"
+    judge_prompt: |
+      You are evaluating the output of the hexagonal-architecture skill on layer responsibility assignment.
+
+      SESSION CONTEXT:
+      The user listed 5 responsibilities for a subscription renewal feature and asked which
+      hexagonal layer each belongs to:
+        1. Business rule: cannot renew active subscription
+        2. Orchestration: check, charge, email steps
+        3. HTTP request translation
+        4. Database persistence
+        5. Stripe API call
+
+      SKILL OUTPUT TO EVALUATE: {SKILL_OUTPUT}
+
+      Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+      Dimension 1 — Layer assignment correctness (1-3): Are all 5 responsibilities assigned to the correct layer?
+        1 = 2 or more assignments are wrong
+        2 = Exactly 1 assignment is wrong or ambiguous
+        3 = All 5 correctly assigned: business rule → domain, orchestration → application, HTTP/DB/Stripe → adapters
+
+      Dimension 2 — Domain vs Application distinction (1-3): Does the response clearly differentiate domain (what CAN happen) from application (HOW things happen)?
+        1 = Domain and application are conflated or treated as a single layer
+        2 = Both mentioned but distinction is vague
+        3 = Clear distinction with responsibility framing: domain enforces constraints, application orchestrates
+
+      Dimension 3 — Port/interface boundary (1-3): Does the response explain that the application layer depends on ports, not adapter implementations?
+        1 = No mention of ports or interfaces
+        2 = Ports mentioned but their role in decoupling application from adapters is unclear
+        3 = Explicitly states application layer depends on port interfaces; adapters implement those ports
+
+      Dimension 4 — Completeness (1-3): Are all 5 responsibilities addressed?
+        1 = One or more responsibilities left unaddressed
+        2 = All addressed but one is underexplained
+        3 = All 5 fully addressed with clear layer assignment and brief rationale
+
+      Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    notes: "Watch for models that put orchestration in the domain layer or that merge HTTP/DB/Stripe into a generic 'infrastructure' without naming them as adapters."

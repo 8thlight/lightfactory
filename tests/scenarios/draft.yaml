@@ -1,0 +1,172 @@
+skill: draft
+version: "2026-02-24"
+category: structured-output
+
+# Triggering tests for the draft skill.
+#
+# The testable unit is the description field:
+#   "Plan phase of RPI methodology. Consumes research artifact or topic and
+#    produces compact implementation plan with test specs and Agent Context
+#    blocks. Use after research or to start planning a non-trivial feature."
+#
+# Probe with: "When would you use the draft skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "plan the implementation for adding discount codes"
+    - "draft plan for the OAuth refactor"
+    - "create an implementation plan for the new payment provider"
+
+    # Phrases aligned with "consumes research artifact" intent
+    - "I have a research artifact — now create the implementation plan"
+    - "draft .light/2026-02-24-add-oauth-research.md"
+    - "turn the research findings into a plan"
+
+    # Phrases aligned with "produces Agent Context blocks" intent
+    - "create a plan with yaks tasks for the team to execute"
+    - "write a plan for this feature with phases and test specs"
+
+    # Phrases aligned with "start planning a non-trivial feature" (no prior research)
+    - "I want to add a webhooks system — help me plan it out before coding"
+    - "create a roadmap for the caching layer refactor"
+
+    # Edge case: ambiguous between research and draft — "plan" leans draft
+    - "plan out how we'll add multi-tenancy support"
+
+  negative:
+    # Should trigger research instead (exploration first, not planning)
+    - "research how the existing discount logic works"
+    - "explore the codebase to understand the order flow"
+    - "investigate how the plugin system is structured"
+
+    # Should trigger craft instead (execution, not planning)
+    - "execute the implementation plan"
+    - "implement the feature from the yaks task graph"
+    - "run the implement skill to build out the phases"
+
+    # Should trigger tdd instead (writing tests directly, not planning)
+    - "write tests first for the discount code validator"
+    - "let's do red-green-refactor on the new feature"
+
+    # Should trigger reflect instead
+    - "reflect on the session we just finished"
+    - "do a retrospective on what went wrong during implementation"
+
+    # Simple tasks that need no plan
+    - "fix the typo in the README"
+    - "rename variable `x` to `discountAmount`"
+
+    # Ambiguous edge case: "design" could mean draft or ADR — no plan implied here
+    - "design the database schema for a new table"
+
+    # Completely unrelated
+    - "what does HTTP 429 mean?"
+
+functional:
+  - id: draft-01
+    description: Produces a valid plan file at the correct path with all required sections
+    grading: code
+    given: |
+      A project with a .light/ directory. A research artifact exists at
+      .light/2026-02-24-add-discount-codes-research.md with summary findings.
+    when: "draft .light/2026-02-24-add-discount-codes-research.md"
+    then:
+      - "File exists at .light/2026-02-24-add-discount-codes-plan.md"
+      - "File contains section: ## Goal"
+      - "File contains section: ## Acceptance Criteria"
+      - "File contains section: ## Files to Create"
+      - "File contains section: ## Files to Modify"
+      - "File contains section: ## Implementation Phases"
+      - "File contains section: ## Constraints"
+      - "File contains section: ## Out of Scope"
+      - "File is approximately 150–250 lines (target ~200)"
+
+  - id: draft-02
+    description: Every TDD implementation phase includes an Agent Context block with required fields
+    grading: code
+    given: |
+      A project with application code. Research artifact describes a feature spanning
+      multiple layers (core logic + HTTP route).
+    when: "create an implementation plan for adding a discount code validator — include TDD phases"
+    then:
+      - "Plan file contains at least one section matching '#### Agent Context'"
+      - "Each Agent Context block contains: Files to create/modify"
+      - "Each Agent Context block contains: Test spec (behavioral description)"
+      - "Each Agent Context block contains: Test command (shell command)"
+      - "Each Agent Context block contains: RED gate (observable failure criterion)"
+      - "Each Agent Context block contains: GREEN gate (observable success criterion)"
+      - "Each Agent Context block contains: Architectural constraints"
+    notes: "Agent Context blocks are the contract between draft and craft — missing fields cause craft to fail"
+
+  - id: draft-03
+    description: TDD phases are decomposed into exactly 3 yaks tasks (Write Tests, Implement, Validate)
+    grading: llm-judge
+    given: |
+      A project where yaks is available (yx list returns results without error).
+      Research artifact describes a feature with at least one TDD layer.
+    when: "plan the implementation of a discount code feature with TDD phases"
+    then:
+      - "Yaks epic is created for the feature"
+      - "Each TDD phase produces exactly 3 yaks tasks: Write Tests, Implement, Validate"
+      - "Write Tests issue is blocked by previous phase completion"
+      - "Implement issue is blocked by Write Tests issue"
+      - "Validate issue is blocked by Implement issue"
+      - "Non-TDD phases (schema, infrastructure) produce exactly 1 yak"
+    notes: "Verify via yx list after plan completes. Haiku may create fewer tasks or skip dependencies"
+
+  - id: draft-04
+    description: Each yak context is self-contained and does not reference the plan file
+    grading: llm-judge
+    given: |
+      A project where yaks is available. Draft has completed and created a yaks epic with tasks.
+    when: "draft a plan for adding webhook support to the notification system"
+    then:
+      - "Each yak context contains full Agent Context inline (not a link to the plan file)"
+      - "No yak context contains a phrase like 'see plan file', 'refer to .light/', or 'as described in the plan'"
+      - "An agent reading only the yak context could execute the phase without accessing .light/"
+    notes: "Self-containment is critical for craft's isolated agent dispatch. Tasks referencing the plan file are a known failure mode"
+
+  - id: draft-05
+    description: Attempts tracker fallback chain when yaks is unavailable (beads then native tasks)
+    grading: llm-judge
+    given: |
+      A project where yaks is NOT available (yx list returns a command-not-found error).
+      No .beads/config.yaml exists. No native task tool is configured.
+    when: "plan the implementation of user profile photo uploads"
+    then:
+      - "Skill detects yaks is unavailable and does not attempt further yx commands"
+      - "Skill attempts beads detection (checks for .beads/config.yaml) before falling back further"
+      - "Skill attempts native task tool (TaskCreate) before falling back to inline task graph"
+      - "Skill falls back to inline task graph only after both beads and native tasks are unavailable"
+      - "Plan file contains section: ## Inline Task Graph as the final fallback"
+    notes: "Verifies the full three-tier fallback chain: yaks → beads → native tasks → inline graph"
+
+  - id: draft-06
+    description: Falls back to beads when yaks is unavailable but beads is initialized
+    grading: llm-judge
+    given: |
+      A project where yaks is NOT available (yx list returns a command-not-found error).
+      A .beads/config.yaml file exists (beads is initialized).
+    when: "plan the implementation of user profile photo uploads"
+    then:
+      - "Skill detects yaks is unavailable and stops issuing yx commands"
+      - "Skill detects .beads/config.yaml and uses beads as the tracker"
+      - "beads:epic command is used to create an epic for the feature"
+      - "beads:create command is used to create tasks for each phase"
+      - "No yx commands are issued after the yaks availability check fails"
+    notes: "Exercises the second tier of the fallback chain: yaks unavailable, beads available"
+
+  - id: draft-07
+    description: Falls back to native tasks when neither yaks nor beads is available
+    grading: code
+    given: |
+      A project where yaks is NOT available (yx list returns a command-not-found error).
+      No .beads/config.yaml exists (beads not initialized).
+    when: "plan the implementation of user profile photo uploads"
+    then:
+      - "TaskCreate tool is called at least once to build the task graph"
+      - "Task titles encode the agent type (e.g., Write Tests, Implement, Validate)"
+      - "No yx commands are issued"
+      - "No beads commands are issued"
+    notes: "Exercises the third tier of the fallback chain: yaks and beads both unavailable, native TaskCreate used"

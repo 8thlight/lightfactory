@@ -1,0 +1,31 @@
+name: Bump marketplace versions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - '.claude-plugin/marketplace.json'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump versions
+        run: |
+          chmod +x scripts/bump-versions.sh
+          ./scripts/bump-versions.sh
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/marketplace.json
+          git diff --staged --quiet && echo "No version changes" && exit 0
+          git commit -m "Bump marketplace and plugin versions"
+          git push
