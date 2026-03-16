@@ -16,7 +16,7 @@ After installation, skills are available as `praxis:skill-name`, `harness:skill-
 ### Install from Local Clone
 
 ```bash
-git clone https://github.com/agentpatterns/lightfactory
+git clone https://github.com/8thlight/lightfactory
 ```
 
 ```
@@ -31,9 +31,6 @@ git clone https://github.com/agentpatterns/lightfactory
 ```
 
 ## Available Skills
-
-The `lightfactory` plugin provides skills for software development, architecture, and diagramming:
-
 
 ### Praxis Plugin: used for agentic engineering flow
 
