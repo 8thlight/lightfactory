@@ -225,6 +225,7 @@ Watch for these during testing:
 - [ ] Forward slashes in all file paths
 
 ### Testing
+- [ ] After renaming skills, grep for the old name as a bare word (`\bOLD_NAME\b`) across the entire repo — comments and simulated test data often retain stale references that structured field searches miss
 - [ ] At least 3 evaluation scenarios created in `tests/scenarios/<skill>.yaml`
 - [ ] `bash tests/local/validate-skills.sh` passes with no failures
 - [ ] Triggering: loads on relevant queries, doesn't load on unrelated ones
