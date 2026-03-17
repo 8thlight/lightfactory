@@ -51,7 +51,13 @@ Before creating a skill, review the Skill Authoring Guidelines and Frontmatter F
 ### Where Skills Live
 
 ```
-plugins/praxis/skills/{skill-name}/
+plugins/praxis/skills/   — research, plan-tasks, implement, tdd, refactor, reflect
+plugins/harness/skills/  — adr, diagram, distill, hexagonal-architecture, scaffold
+```
+
+Each skill directory contains:
+```
+{skill-name}/
 ├── SKILL.md              # Main skill document (≤300 lines)
 └── references/           # Optional supporting markdown (one level deep)
 ```
