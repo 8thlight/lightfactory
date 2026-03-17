@@ -1,4 +1,4 @@
-# Light Factory (lfx)
+# Light Factory
 
 A Claude Code plugin providing skills for agentic engineering patterns and practices.
 
@@ -7,8 +7,9 @@ A Claude Code plugin providing skills for agentic engineering patterns and pract
 ### Install
 
 ```
-/plugin marketplace add agentpatterns/lightfactory
-/plugin install praxis
+/plugin marketplace add 8thlight/lightfactory
+/plugin install lightfactory@praxis
+/plugin install lightfactory@harness
 ```
 
 After installation, skills are available as `praxis:skill-name`, `harness:skill-name` and activate automatically when relevant to your task.
@@ -21,13 +22,15 @@ git clone https://github.com/8thlight/lightfactory
 
 ```
 /plugin marketplace add /path/to/lightfactory
-/plugin install light@praxis
+/plugin install lightfactory@praxis
+/plugin install lightfactory@harness
 ```
 
 ### Update
 
 ```
-/plugin marketplace update praxis
+/plugin marketplace update lightfactory@praxis
+/plugin marketplace update lightfactory@harness
 ```
 
 ## Available Skills
@@ -43,6 +46,14 @@ git clone https://github.com/8thlight/lightfactory
 | **refactor** | `/refactor` | Refactoring process with test safety and incremental commits |
 | **reflect** | `/reflect` | Post-session reflection that mines git history and artifacts to produce improvement proposals |
 
+#### RPI Methodology (Research → Plan → Implement)
+
+The light factory praxis plugin's core workflow for non-trivial features:
+
+1. **Research** (`/research`) — Explore the codebase with parallel subagents, output a compact research artifact
+2. **Plan** (`/plan-tasks`) — Consume the research artifact, produce a compact implementation plan with test specs
+3. **Implement** (`/implement`) — Execute the plan phase by phase with strict RED → GREEN → VALIDATE discipline
+
 
 ### Harness Plugin: used for harness engineering flow
 
@@ -53,14 +64,6 @@ git clone https://github.com/8thlight/lightfactory
 | **scaffold** | `/scaffold` | Scaffolds DDD projects from Gherkin feature files with language subtype dispatch |
 | **hexagonal-architecture** | `/hexagonal-architecture` | Applies hexagonal (ports & adapters) architecture with domain-first design |
 | **adr** | `/adr` | Guides writing minimal Architecture Decision Records |
-
-#### RPI Methodology (Research → Plan → Implement)
-
-The light factory praxis plugin's core workflow for non-trivial features:
-
-1. **Research** (`/research`) — Explore the codebase with parallel subagents, output a compact research artifact
-2. **plan-tasks** (`/plan-tasks`) — Consume the research artifact, produce a compact implementation plan with test specs
-3. **Implement** (`/implement`) — Execute the plan phase by phase with strict RED → GREEN → VALIDATE discipline
 
 ## Testing
 
