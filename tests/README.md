@@ -96,7 +96,7 @@ Each file in `tests/scenarios/` covers one skill.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `skill` | string | yes | Kebab-case skill name matching `plugins/implementer/skills/` directory |
+| `skill` | string | yes | Kebab-case skill name matching a directory under `plugins/praxis/skills/` or `plugins/harness/skills/` |
 | `version` | string | yes | Date-stamped version (`YYYY-MM-DD`) |
 | `category` | string | yes | `structured-output`, `behavioral`, `audit-fix`, or `reference` |
 | `triggering.positive` | list of strings | yes | Phrases that SHOULD cause the skill to load |
