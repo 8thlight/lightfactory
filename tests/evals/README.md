@@ -71,7 +71,7 @@ additional API call per assertion (the judge model evaluates the output).
 | implement     | 6          | 3 (implement-03, -05, -06) | 9 |
 | tdd           | 5          | 2 (tdd-04, -05)     | 7 |
 | reflect       | 3          | 1 (reflect-03)      | 4 |
-| **Total**     | **24**     | **11**              | **~35** |
+| **Total**     | **26**     | **13**              | **~37** |
 
 At typical Sonnet pricing (~$0.003 per 1K output tokens), a full eval run is
 estimated at **$0.50–$2.00** depending on response length. LLM-judge calls add
