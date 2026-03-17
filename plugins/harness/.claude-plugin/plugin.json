@@ -5,6 +5,5 @@
   "author": {
     "name": "Eric Olson"
   },
-  "repository": "https://github.com/8thlight/lightfactory",
-  "hooks": "./hooks/hooks.json"
+  "repository": "https://github.com/8thlight/lightfactory"
 }
