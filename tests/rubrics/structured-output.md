@@ -23,7 +23,7 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Confidence levels | `string-match` | Each web finding line matches `\*\*(High\|Medium\|Low)\*\*` |
 | Line count | `quantitative` | `150 <= line_count <= 250` |
 
-## draft
+## plan-tasks
 
 | Check | Type | Assertion |
 |-------|------|-----------|
@@ -33,11 +33,11 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Tracker fallback | `section-present` | `^## Inline Task Graph` (only when task tracker unavailable) |
 | Line count | `quantitative` | `150 <= line_count <= 250` |
 
-## craft
+## implement
 
 | Check | Type | Assertion |
 |-------|------|-----------|
-| Execution log | `file-exists` | `craft-execution-log.md` in project root |
+| Execution log | `file-exists` | `implement-execution-log.md` in project root |
 | Log entries | `string-match` | `\[DISPATCHED\]`, `\[GATE PASS\]` or `\[GATE FAIL\]`, `\[CLOSED\]` (success), `\[REMEDIATION\]` (remediation path), `\[BLOCKED\]` (after 2 failures) |
 | Lint fast path | `string-absent` | `\[REMEDIATION\]` absent when only biome failed |
 | Agent types | `string-match` | At least one of: `agent-test`, `agent-impl`, `agent-validate` |
@@ -80,17 +80,6 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Final section | `section-present` | `^## Final` present after Summary stage |
 | Final fields | `string-match` | `## Final` section contains `Total steps:`, `Files touched:`, `All commits:`, `Final test result: PASS` |
 | No test assertion changes | `string-absent` | No test assertion lines changed (diff of test files before/after shows only import/rename updates) |
-
-## tidy
-
-| Check | Type | Assertion |
-|-------|------|-----------|
-| Fixes Applied section | `section-present` | `^## Fixes Applied` present in skill output |
-| Audit table columns | `string-match` | Table header row matches `\| # \| Severity \| Fix \| Commit Message \|` |
-| Severity values | `string-match` | Each data row Severity cell contains one of: `must-fix`, `should-fix`, `nice-to-have` |
-| Commit message format | `string-match` | Each Commit Message cell matches `` `tidy: .+` `` |
-| No source file edits | `string-absent` | No Edit/Write tool call targets a non-markdown file (`.ts`, `.js`, `.py`, `.go`, `.rb`, `.sh`) |
-| AskUserQuestion gate | `string-match` | `AskUserQuestion` call appears before any `Edit` or `Write` call in tool trace |
 
 ## adr
 

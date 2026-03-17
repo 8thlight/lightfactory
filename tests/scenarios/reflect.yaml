@@ -26,7 +26,7 @@ triggering:
     - "we just finished the payment refactor — any process improvements to capture?"
 
     # Phrases emphasizing skill/hook/template improvement
-    - "the draft skill felt incomplete — let's propose improvements"
+    - "the plan-tasks skill felt incomplete — let's propose improvements"
     - "I want to update the skills based on what we learned"
     - "run a reflection to see if any hooks should be added based on today's session"
 
@@ -42,7 +42,7 @@ triggering:
     - "explore what patterns we should follow for the new feature"
     - "investigate the plugin architecture before we start"
 
-    # Should trigger draft instead (planning, not reflecting)
+    # Should trigger plan-tasks instead (planning, not reflecting)
     - "plan the next phase of the OAuth feature"
     - "create an implementation roadmap based on the research"
     - "draft the yaks task graph for the payment refactor"
@@ -50,7 +50,7 @@ triggering:
     # Should trigger implement instead (building, not reflecting)
     - "implement the feature from the yaks task graph"
     - "execute the plan and dispatch the agents"
-    - "build from the plan we drafted"
+    - "build from the plan we created"
 
     # Should trigger tdd instead (test-writing, not post-session analysis)
     - "write tests first for the new discount validator"
@@ -113,20 +113,20 @@ functional:
     grading: llm-judge
     given: |
       A project with the following simulated session context:
-      - git log shows 3 commits in the last hour: "craft: implement discount validator", "craft: fix failing test for edge case", "craft: add integration test"
-      - craft-execution-log.md shows one remediation cycle (a lint error that was auto-fixed)
+      - git log shows 3 commits in the last hour: "implement: implement discount validator", "implement: fix failing test for edge case", "implement: add integration test"
+      - implement-execution-log.md shows one remediation cycle (a lint error that was auto-fixed)
       - No existing AskUserQuestion hook in .claude/settings.json
       - The implement skill's SKILL.md does not mention the lint fast-path behavior in its anti-patterns section
-    when: "reflect on the craft session — the lint auto-fix step caused confusion because it wasn't documented anywhere"
+    when: "reflect on the implement session — the lint auto-fix step caused confusion because it wasn't documented anywhere"
     then:
-      - "Proposals reference artifacts actually present in the session context (craft-execution-log.md, git commits, SKILL.md)"
+      - "Proposals reference artifacts actually present in the session context (implement-execution-log.md, git commits, SKILL.md)"
       - "At least one proposal targets the implement skill or CLAUDE.md, not an unrelated file"
       - "No proposal describes a problem that cannot be inferred from the provided session context"
       - "Proposals are specific and actionable (not generic advice like 'improve documentation')"
     judge_prompt: |
       You are evaluating a reflect skill output. The session context included:
-      - 3 craft commits (implement, fix failing test, add integration test)
-      - One lint auto-fix remediation cycle documented in craft-execution-log.md
+      - 3 implement commits (implement, fix failing test, add integration test)
+      - One lint auto-fix remediation cycle documented in implement-execution-log.md
       - The lint fast-path behavior is absent from the implement skill.md anti-patterns section
       - No AskUserQuestion hook exists in .claude/settings.json
 

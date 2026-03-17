@@ -1,4 +1,4 @@
-skill: craft
+skill: implement
 version: "2026-02-24"
 category: structured-output
 
@@ -7,7 +7,7 @@ category: structured-output
 # The testable unit is the description field:
 #   "Implement phase of RPI methodology. Executes yaks-driven task graph using
 #    isolated agents for test-first discipline. Use when executing an
-#    implementation plan from the draft skill."
+#    implementation plan from the plan-tasks skill."
 #
 # Probe with: "When would you use the implement skill?"
 
@@ -23,8 +23,8 @@ triggering:
     - "run the implementation phases from the task graph"
     - "dispatch agents to execute the implementation plan"
 
-    # Phrases aligned with "use when executing an implementation plan from the draft skill"
-    - "draft is done, now run craft to implement it"
+    # Phrases aligned with "use when executing an implementation plan from the plan-tasks skill"
+    - "plan-tasks is done, now run implement to build it"
     - "I approved the plan — proceed with implementation"
     - "pick up where we left off on the yaks epic"
 
@@ -40,19 +40,19 @@ triggering:
     - "explore the codebase before we start building"
     - "investigate the discount logic before implementing"
 
-    # Should trigger draft instead (still in planning phase)
+    # Should trigger plan-tasks instead (still in planning phase)
     - "create the implementation plan for the OAuth feature"
     - "draft a plan with yaks tasks for the team"
     - "write an implementation roadmap before we code"
 
-    # Should trigger tdd instead (writing tests directly, outside craft orchestration)
+    # Should trigger tdd instead (writing tests directly, outside implement orchestration)
     - "write failing tests for the discount code validator"
     - "do TDD on the payment processor module"
     - "red green refactor the new auth middleware"
 
     # Should trigger reflect instead
     - "do a retrospective on the implementation session"
-    - "reflect on what we learned from crafting this feature"
+    - "reflect on what we learned from implementing this feature"
 
     # Completely unrelated / simple tasks
     - "fix the lint error in PaymentService.ts"
@@ -63,22 +63,22 @@ triggering:
     - "run the tests for the new feature"
 
 functional:
-  - id: craft-01
-    description: Creates craft-execution-log.md with structured entries at the start of every session
+  - id: implement-01
+    description: Creates implement-execution-log.md with structured entries at the start of every session
     grading: code
     given: |
       A project with a yaks epic containing three tasks: P1 Write Test, P1 Implement, P1 Validate.
-      No craft-execution-log.md exists yet. The user has a complete plan ready to execute.
+      No implement-execution-log.md exists yet. The user has a complete plan ready to execute.
     when: "execute plan for the discount codes epic"
     then:
-      - "File craft-execution-log.md exists in the project root"
+      - "File implement-execution-log.md exists in the project root"
       - "File contains at least one [DISPATCHED] entry"
       - "File contains entries for agent types: agent-test, agent-impl, or agent-validate"
       - "File contains [GATE PASS] or [GATE FAIL] entries after each agent completes"
       - "File contains [CLOSED] entry after each successfully gated issue"
     notes: "Log must be created before first agent dispatch, not after. Check timestamp order if automated."
 
-  - id: craft-02
+  - id: implement-02
     description: Gate pass path — RED gate passes, GREEN gate passes, VALIDATE gate passes, issue closed
     grading: code
     given: |
@@ -88,14 +88,14 @@ functional:
       Agent 3 runs full suite — tsc, vitest, biome all exit 0 (VALIDATE gate passes).
     when: "implement the feature from the yaks task graph"
     then:
-      - "craft-execution-log.md contains [GATE PASS] entry for RED gate"
-      - "craft-execution-log.md contains [GATE PASS] entry for GREEN gate"
-      - "craft-execution-log.md contains [GATE PASS] entry for VALIDATE gate"
-      - "craft-execution-log.md contains [CLOSED] entry for the Validate issue"
+      - "implement-execution-log.md contains [GATE PASS] entry for RED gate"
+      - "implement-execution-log.md contains [GATE PASS] entry for GREEN gate"
+      - "implement-execution-log.md contains [GATE PASS] entry for VALIDATE gate"
+      - "implement-execution-log.md contains [CLOSED] entry for the Validate issue"
       - "No [REMEDIATION] entries appear in the log"
       - "No [BLOCKED] entries appear in the log"
 
-  - id: craft-03
+  - id: implement-03
     description: RED gate fail causes hard stop — does not proceed to implementation
     grading: llm-judge
     given: |
@@ -104,14 +104,14 @@ functional:
       The RED gate check detects that the tests pass before any implementation code is written.
     when: "execute plan for the discount codes epic"
     then:
-      - "craft-execution-log.md contains [GATE FAIL] entry for RED gate with reason"
+      - "implement-execution-log.md contains [GATE FAIL] entry for RED gate with reason"
       - "Claude stops and reports the RED gate failure to the user"
       - "P1 Implement issue is NOT dispatched (no [DISPATCHED] entry for agent-impl)"
       - "P1 Implement issue is left open for user decision"
       - "The explanation mentions that the test is either tautological or the feature already exists"
     notes: "Hard stop is critical — Claude must not proceed to implementation when RED gate fails."
 
-  - id: craft-04
+  - id: implement-04
     description: GREEN gate fail proceeds to validation — enters remediation via dynamic issue creation
     grading: code
     given: |
@@ -121,14 +121,14 @@ functional:
       Agent 3 reports full failure output.
     when: "implement the feature from the yaks task graph"
     then:
-      - "craft-execution-log.md contains [GATE FAIL] entry for GREEN gate"
+      - "implement-execution-log.md contains [GATE FAIL] entry for GREEN gate"
       - "Agent 3 (Validate) is still dispatched after GREEN gate failure"
-      - "craft-execution-log.md contains a [REMEDIATION] entry with attempt 1"
+      - "implement-execution-log.md contains a [REMEDIATION] entry with attempt 1"
       - "A new remediation issue is created (P1: Remediate — attempt 1)"
       - "A new re-validation issue is created (P1: Re-Validate — attempt 1)"
     notes: "GREEN fail must not stop execution — it must proceed to Agent 3 for the full failure report."
 
-  - id: craft-05
+  - id: implement-05
     description: Lint fast path — biome-only VALIDATE failure auto-fixed without creating remediation issues
     grading: code
     given: |
@@ -136,14 +136,14 @@ functional:
       (lint errors only — no type errors, no test failures).
     when: "execute plan for the discount codes epic"
     then:
-      - "craft-execution-log.md does NOT contain a [REMEDIATION] entry for this phase"
+      - "implement-execution-log.md does NOT contain a [REMEDIATION] entry for this phase"
       - "Claude runs biome check --write --unsafe to auto-fix lint issues"
       - "Claude re-runs the full VALIDATE gate after auto-fix"
       - "If re-run passes, [GATE PASS] for VALIDATE appears in the log"
       - "No new remediation or re-validation yaks tasks are created for a biome-only failure"
     notes: "Fast path is a correctness test — heavyweight remediation for trivial lint errors is an anti-pattern."
 
-  - id: craft-06
+  - id: implement-06
     description: Remediation limit — escalates to user after 2 failed remediation attempts
     grading: llm-judge
     given: |
@@ -151,8 +151,8 @@ functional:
       still fails, remediation attempt 2 is dispatched and re-validation still fails.
     when: "execute plan for the discount codes epic"
     then:
-      - "craft-execution-log.md contains [REMEDIATION] entries for attempt 1 and attempt 2"
-      - "craft-execution-log.md contains a [BLOCKED] entry after attempt 2 fails"
+      - "implement-execution-log.md contains [REMEDIATION] entries for attempt 1 and attempt 2"
+      - "implement-execution-log.md contains a [BLOCKED] entry after attempt 2 fails"
       - "Claude stops and asks the user for guidance"
       - "Claude does NOT attempt a third remediation automatically"
       - "The blocked issue is reported to user"

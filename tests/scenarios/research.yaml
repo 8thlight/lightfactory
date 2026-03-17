@@ -33,7 +33,7 @@ triggering:
     - "just do a quick look at how file uploads are handled before I add PDF support"
 
   negative:
-    # Should trigger draft instead (planning, not exploration)
+    # Should trigger plan-tasks instead (planning, not exploration)
     - "create an implementation plan for adding discount codes"
     - "draft a plan for the OAuth feature using the research artifact"
     - "write an implementation roadmap for the payment refactor"

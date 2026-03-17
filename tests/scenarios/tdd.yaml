@@ -40,7 +40,7 @@ triggering:
     - "explore the codebase to understand what test utilities are available"
     - "investigate the architecture before we write any tests"
 
-    # Should trigger draft instead (planning test specs, not writing them)
+    # Should trigger plan-tasks instead (planning test specs, not writing them)
     - "write a plan with test specifications for each phase"
     - "create an implementation plan that includes behavioral test specs"
     - "draft the test boundaries before implementation"

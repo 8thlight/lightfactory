@@ -64,6 +64,7 @@ The light factory praxis plugin's core workflow for non-trivial features:
 | **scaffold** | `/scaffold` | Scaffolds DDD projects from Gherkin feature files with language subtype dispatch |
 | **hexagonal-architecture** | `/hexagonal-architecture` | Applies hexagonal (ports & adapters) architecture with domain-first design |
 | **adr** | `/adr` | Guides writing minimal Architecture Decision Records |
+| **distill** | `/distill` | Distills an agentic engineering harness from a project with DDD structures and fitness tests |
 
 ## Testing
 

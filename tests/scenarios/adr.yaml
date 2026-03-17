@@ -38,7 +38,7 @@ triggering:
     - "explore how other teams have implemented event sourcing before we decide anything"
     - "investigate the tradeoffs between Kafka and RabbitMQ for our use case"
 
-    # Should trigger draft instead (planning, not recording)
+    # Should trigger plan-tasks instead (planning, not recording)
     - "create an implementation plan for migrating to PostgreSQL"
     - "draft a plan for breaking the monolith into services over the next quarter"
     - "write an implementation roadmap for the gRPC migration"

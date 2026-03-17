@@ -1,15 +1,15 @@
-skill: draft
+skill: plan-tasks
 version: "2026-02-24"
 category: structured-output
 
-# Triggering tests for the draft skill.
+# Triggering tests for the plan-tasks skill.
 #
 # The testable unit is the description field:
 #   "Plan phase of RPI methodology. Consumes research artifact or topic and
 #    produces compact implementation plan with test specs and Agent Context
 #    blocks. Use after research or to start planning a non-trivial feature."
 #
-# Probe with: "When would you use the draft skill?"
+# Probe with: "When would you use the plan-tasks skill?"
 
 triggering:
   positive:
@@ -20,7 +20,7 @@ triggering:
 
     # Phrases aligned with "consumes research artifact" intent
     - "I have a research artifact — now create the implementation plan"
-    - "draft .light/2026-02-24-add-oauth-research.md"
+    - "plan tasks from .light/2026-02-24-add-oauth-research.md"
     - "turn the research findings into a plan"
 
     # Phrases aligned with "produces Agent Context blocks" intent
@@ -31,7 +31,7 @@ triggering:
     - "I want to add a webhooks system — help me plan it out before coding"
     - "create a roadmap for the caching layer refactor"
 
-    # Edge case: ambiguous between research and draft — "plan" leans draft
+    # Edge case: ambiguous between research and plan-tasks — "plan" leans plan-tasks
     - "plan out how we'll add multi-tenancy support"
 
   negative:
@@ -40,7 +40,7 @@ triggering:
     - "explore the codebase to understand the order flow"
     - "investigate how the plugin system is structured"
 
-    # Should trigger craft instead (execution, not planning)
+    # Should trigger implement instead (execution, not planning)
     - "execute the implementation plan"
     - "implement the feature from the yaks task graph"
     - "run the implement skill to build out the phases"
@@ -57,14 +57,14 @@ triggering:
     - "fix the typo in the README"
     - "rename variable `x` to `discountAmount`"
 
-    # Ambiguous edge case: "design" could mean draft or ADR — no plan implied here
+    # Ambiguous edge case: "design" could mean plan-tasks or ADR — no plan implied here
     - "design the database schema for a new table"
 
     # Completely unrelated
     - "what does HTTP 429 mean?"
 
 functional:
-  - id: draft-01
+  - id: plan-tasks-01
     description: Produces a valid plan file at the correct path with all required sections
     grading: code
     given: |
@@ -82,7 +82,7 @@ functional:
       - "File contains section: ## Out of Scope"
       - "File is approximately 150–250 lines (target ~200)"
 
-  - id: draft-02
+  - id: plan-tasks-02
     description: Every TDD implementation phase includes an Agent Context block with required fields
     grading: code
     given: |
@@ -97,9 +97,9 @@ functional:
       - "Each Agent Context block contains: RED gate (observable failure criterion)"
       - "Each Agent Context block contains: GREEN gate (observable success criterion)"
       - "Each Agent Context block contains: Architectural constraints"
-    notes: "Agent Context blocks are the contract between draft and craft — missing fields cause craft to fail"
+    notes: "Agent Context blocks are the contract between plan-tasks and implement — missing fields cause implement to fail"
 
-  - id: draft-03
+  - id: plan-tasks-03
     description: TDD phases are decomposed into exactly 3 yaks tasks (Write Tests, Implement, Validate)
     grading: llm-judge
     given: |
@@ -115,7 +115,7 @@ functional:
       - "Non-TDD phases (schema, infrastructure) produce exactly 1 yak"
     notes: "Verify via yx list after plan completes. Haiku may create fewer tasks or skip dependencies"
 
-  - id: draft-04
+  - id: plan-tasks-04
     description: Each yak context is self-contained and does not reference the plan file
     grading: llm-judge
     given: |
@@ -125,9 +125,9 @@ functional:
       - "Each yak context contains full Agent Context inline (not a link to the plan file)"
       - "No yak context contains a phrase like 'see plan file', 'refer to .light/', or 'as described in the plan'"
       - "An agent reading only the yak context could execute the phase without accessing .light/"
-    notes: "Self-containment is critical for craft's isolated agent dispatch. Tasks referencing the plan file are a known failure mode"
+    notes: "Self-containment is critical for implement's isolated agent dispatch. Tasks referencing the plan file are a known failure mode"
 
-  - id: draft-05
+  - id: plan-tasks-05
     description: Attempts tracker fallback chain when yaks is unavailable (beads then native tasks)
     grading: llm-judge
     given: |
@@ -142,7 +142,7 @@ functional:
       - "Plan file contains section: ## Inline Task Graph as the final fallback"
     notes: "Verifies the full three-tier fallback chain: yaks → beads → native tasks → inline graph"
 
-  - id: draft-06
+  - id: plan-tasks-06
     description: Falls back to beads when yaks is unavailable but beads is initialized
     grading: llm-judge
     given: |
@@ -157,7 +157,7 @@ functional:
       - "No yx commands are issued after the yaks availability check fails"
     notes: "Exercises the second tier of the fallback chain: yaks unavailable, beads available"
 
-  - id: draft-07
+  - id: plan-tasks-07
     description: Falls back to native tasks when neither yaks nor beads is available
     grading: code
     given: |

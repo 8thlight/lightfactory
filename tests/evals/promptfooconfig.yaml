@@ -3,7 +3,7 @@
 # Run: cd tests/evals && promptfoo eval
 # View: promptfoo view
 
-description: implement skill functional evals
+description: lightfactory skill functional evals
 
 providers:
   - id: exec:claude --print "{{prompt}}"
@@ -160,10 +160,10 @@ tests:
             2 = Next steps mentioned but informal, not a structured block
             3 = Research Complete block with artifact path and ordered next steps was presented
 
-          Dimension 2 — No draft invocation (1-3): Did the skill refrain from invoking draft or creating plan files?
-            1 = Draft was invoked or a plan file was created
-            2 = Draft was not invoked but planning content was generated inline
-            3 = No draft invocation and no plan file was created
+          Dimension 2 — No plan-tasks invocation (1-3): Did the skill refrain from invoking plan-tasks or creating plan files?
+            1 = Plan-tasks was invoked or a plan file was created
+            2 = Plan-tasks was not invoked but planning content was generated inline
+            3 = No plan-tasks invocation and no plan file was created
 
           Dimension 3 — No code written (1-3): Did the skill refrain from writing any code files?
             1 = Code files were written
@@ -181,11 +181,11 @@ tests:
       grading: llm-judge
 
 # ---------------------------------------------------------------------------
-# DRAFT skill scenarios
+# PLAN-TASKS skill scenarios
 # ---------------------------------------------------------------------------
 
-  # draft-01: Produces a valid plan file at the correct path with all required sections
-  - description: "[draft-01] Produces valid plan file with all required sections"
+  # plan-tasks-01: Produces a valid plan file at the correct path with all required sections
+  - description: "[plan-tasks-01] Produces valid plan file with all required sections"
     vars:
       prompt: |
         GIVEN: A project with a .light/ directory. A research artifact exists at
@@ -210,11 +210,11 @@ tests:
       - type: icontains
         value: "## Out of Scope"
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: code
 
-  # draft-02: Every TDD implementation phase includes an Agent Context block with required fields
-  - description: "[draft-02] Every TDD implementation phase includes a complete Agent Context block"
+  # plan-tasks-02: Every TDD implementation phase includes an Agent Context block with required fields
+  - description: "[plan-tasks-02] Every TDD implementation phase includes a complete Agent Context block"
     vars:
       prompt: |
         GIVEN: A project with application code. Research artifact describes a feature spanning
@@ -237,11 +237,11 @@ tests:
       - type: icontains
         value: "Architectural constraints"
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: code
 
-  # draft-03: TDD phases are decomposed into exactly 3 yaks tasks (Write Tests, Implement, Validate)
-  - description: "[draft-03] TDD phases decomposed into exactly 3 yaks tasks with correct dependencies"
+  # plan-tasks-03: TDD phases are decomposed into exactly 3 yaks tasks (Write Tests, Implement, Validate)
+  - description: "[plan-tasks-03] TDD phases decomposed into exactly 3 yaks tasks with correct dependencies"
     vars:
       prompt: |
         GIVEN: A project where yaks is available (yx list returns results without error).
@@ -251,7 +251,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the draft skill correctly decomposed TDD phases into yaks tasks.
+          You are evaluating whether the plan-tasks skill correctly decomposed TDD phases into yaks tasks.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -277,11 +277,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: llm-judge
 
-  # draft-04: Each yak context is self-contained and does not reference the plan file
-  - description: "[draft-04] Yak contexts are self-contained and do not reference the plan file"
+  # plan-tasks-04: Each yak context is self-contained and does not reference the plan file
+  - description: "[plan-tasks-04] Yak contexts are self-contained and do not reference the plan file"
     vars:
       prompt: |
         GIVEN: A project where yaks is available. Draft has completed and created a yaks epic with tasks.
@@ -290,7 +290,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the draft skill created self-contained yak contexts.
+          You are evaluating whether the plan-tasks skill created self-contained yak contexts.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -316,11 +316,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: llm-judge
 
-  # draft-05: Attempts tracker fallback chain when yaks is unavailable (beads then native tasks)
-  - description: "[draft-05] Attempts tracker fallback chain when yaks is unavailable"
+  # plan-tasks-05: Attempts tracker fallback chain when yaks is unavailable (beads then native tasks)
+  - description: "[plan-tasks-05] Attempts tracker fallback chain when yaks is unavailable"
     vars:
       prompt: |
         GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
@@ -330,7 +330,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the draft skill correctly walked the three-tier tracker fallback chain.
+          You are evaluating whether the plan-tasks skill correctly walked the three-tier tracker fallback chain.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -356,11 +356,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: llm-judge
 
-  # draft-06: Falls back to beads when yaks is unavailable but beads is initialized
-  - description: "[draft-06] Falls back to beads when yaks unavailable but beads is initialized"
+  # plan-tasks-06: Falls back to beads when yaks is unavailable but beads is initialized
+  - description: "[plan-tasks-06] Falls back to beads when yaks unavailable but beads is initialized"
     vars:
       prompt: |
         GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
@@ -370,7 +370,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the draft skill correctly fell back to beads when yaks was unavailable.
+          You are evaluating whether the plan-tasks skill correctly fell back to beads when yaks was unavailable.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -396,11 +396,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: llm-judge
 
-  # draft-07: Falls back to native tasks when neither yaks nor beads is available
-  - description: "[draft-07] Falls back to native TaskCreate when neither yaks nor beads available"
+  # plan-tasks-07: Falls back to native tasks when neither yaks nor beads is available
+  - description: "[plan-tasks-07] Falls back to native TaskCreate when neither yaks nor beads available"
     vars:
       prompt: |
         GIVEN: A project where yaks is NOT available (yx list returns a tool-not-found error or similar).
@@ -413,24 +413,24 @@ tests:
       - type: regex
         value: "Write Tests|Implement|Validate"
     metadata:
-      skill: draft
+      skill: plan-tasks
       grading: code
 
 # ---------------------------------------------------------------------------
-# implement skill scenarios
+# IMPLEMENT skill scenarios
 # ---------------------------------------------------------------------------
 
-  # craft-01: Creates craft-execution-log.md with structured entries at start of every session
-  - description: "[craft-01] Creates craft-execution-log.md with structured entries"
+  # implement-01: Creates implement-execution-log.md with structured entries at start of every session
+  - description: "[implement-01] Creates implement-execution-log.md with structured entries"
     vars:
       prompt: |
         GIVEN: A project with a yaks epic containing three tasks: P1 Write Test, P1 Implement, P1 Validate.
-        No craft-execution-log.md exists yet. The user has a complete plan ready to execute.
+        No implement-execution-log.md exists yet. The user has a complete plan ready to execute.
 
         TASK: execute plan for the discount codes epic
     assert:
       - type: icontains
-        value: "craft-execution-log.md"
+        value: "implement-execution-log.md"
       - type: icontains
         value: "[DISPATCHED]"
       - type: regex
@@ -440,11 +440,11 @@ tests:
       - type: regex
         value: "agent-test|agent-impl|agent-validate"
     metadata:
-      skill: craft
+      skill: implement
       grading: code
 
-  # craft-02: Gate pass path — RED, GREEN, VALIDATE all pass, issue closed
-  - description: "[craft-02] Full gate pass path — RED, GREEN, VALIDATE all pass, issue closed"
+  # implement-02: Gate pass path — RED, GREEN, VALIDATE all pass, issue closed
+  - description: "[implement-02] Full gate pass path — RED, GREEN, VALIDATE all pass, issue closed"
     vars:
       prompt: |
         GIVEN: A yaks epic with a single TDD phase: P1 Write Test, P1 Implement, P1 Validate.
@@ -463,11 +463,11 @@ tests:
       - type: icontains
         value: "[CLOSED]"
     metadata:
-      skill: craft
+      skill: implement
       grading: code
 
-  # craft-03: RED gate fail causes hard stop — does not proceed to implementation
-  - description: "[craft-03] RED gate fail causes hard stop — implementation not dispatched"
+  # implement-03: RED gate fail causes hard stop — does not proceed to implementation
+  - description: "[implement-03] RED gate fail causes hard stop — implementation not dispatched"
     vars:
       prompt: |
         GIVEN: A yaks epic with P1 Write Test and P1 Implement tasks.
@@ -482,7 +482,7 @@ tests:
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
-          Dimension 1 — RED gate FAIL logged (1-3): Does craft-execution-log.md contain a [GATE FAIL] entry for RED gate?
+          Dimension 1 — RED gate FAIL logged (1-3): Does implement-execution-log.md contain a [GATE FAIL] entry for RED gate?
             1 = No [GATE FAIL] entry for RED gate
             2 = Failure mentioned informally but not as a [GATE FAIL] log entry
             3 = [GATE FAIL] entry for RED gate with a reason is present
@@ -504,11 +504,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: craft
+      skill: implement
       grading: llm-judge
 
-  # craft-04: GREEN gate fail proceeds to validation — enters remediation via dynamic task creation
-  - description: "[craft-04] GREEN gate fail proceeds to validation and enters remediation"
+  # implement-04: GREEN gate fail proceeds to validation — enters remediation via dynamic task creation
+  - description: "[implement-04] GREEN gate fail proceeds to validation and enters remediation"
     vars:
       prompt: |
         GIVEN: A yaks epic with P1 Write Test, P1 Implement, P1 Validate tasks.
@@ -529,11 +529,11 @@ tests:
       - type: regex
         value: "Re-Validate|re-validate|revalidate"
     metadata:
-      skill: craft
+      skill: implement
       grading: code
 
-  # craft-05: Lint fast path — biome-only VALIDATE failure auto-fixed without creating remediation tasks
-  - description: "[craft-05] Lint fast path — biome-only failure auto-fixed without remediation tasks"
+  # implement-05: Lint fast path — biome-only VALIDATE failure auto-fixed without creating remediation tasks
+  - description: "[implement-05] Lint fast path — biome-only failure auto-fixed without remediation tasks"
     vars:
       prompt: |
         GIVEN: A yaks epic where Agent 3's VALIDATE run finds: tsc exits 0, vitest exits 0, but biome exits 1
@@ -569,11 +569,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: craft
+      skill: implement
       grading: llm-judge
 
-  # craft-06: Remediation limit — escalates to user after 2 failed remediation attempts
-  - description: "[craft-06] Escalates to user after 2 failed remediation attempts"
+  # implement-06: Remediation limit — escalates to user after 2 failed remediation attempts
+  - description: "[implement-06] Escalates to user after 2 failed remediation attempts"
     vars:
       prompt: |
         GIVEN: A yaks epic where Agent 3 finds failures, remediation attempt 1 is dispatched and re-validation
@@ -609,7 +609,7 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: craft
+      skill: implement
       grading: llm-judge
 
 # ---------------------------------------------------------------------------
@@ -794,7 +794,7 @@ tests:
   - description: "[reflect-02] Improvement proposals capped at 5, priority-ordered, with all required fields"
     vars:
       prompt: |
-        GIVEN: A project with git history showing a recent craft session. The session involved multiple
+        GIVEN: A project with git history showing a recent implement session. The session involved multiple
         tool calls, at least one re-try or correction, and a final passing test suite. The reflect skill is loaded.
 
         TASK: retrospective — we just finished the payment refactor session and there was noticeable friction around how the implement skill handles remediation
@@ -820,19 +820,19 @@ tests:
     vars:
       prompt: |
         GIVEN: A project with the following simulated session context:
-        - git log shows 3 commits in the last hour: "craft: implement discount validator",
-          "craft: fix failing test for edge case", "craft: add integration test"
-        - craft-execution-log.md shows one remediation cycle (a lint error that was auto-fixed)
+        - git log shows 3 commits in the last hour: "implement: implement discount validator",
+          "implement: fix failing test for edge case", "implement: add integration test"
+        - implement-execution-log.md shows one remediation cycle (a lint error that was auto-fixed)
         - No existing AskUserQuestion hook in .claude/settings.json
         - The implement skill's SKILL.md does not mention the lint fast-path behavior in its anti-patterns section
 
-        TASK: reflect on the craft session — the lint auto-fix step caused confusion because it wasn't documented anywhere
+        TASK: reflect on the implement session — the lint auto-fix step caused confusion because it wasn't documented anywhere
     assert:
       - type: llm-rubric
         value: |
           You are evaluating a reflect skill output. The session context included:
-          - 3 craft commits (implement discount validator, fix failing test for edge case, add integration test)
-          - One lint auto-fix remediation cycle documented in craft-execution-log.md
+          - 3 implement commits (implement discount validator, fix failing test for edge case, add integration test)
+          - One lint auto-fix remediation cycle documented in implement-execution-log.md
           - The lint fast-path behavior is absent from the implement skill.md anti-patterns section
           - No AskUserQuestion hook exists in .claude/settings.json
 

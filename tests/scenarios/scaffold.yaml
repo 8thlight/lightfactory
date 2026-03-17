@@ -26,7 +26,7 @@ triggering:
     # Phrases aligned with "generating project boilerplate from acceptance tests"
     - "generate project boilerplate from these Gherkin feature files"
     - "create the initial project scaffolding based on my acceptance test scenarios"
-    - "build out the DDD directory structure so I can start implementing features"
+    - "scaffold the DDD directory structure so I can start implementing features"
 
     # Phrases emphasizing domain modeling from feature files
     - "read my feature files and scaffold the bounded context directories"

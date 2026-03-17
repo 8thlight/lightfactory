@@ -67,8 +67,8 @@ additional API call per assertion (the judge model evaluates the output).
 | Scenario type | Test cases | LLM-judge assertions | Total API calls (approx.) |
 |---------------|-----------|---------------------|--------------------------|
 | research      | 5          | 3 (research-02, -04, -05) | 8 |
-| draft         | 5          | 2 (draft-03, -04)   | 7 |
-| craft         | 6          | 3 (craft-03, -05, -06) | 9 |
+| plan-tasks    | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
+| implement     | 6          | 3 (implement-03, -05, -06) | 9 |
 | tdd           | 5          | 2 (tdd-04, -05)     | 7 |
 | reflect       | 3          | 1 (reflect-03)      | 4 |
 | **Total**     | **24**     | **11**              | **~35** |
@@ -104,17 +104,19 @@ Run frequency recommendations:
 | research-03 | research | Confidence levels on every web finding | code |
 | research-04 | research | AskUserQuestion called with findings summary | llm-judge |
 | research-05 | research | Hard stop after next-steps output | llm-judge |
-| draft-01 | draft | Valid plan file with all required sections | code |
-| draft-02 | draft | Agent Context blocks in every TDD phase | code |
-| draft-03 | draft | TDD phases decomposed into 3 yaks tasks | llm-judge |
-| draft-04 | draft | Self-contained yaks task descriptions | llm-judge |
-| draft-05 | draft | Inline task graph fallback when yaks unavailable | code |
-| craft-01 | craft | craft-execution-log.md created with structured entries | code |
-| craft-02 | craft | Full gate pass path (RED, GREEN, VALIDATE) | code |
-| craft-03 | craft | RED gate fail hard stop | llm-judge |
-| craft-04 | craft | GREEN gate fail enters remediation | code |
-| craft-05 | craft | Lint fast path — biome-only failure auto-fixed | llm-judge |
-| craft-06 | craft | Escalates to user after 2 failed remediations | llm-judge |
+| plan-tasks-01 | plan-tasks | Valid plan file with all required sections | code |
+| plan-tasks-02 | plan-tasks | Agent Context blocks in every TDD phase | code |
+| plan-tasks-03 | plan-tasks | TDD phases decomposed into 3 yaks tasks | llm-judge |
+| plan-tasks-04 | plan-tasks | Self-contained yaks task descriptions | llm-judge |
+| plan-tasks-05 | plan-tasks | Tracker fallback chain when yaks unavailable | llm-judge |
+| plan-tasks-06 | plan-tasks | Falls back to beads when yaks unavailable | llm-judge |
+| plan-tasks-07 | plan-tasks | Falls back to native TaskCreate | code |
+| implement-01 | implement | implement-execution-log.md created with structured entries | code |
+| implement-02 | implement | Full gate pass path (RED, GREEN, VALIDATE) | code |
+| implement-03 | implement | RED gate fail hard stop | llm-judge |
+| implement-04 | implement | GREEN gate fail enters remediation | code |
+| implement-05 | implement | Lint fast path — biome-only failure auto-fixed | llm-judge |
+| implement-06 | implement | Escalates to user after 2 failed remediations | llm-judge |
 | tdd-01 | tdd | tdd-session-log.md created before any code | code |
 | tdd-02 | tdd | [TEST] comments before production code with ZOMBIES | code |
 | tdd-03 | tdd | All 7 ZOMBIES letters present | code |
@@ -124,7 +126,7 @@ Run frequency recommendations:
 | reflect-02 | reflect | Proposals capped at 5, priority-ordered, complete fields | code |
 | reflect-03 | reflect | Proposals actionable and session-relevant | llm-judge |
 
-**Total: 24 test cases — 13 code-graded, 11 llm-judge**
+**Total: 26 test cases — 13 code-graded, 13 llm-judge**
 
 ---
 

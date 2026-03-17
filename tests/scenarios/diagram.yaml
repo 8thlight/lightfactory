@@ -38,7 +38,7 @@ triggering:
     - "explore the codebase to understand how our services communicate"
     - "investigate what the existing module boundaries are before I reorganize them"
 
-    # Should trigger draft instead (planning an implementation)
+    # Should trigger plan-tasks instead (planning an implementation)
     - "create an implementation plan for adding the new reporting service"
     - "draft a plan for decomposing the monolith into microservices"
     - "write a design document for the new API gateway feature"

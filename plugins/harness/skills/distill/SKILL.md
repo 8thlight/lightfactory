@@ -1,6 +1,11 @@
 ---
 name: distill
-description: Distill an agentic engineering harness from the project. Create consistent code architecture patterns, domain-driven design structures, fitness tests, and acceptance tests.
+description: Distill an agentic engineering harness from the project. Create consistent code architecture patterns, domain-driven design structures, fitness tests, and acceptance tests. Use when extracting domain patterns from features or creating a harness from existing code.
+triggers:
+  - "distill a harness"
+  - "create harness from features"
+  - "extract domain patterns"
+  - "distill harness from project"
 allowed-tools: Read Glob Write Bash
 ---
 

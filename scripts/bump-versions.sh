@@ -40,6 +40,15 @@ for i in $(seq 0 $((plugin_count - 1))); do
 
   tmp=$(mktemp)
   jq --argjson i "$i" --arg v "$new_plugin_version" '.plugins[$i].version = $v' "$MARKETPLACE_FILE" > "$tmp" && mv "$tmp" "$MARKETPLACE_FILE"
+
+  # Also update the plugin's own plugin.json
+  plugin_source=$(jq -r ".plugins[$i].source" "$MARKETPLACE_FILE")
+  plugin_json="${plugin_source}/.claude-plugin/plugin.json"
+  if [ -f "$plugin_json" ]; then
+    tmp=$(mktemp)
+    jq --arg v "$new_plugin_version" '.version = $v' "$plugin_json" > "$tmp" && mv "$tmp" "$plugin_json"
+    echo "  Updated $plugin_json"
+  fi
 done
 
 echo "Done. All versions bumped."

@@ -43,12 +43,12 @@ triggering:
     - "investigate the authentication module to understand what's there"
     - "explore the payment codebase — I want to understand the patterns first"
 
-    # Should trigger draft instead (planning a feature, not improving existing code)
+    # Should trigger plan-tasks instead (planning a feature, not improving existing code)
     - "create a plan for adding discount code support to the checkout flow"
     - "draft an implementation plan for the new notification system"
     - "write a roadmap for the OAuth integration feature"
 
-    # Should trigger craft instead (executing a feature plan)
+    # Should trigger implement instead (executing a feature plan)
     - "implement the feature from the yaks task graph"
     - "execute the implementation plan we drafted yesterday"
     - "build out the discount validator as described in the plan"

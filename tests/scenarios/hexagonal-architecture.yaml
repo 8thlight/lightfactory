@@ -52,7 +52,7 @@ triggering:
     - "explore the current service structure to understand what patterns are already in use"
     - "investigate how the authentication module is organized before we redesign it"
 
-    # Should trigger draft instead (planning, not architectural guidance)
+    # Should trigger plan-tasks instead (planning, not architectural guidance)
     - "draft an implementation plan for extracting the domain model from the OrderService"
     - "create a roadmap for the hexagonal refactor based on what we found"
 

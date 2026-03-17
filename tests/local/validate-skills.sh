@@ -2,7 +2,7 @@
 #
 # validate-skills.sh — Deterministic structural and trigger validation for skill definitions.
 #
-# Checks 8 categories of rules against skills under plugins/implementer/skills/ and scenario
+# Checks 8 categories of rules against skills under plugins/*/skills/ and scenario
 # files under tests/scenarios/. Produces TAP-like output (ok/not ok with test numbers).
 #
 # Dependencies: yq (mikefarah/yq v4+), grep, wc
@@ -18,7 +18,7 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-readonly SKILLS_DIR="${PROJECT_ROOT}/plugins/implementer/skills"
+readonly PLUGIN_SKILLS_DIRS=("${PROJECT_ROOT}/plugins/praxis/skills" "${PROJECT_ROOT}/plugins/harness/skills")
 readonly SCENARIOS_DIR="${PROJECT_ROOT}/tests/scenarios"
 readonly RUBRICS_DIR="${PROJECT_ROOT}/tests/rubrics"
 
@@ -101,9 +101,10 @@ skill_has_frontmatter() {
 # providing non-empty name, description, triggers, and allowed-tools. Also verifies
 # that the frontmatter `name` matches the directory name (Check 4).
 check_skill_structure() {
-    local skill_dir skill_name skill_file fm_name fm_description fm_allowed_tools trigger_count
+    local skills_dir skill_dir skill_name skill_file fm_name fm_description fm_allowed_tools trigger_count
 
-    for skill_dir in "${SKILLS_DIR}"/*/; do
+    for skills_dir in "${PLUGIN_SKILLS_DIRS[@]}"; do
+    for skill_dir in "${skills_dir}"/*/; do
         [[ -d "${skill_dir}" ]] || continue
         skill_name=$(basename "${skill_dir}")
         skill_file="${skill_dir}SKILL.md"
@@ -173,14 +174,16 @@ check_skill_structure() {
             pass "skill/${skill_name}: frontmatter name matches directory name"
         fi
     done
+    done
 }
 
 # check_description_constraints — Check 2.
 # description must be < MAX_DESCRIPTION_LENGTH chars and must not contain XML angle brackets.
 check_description_constraints() {
-    local skill_dir skill_name skill_file fm_description desc_length
+    local skills_dir skill_dir skill_name skill_file fm_description desc_length
 
-    for skill_dir in "${SKILLS_DIR}"/*/; do
+    for skills_dir in "${PLUGIN_SKILLS_DIRS[@]}"; do
+    for skill_dir in "${skills_dir}"/*/; do
         [[ -d "${skill_dir}" ]] || continue
         skill_name=$(basename "${skill_dir}")
         skill_file="${skill_dir}SKILL.md"
@@ -206,14 +209,16 @@ check_description_constraints() {
             pass "skill/${skill_name}: description contains no XML angle brackets"
         fi
     done
+    done
 }
 
 # check_trigger_validation — Check 3.
 # Each trigger must be multi-word (contains at least one space character).
 check_trigger_validation() {
-    local skill_dir skill_name skill_file trigger single_word_found trigger_count
+    local skills_dir skill_dir skill_name skill_file trigger single_word_found trigger_count
 
-    for skill_dir in "${SKILLS_DIR}"/*/; do
+    for skills_dir in "${PLUGIN_SKILLS_DIRS[@]}"; do
+    for skill_dir in "${skills_dir}"/*/; do
         [[ -d "${skill_dir}" ]] || continue
         skill_name=$(basename "${skill_dir}")
         skill_file="${skill_dir}SKILL.md"
@@ -239,14 +244,16 @@ check_trigger_validation() {
             pass "skill/${skill_name}: all triggers are multi-word (no single-word triggers)"
         fi
     done
+    done
 }
 
 # check_line_count — Check 5.
 # SKILL.md must be <= MAX_SKILL_LINES lines.
 check_line_count() {
-    local skill_dir skill_name skill_file line_count
+    local skills_dir skill_dir skill_name skill_file line_count
 
-    for skill_dir in "${SKILLS_DIR}"/*/; do
+    for skills_dir in "${PLUGIN_SKILLS_DIRS[@]}"; do
+    for skill_dir in "${skills_dir}"/*/; do
         [[ -d "${skill_dir}" ]] || continue
         skill_name=$(basename "${skill_dir}")
         skill_file="${skill_dir}SKILL.md"
@@ -260,6 +267,7 @@ check_line_count() {
             pass "skill/${skill_name}: SKILL.md <= ${MAX_SKILL_LINES} lines"
         fi
     done
+    done
 }
 
 # check_trigger_phrase_matching — Check 6.
@@ -269,16 +277,23 @@ check_line_count() {
 # the right skill.
 check_trigger_phrase_matching() {
     local scenario_file scenario_skill skill_file skill_description lower_desc
-    local phrase lower_phrase word lower_word match_found
+    local phrase lower_phrase word lower_word match_found skills_dir
 
     for scenario_file in "${SCENARIOS_DIR}"/*.yaml; do
         [[ -f "${scenario_file}" ]] || continue
         scenario_skill=$(yq '.skill' "${scenario_file}" 2>/dev/null) || continue
         [[ "${scenario_skill}" == "null" || -z "${scenario_skill}" ]] && continue
 
-        skill_file="${SKILLS_DIR}/${scenario_skill}/SKILL.md"
-        if [[ ! -f "${skill_file}" ]]; then
-            diag "scenario $(basename ${scenario_file}): skill file not found at ${skill_file} — skipping trigger matching"
+        # Search for the skill across all plugin directories
+        skill_file=""
+        for skills_dir in "${PLUGIN_SKILLS_DIRS[@]}"; do
+            if [[ -f "${skills_dir}/${scenario_skill}/SKILL.md" ]]; then
+                skill_file="${skills_dir}/${scenario_skill}/SKILL.md"
+                break
+            fi
+        done
+        if [[ -z "${skill_file}" ]]; then
+            diag "scenario $(basename ${scenario_file}): skill '${scenario_skill}' not found in any plugin — skipping trigger matching"
             continue
         fi
 
@@ -420,7 +435,7 @@ main() {
 
     printf '# validate-skills.sh — skill structure and trigger validation\n'
     printf '# Project root: %s\n' "${PROJECT_ROOT}"
-    printf '# Skills dir:   %s\n' "${SKILLS_DIR}"
+    printf '# Skills dirs:  %s\n' "${PLUGIN_SKILLS_DIRS[*]}"
     printf '#\n'
 
     # Run checks in the order specified in the task brief
