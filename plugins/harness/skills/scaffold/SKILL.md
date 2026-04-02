@@ -13,8 +13,6 @@ allowed-tools: Read Glob Write Bash
 
 # Scaffold Harness
 
-TODO: This needs refactoring...
-
 Read the Gherkin feature files to understand the domain requirements before creating any files. The feature files define the acceptance tests — every file you scaffold must serve those tests.
 
 ## Language Selection

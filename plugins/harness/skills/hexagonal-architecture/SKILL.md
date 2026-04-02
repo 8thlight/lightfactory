@@ -103,7 +103,7 @@ Ports give clean seams for test doubles. Test the domain exhaustively with fast 
 
 7. **Verify testability** — Domain and application layers must be unit-testable without real infrastructure. If a test requires a live database or HTTP call to test domain logic, a boundary has been violated.
 
-> **Note:** This skill provides architectural guidance. It does not scaffold files. Use the `scaffold` skill to generate the project structure. See [references/disclaimer.md](references/disclaimer.md) for scope boundaries.
+> **Note:** This skill provides architectural guidance only — it does not scaffold files. Use the `scaffold` skill to generate the project structure.
 
 ## When NOT to Use
 
