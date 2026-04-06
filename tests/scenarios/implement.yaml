@@ -156,3 +156,44 @@ functional:
       - "Claude stops and asks the user for guidance"
       - "Claude does NOT attempt a third remediation automatically"
       - "The blocked issue is reported to user"
+
+  - id: implement-07
+    description: Session manifest written after final verification with correct file lists and gate counts
+    grading: code
+    given: |
+      A yaks epic with two TDD phases: P1-Core-Logic (write-test, implement, validate) and
+      P2-HTTP-Route (write-test, implement, validate). All gates pass. A research artifact
+      exists at .light/sessions/discount-codes-research.md. Agent reports include:
+      - agent-test P1: Files created: src/lib/discount.test.ts
+      - agent-impl P1: Files created/modified: src/lib/discount.ts
+      - agent-test P2: Files created: src/app/api/discounts/route.test.ts
+      - agent-impl P2: Files created/modified: src/app/api/discounts/route.ts
+    when: "execute plan for the discount codes epic"
+    then:
+      - "File .light/sessions/YYYY-MM-DD-discount-codes.manifest.json exists"
+      - "Manifest contains version field set to 1"
+      - "Manifest files_created includes test and implementation file paths"
+      - "Manifest workflow_steps includes research, plan, and implement"
+      - "Manifest gates.red_passed equals 2"
+      - "Manifest gates.green_passed equals 2"
+      - "Manifest gates.validate_passed equals 2"
+      - "Manifest test_suite_passed is true"
+      - "Manifest phases_completed equals total_phases"
+
+  - id: implement-08
+    description: Session manifest file tracking correctly classifies files from agent-no-test phases
+    grading: llm-judge
+    given: |
+      A yaks epic with P1-Schema-Setup (no-test, creates prisma migration) and P2-Core-Logic (TDD).
+      Agent reports include:
+      - agent-no-test P1: Files created/modified: prisma/schema.prisma, prisma/migrations/001_add_discounts/migration.sql
+      - agent-test P2: Files created: src/lib/discount.test.ts
+      - agent-impl P2: Files created/modified: src/lib/discount.ts
+      prisma/schema.prisma existed before the session. The migration file did not.
+    when: "implement the feature from the yaks task graph"
+    then:
+      - "prisma/migrations/001_add_discounts/migration.sql appears in files_created (new file)"
+      - "prisma/schema.prisma appears in files_modified (existed before session)"
+      - "src/lib/discount.test.ts appears in files_created"
+      - "src/lib/discount.ts appears in files_created or files_modified depending on whether agent-impl created or modified it"
+      - "The classification considers file existence before session start, not just the agent report label"
