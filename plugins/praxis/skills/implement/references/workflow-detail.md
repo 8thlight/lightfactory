@@ -8,31 +8,11 @@ Each task contains a self-contained agent task description in its context. The R
 
 ### Building Agent Prompts
 
-For each ready task (from readiness computation), read the task context using the appropriate tracker command:
+For each ready task (from readiness computation), read the task context using the tracker-specific command:
 
-#### YAKS
-
-```bash
-yx context "{task name}"
-```
-
-#### BEADS
-
-```
-Skill: beads:show {issue-id}
-```
-
-Reads agent context from the issue description.
-
-#### NATIVE
-
-```
-TaskGet: { id: "{task-id}" }
-```
-
-Reads agent context from the description field.
-
----
+- **YAKS** — see [tracker-yaks.md](tracker-yaks.md#agent-prompt-reading)
+- **BEADS** — see [tracker-beads.md](tracker-beads.md#agent-prompt-reading)
+- **NATIVE** — see [tracker-native.md](tracker-native.md#agent-prompt-reading)
 
 After reading the context:
 
@@ -75,65 +55,13 @@ See `plugins/praxus/agents/` for the full agent definitions:
 
 ## Readiness Computation Algorithm
 
-The implement skill computes readiness from the task list. In YAKS and NATIVE modes, this is an in-skill computation (see algorithm below). In BEADS mode, `Skill: beads:ready` returns the ready set directly.
+The implement skill computes readiness from the task list. In YAKS and NATIVE modes, this is an in-skill computation. In BEADS mode, `Skill: beads:ready` returns the ready set directly.
 
-### YAKS
+Per-tracker details and pseudocode:
 
-Use `yx list --format json` to fetch the epic tree, then apply the algorithm:
-
-```python
-# Pseudocode — applies to YAKS mode
-def compute_ready(epic_json):
-    phase_groups = epic_json["children"]  # top-level children of the epic
-
-    # 1. Extract prefix number from name (e.g., "P2-Core-Logic" → 2)
-    for group in phase_groups:
-        group["prefix"] = int(re.match(r"P(\d+)", group["name"]).group(1))
-
-    # 2. Group by prefix number
-    by_prefix = defaultdict(list)
-    for group in phase_groups:
-        by_prefix[group["prefix"]].append(group)
-
-    # 3. Find active groups (all lower-prefix groups done)
-    ready = []
-    for prefix in sorted(by_prefix.keys()):
-        # Check all lower-prefix groups are done
-        all_lower_done = all(
-            g["state"] == "done"
-            for p in by_prefix if p < prefix
-            for g in by_prefix[p]
-        )
-        if not all_lower_done:
-            break  # This prefix and all higher are blocked
-
-        for group in by_prefix[prefix]:
-            if group["state"] == "done":
-                continue
-            if not group["children"]:
-                # Leaf phase group — the group itself is the task
-                ready.append(group)
-            else:
-                # Parent phase group — find first non-done child
-                for child in sorted(group["children"], key=lambda c: c["name"]):
-                    if child["state"] != "done":
-                        ready.append(child)
-                        break
-
-    return ready
-```
-
-### BEADS
-
-```
-Skill: beads:ready
-```
-
-Returns the unblocked tasks directly — no in-skill computation needed.
-
-### NATIVE
-
-Use `TaskList` to fetch all tasks, then apply the same naming-convention algorithm as YAKS: extract the `P{N}` prefix from each task title, group by prefix, and return the first non-done tasks at the lowest incomplete prefix level. Parse `TaskList` output instead of yaks JSON.
+- **YAKS** — see [tracker-yaks.md](tracker-yaks.md#readiness-computation)
+- **BEADS** — see [tracker-beads.md](tracker-beads.md#readiness-computation)
+- **NATIVE** — see [tracker-native.md](tracker-native.md#readiness-computation)
 
 ### Example Walk-Through
 
@@ -188,78 +116,16 @@ When Agent 3 (Validate) reports failures, create new tasks under the same phase 
 
 ### Procedure
 
-1. **Create remediation task** (name: `04-remediate-attempt-{M}`, agent-type: `agent-remediate`):
-
-   #### YAKS
-
-   ```bash
-   yx add "04-remediate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-remediate"
-   echo "{remediation context}" | yx context "04-remediate-attempt-1"
-   ```
-
-   #### BEADS
-
-   ```
-   Skill: beads:create "04-remediate-attempt-1"
-   ```
-
-   Set parent to `P2-Core-Logic` and include the `agent-type=agent-remediate` field. Then:
-
-   ```
-   Skill: beads:dep "04-remediate-attempt-1" depends-on "03-validate"
-   ```
-
-   #### NATIVE
-
-   ```
-   TaskCreate: { title: "04-remediate-attempt-1", description: "{remediation context}" }
-   ```
-
-   Include the full remediation context (failure output, files to fix, instructions) in the description field.
-
-2. **Create re-validation task** (name: `05-revalidate-attempt-{M}`, agent-type: `agent-validate`):
-
-   #### YAKS
-
-   ```bash
-   yx add "05-revalidate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-validate"
-   echo "{revalidation context}" | yx context "05-revalidate-attempt-1"
-   ```
-
-   #### BEADS
-
-   ```
-   Skill: beads:create "05-revalidate-attempt-1"
-   Skill: beads:dep "05-revalidate-attempt-1" depends-on "04-remediate-attempt-1"
-   ```
-
-   #### NATIVE
-
-   ```
-   TaskCreate: { title: "05-revalidate-attempt-1", description: "{revalidation context}" }
-   ```
-
-3. **Mark the original validate task as done** — it completed its job (reporting failures):
-
-   #### YAKS
-
-   ```bash
-   yx done "03-validate"
-   ```
-
-   #### BEADS
-
-   ```
-   Skill: beads:close "03-validate"
-   ```
-
-   #### NATIVE
-
-   ```
-   TaskUpdate: { id: "{task-id}", status: "completed" }
-   ```
-
+1. **Create remediation task** (name: `04-remediate-attempt-{M}`, agent-type: `agent-remediate`) — see tracker file for commands
+2. **Create re-validation task** (name: `05-revalidate-attempt-{M}`, agent-type: `agent-validate`) — see tracker file for commands
+3. **Mark the original validate task as done** — it completed its job (reporting failures) — see tracker file for commands
 4. The sequential naming (`04-`, `05-`) ensures remediation runs next, then re-validation
+
+Per-tracker commands:
+
+- **YAKS** — see [tracker-yaks.md](tracker-yaks.md#remediation-commands)
+- **BEADS** — see [tracker-beads.md](tracker-beads.md#remediation-commands)
+- **NATIVE** — see [tracker-native.md](tracker-native.md#remediation-commands)
 
 ### Remediation Task Context Template
 

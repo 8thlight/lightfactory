@@ -56,7 +56,7 @@ triggering:
 
     # Completely unrelated / simple tasks
     - "fix the lint error in PaymentService.ts"
-    - "explain what hexagonal architecture is"
+    - "explain what dependency injection is"
     - "what does the `--no-emit` flag do in TypeScript?"
 
     # Ambiguous edge case: "run" could mean run tests, not execute plan
@@ -197,3 +197,32 @@ functional:
       - "src/lib/discount.test.ts appears in files_created"
       - "src/lib/discount.ts appears in files_created or files_modified depending on whether agent-impl created or modified it"
       - "The classification considers file existence before session start, not just the agent report label"
+
+  - id: implement-09
+    description: Session recovery — resumes an interrupted implementation from task graph state
+    grading: llm-judge
+    given: |
+      A yaks epic with 6 phases. P1 and P2 are done. P3 has 01-write-tests done and 02-implement in progress.
+      This is a fresh Claude Code session (no prior conversation context).
+    when: "resume the implementation — we got interrupted on the discount codes feature"
+    then:
+      - "Skill detects yaks mode and reads the epic"
+      - "Readiness computation identifies P3/02-implement as the next ready task"
+      - "Skill does NOT re-dispatch P1 or P2 tasks (they are done)"
+      - "Skill does NOT re-dispatch P3/01-write-tests (it is done)"
+      - "Skill dispatches P3/02-implement as the next agent"
+    notes: "Tests session recovery via task graph state. Common failure: re-running completed phases."
+
+  - id: implement-10
+    description: Parallel dispatch — same-prefix phases dispatched in a single message
+    grading: llm-judge
+    given: |
+      A yaks epic where P1 is done. P2-Feature-A and P2-Feature-B are independent phase groups
+      (same P2 prefix). Both have 01-write-tests as their first child.
+    when: "continue implementing the feature"
+    then:
+      - "Readiness computation returns both P2-Feature-A/01-write-tests and P2-Feature-B/01-write-tests"
+      - "Both tasks are dispatched in a single message with multiple Task tool calls"
+      - "The dispatch message does NOT dispatch P3 tasks (blocked by P2)"
+      - "Each dispatched agent receives its own self-contained task context"
+    notes: "Tests parallel dispatch across independent phase groups. Common failure: sequential dispatch one at a time."

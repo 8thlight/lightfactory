@@ -129,3 +129,28 @@ functional:
       - "Skill does NOT create any yaks tasks or task graphs"
       - "No further tool calls occur after the next-steps output is presented"
     notes: "This tests the phase boundary enforcement. Sonnet and Opus typically respect the STOP instruction; Haiku may continue"
+
+  - id: research-06
+    description: Infers appropriate depth level from user prompt signals
+    grading: llm-judge
+    given: |
+      A project with multiple modules. User gives clear signals about scope.
+    when: "just do a quick look at how file uploads work — I already know the codebase pretty well"
+    then:
+      - "Skill selects Quick depth (2-3 codebase agents, 0-1 web agents)"
+      - "Research artifact contains 'Depth: Quick' in the metadata"
+      - "No more than 3 codebase agents are dispatched"
+      - "Skill does NOT ask user to choose depth level (signal was clear)"
+    notes: "Tests depth inference from 'quick look' signal. Compare against a Deep prompt like 'thorough investigation of unfamiliar domain'"
+
+  - id: research-07
+    description: Asks user to choose depth when signals are ambiguous
+    grading: llm-judge
+    given: |
+      A project where a feature touches 2 modules and involves one external library.
+    when: "I need to add Stripe webhook handling — figure out what we need"
+    then:
+      - "Skill calls AskUserQuestion to clarify depth before dispatching agents"
+      - "AskUserQuestion message briefly explains what Quick vs Standard vs Deep would investigate"
+      - "Skill waits for user response before proceeding to agent dispatch"
+    notes: "Tests that ambiguous signals (external lib = Standard/Deep, but 'figure out' is vague) trigger a clarification"

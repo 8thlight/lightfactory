@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement phase of RPI methodology. Executes a task-graph-driven implementation using isolated agents with strict RED/GREEN/VALIDATE gate enforcement. Use when executing an implementation plan from the plan-tasks skill.
+description: Execute an approved implementation plan using task-graph-driven orchestration with isolated TDD agents (RED/GREEN/VALIDATE gates). Reads a task graph from yaks, beads, or native tasks and dispatches agents phase by phase. Use when the user has an approved plan and wants to start building, execute a task graph, resume an interrupted implementation, or pick up where a previous session left off. Do NOT use for planning (use plan-tasks instead) or codebase exploration (use research instead). Triggers on phrases like "implement the plan", "execute the plan", "start building", "resume implementation", "pick up where we left off", "dispatch agents", or "build from plan".
 triggers:
   - "implement the plan"
   - "execute plan"
@@ -17,7 +17,7 @@ Use this skill to execute an implementation plan using task-graph-driven orchest
 
 ## Phase Contract
 
-**Receives:** Task graph (epic + per-agent-step child tasks) created by `/plan-tasks` — or creates it from the plan file if the task graph doesn't exist yet
+**Receives:** Task graph (epic + per-agent-step child tasks) created by `/plan-tasks` — or delegates to `/plan-tasks` to create it
 **Produces:** Working feature with passing tests + execution audit trail + session artifact at `.light/sessions/`
 **Does NOT read:** The plan file during execution — task contexts are self-contained
 
@@ -47,7 +47,7 @@ Use this skill when:
 
 ## Execution Log
 
-**REQUIRED:** Create `.light/sessions/YYYY-MM-DD-{topic}-implementation.md` in the project root at the start of every RPI session. Append entries throughout orchestration. This provides an observable audit trail of agent dispatch and gate results.
+**REQUIRED:** Create `.light/sessions/YYYY-MM-DD-{topic}-execution.md` in the project root at the start of every RPI session. Append entries throughout orchestration. This provides an observable audit trail of agent dispatch and gate results.
 
 Entry format (one per line, append-only):
 ```
@@ -59,25 +59,19 @@ Entry format (one per line, append-only):
 [BLOCKED] {task name} — escalating to user: {reason}
 ```
 
-## Task Tracker Detection
+## Workflow
 
-Before starting the orchestration loop, detect which tracker is available:
+### 1. Identify the Epic
+
+Detect the active tracker and find the target epic:
 
 1. Run `yx list --format json` — if it succeeds → **YAKS mode**
 2. Run `ls .beads/config.yaml` — if it exists → **BEADS mode**
-3. Otherwise → **NATIVE mode** (use `TaskCreate`/`TaskList`/`TaskUpdate`)
+3. Otherwise → **NATIVE mode** (use `TaskList`)
 
-Each mode follows the same workflow structure. The tracker is an infrastructure detail — agent isolation, TDD gates, and execution log are identical across all three modes.
+The tracker is an infrastructure detail — agent isolation, TDD gates, and execution log are identical across all three modes.
 
-## Workflow
-
-### 1. Identify the Epic (or Create Task Graph)
-
-**YAKS:** Find the target epic via user input or `yx list --format json`. Verify the epic has child yaks with agent-type fields set. If no epic exists yet, read the plan file and create the yaks task graph now — see the [task-graph-decomposition procedure](../plan-tasks/references/task-graph-decomposition.md).
-
-**BEADS:** Use `Skill: beads:list` to find the target epic bead. Verify child beads exist with agent-type fields set. If no epic exists yet, create beads from the plan file using `Skill: beads:create`.
-
-**NATIVE:** Use `TaskList` to find existing tasks for this session. If no tasks exist yet, create them with `TaskCreate`. Note: native tasks are session-scoped — they do not persist across sessions (see Session Recovery).
+**If no task graph exists** (no epic or tasks found in the detected tracker), invoke `Skill: plan-tasks` to create one. STOP after plan-tasks completes — the user will re-run `/implement`.
 
 If resuming a previous session, this step is the same — the readiness computation skips done tasks automatically.
 
@@ -148,15 +142,20 @@ When readiness computation returns multiple tasks, dispatch them all in a **sing
 
 #### Remediation
 
-When Agent 3 (Validate) finds failures:
-
-**YAKS:** Create remediation and re-validation yaks via `yx add` with `--field "agent-type=agent-remediate"` / `--field "agent-type=agent-validate"`. See [workflow-detail.md](references/workflow-detail.md) for the full procedure and context template.
-
-**BEADS:** Create remediation and re-validation beads via `Skill: beads:create` under the same phase group parent.
-
-**NATIVE:** Create remediation and re-validation tasks via `TaskCreate` under the same phase group.
+When Agent 3 (Validate) finds failures, create remediation and re-validation tasks under the same phase group parent using the tracker's task-creation command. See [workflow-detail.md](references/workflow-detail.md) for the full procedure, context template, and per-tracker commands.
 
 In all modes: name remediation `04-remediate-attempt-{M}` and re-validation `05-revalidate-attempt-{M}`. Mark the original validate task done (it completed its job — reporting failures). If attempt count reaches 2 and re-validation still fails, **STOP — ask the user**.
+
+#### Lint Fast Path
+
+When Agent 3 (Validate) reports that tests and type-checks pass but only the linter fails (e.g., biome exits non-zero while tsc and test runner exit 0):
+
+1. Run the project's lint auto-fix command (e.g., `biome check --write --unsafe` for biome, `eslint --fix` for ESLint)
+2. Re-run the full VALIDATE gate
+3. If the re-run passes, log `[GATE PASS]` and proceed — no remediation tasks needed
+4. If the re-run still fails, fall through to the normal remediation flow
+
+This avoids heavyweight agent-remediate dispatch for trivial formatting issues.
 
 ### 3. Report Progress
 
@@ -192,7 +191,7 @@ After final verification passes, write a single session artifact to `.light/sess
 **Required sections:**
 - **Research Summary** — Key findings from the plan's inline research section (or "No research phase" if skipped)
 - **Plan Summary** — Phases, acceptance criteria, architectural decisions
-- **Execution Log** — Agent dispatches, gate results, remediations (from `./light/YYYY-MM-DD-{topic}-execution.md`)
+- **Execution Log** — Agent dispatches, gate results, remediations (from `.light/sessions/YYYY-MM-DD-{topic}-execution.md`)
 - **Outcome** — Final test suite result, acceptance criteria status
 
 Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).

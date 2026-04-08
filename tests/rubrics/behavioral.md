@@ -9,7 +9,6 @@ Grading rubric for Category B skills. Use when code-grading cannot assess qualit
 | `reflect` | Proposal relevance, actionability, anti-pattern adherence | reflect-02, reflect-03 |
 | `research` (partial) | Parallel dispatch behavior, AskUserQuestion usage | research-02, research-04, research-05 |
 | `implement` (partial) | RED gate hard stop, remediation limit enforcement | implement-03, implement-06 |
-| `hexagonal-architecture` | Layer classification correctness, naming convention adherence, anti-pattern detection | hexarch-01, hexarch-02, hexarch-03, hexarch-04, hexarch-05 |
 
 ---
 
@@ -57,21 +56,6 @@ Do not give partial credit — choose the closest whole number.
 | Proposal count | Within the 5-proposal cap; 3-4 is ideal |
 
 **Pass threshold:** 9/12. Scenarios: reflect-02 (code-graded structure), reflect-03 (LLM-judge quality).
-
----
-
-## hexagonal-architecture
-
-| Dimension | What it measures |
-|-----------|-----------------|
-| Correctness | Components classified correctly as inside/outside the hexagon |
-| Decision Rule usage | Core Decision Rule ("Does it do I/O?") applied consistently |
-| Layer distinction | Domain vs Application layers clearly distinguished as both inside the hexagon |
-| Naming conventions | DTOs named per skill conventions (View/Response, Request, Dbo) with correct mapping direction |
-| Anti-pattern detection | Domain Scope Pollution and other violations identified and named |
-| No over-engineering | Recommends against hexagonal architecture for simple scripts/CRUD |
-
-**Pass threshold:** 9/12 per scenario. Scenarios: hexarch-01 (classification), hexarch-02 (naming), hexarch-03 (anti-patterns), hexarch-04 (when-not-to-use), hexarch-05 (layer responsibilities).
 
 ---
 

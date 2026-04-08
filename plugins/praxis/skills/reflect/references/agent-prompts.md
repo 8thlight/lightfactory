@@ -1,6 +1,6 @@
 # Agent Prompts for Reflect Skill
 
-Dispatch all four agents in a **single message** with `run_in_background: true` before entering plan mode.
+Dispatch all four agents in a **single message** with `run_in_background: true` before synthesizing.
 
 ## Agent 1: Git Historian
 

@@ -61,7 +61,7 @@ promptfoo eval --output json > results.json
 ## Cost Expectations
 
 Each test case makes one call to the Claude API via the `claude` CLI. The config
-contains **24 test cases** total (see breakdown below). LLM-judge assertions make an
+contains **26 test cases** total (see breakdown below). LLM-judge assertions make an
 additional API call per assertion (the judge model evaluates the output).
 
 | Scenario type | Test cases | LLM-judge assertions | Total API calls (approx.) |
