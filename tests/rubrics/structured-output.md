@@ -42,6 +42,21 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Lint fast path | `string-absent` | `\[REMEDIATION\]` absent when only biome failed |
 | Agent types | `string-match` | At least one of: `agent-test`, `agent-impl`, `agent-validate` |
 
+### Session manifest (implement-07, implement-08)
+
+| Check | Type | Assertion |
+|-------|------|-----------|
+| Manifest path | `file-exists` | `.light/sessions/\d{4}-\d{2}-\d{2}-[a-z0-9-]+\.manifest\.json` |
+| Valid JSON | `string-match` | File parses as valid JSON |
+| Version field | `string-match` | `"version":\s*1` |
+| Files created | `string-match` | `"files_created"` key present with array value |
+| Files modified | `string-match` | `"files_modified"` key present with array value |
+| Workflow steps | `string-match` | `"workflow_steps"` key present with array containing `"plan"` and `"implement"` |
+| Gates object | `string-match` | `"gates"` key present with `red_passed`, `green_passed`, `validate_passed` |
+| Test suite result | `string-match` | `"test_suite_passed"` key present with boolean value |
+| Phase counts | `string-match` | `"phases_completed"` and `"total_phases"` keys present with number values |
+| Timestamp | `string-match` | `"timestamp"` matches ISO-8601 pattern `\d{4}-\d{2}-\d{2}T` |
+
 ## scaffold
 
 | Check | Type | Assertion |

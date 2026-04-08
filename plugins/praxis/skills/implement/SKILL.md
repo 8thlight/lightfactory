@@ -85,6 +85,8 @@ If resuming a previous session, this step is the same — the readiness computat
 
 This is the core execution loop. It runs until all tasks in the epic are done or an unrecoverable error occurs.
 
+**File tracking:** Maintain running lists of `files_created` and `files_modified` throughout the loop. After each agent completes, parse its report for `Files created:`, `Files created/modified:`, and `Files modified:` lines and append paths to the appropriate list. These lists feed into the session manifest (step 5b).
+
 ```
 Loop:
   a. Compute ready tasks (see Readiness Computation below)
@@ -97,6 +99,7 @@ Loop:
      - If multiple ready tasks: dispatch in parallel (single message, multiple Task calls)
   e. Wait for agent(s) to complete
   f. For each completed agent:
+     - Parse agent report for file paths → update files_created / files_modified lists
      - If gate PASSED → mark done (tracker-specific command below)
      - If RED gate FAILED (tests pass immediately) → STOP, report to user
      - If GREEN gate FAILED → proceed to validation anyway
@@ -184,7 +187,7 @@ Check plannotator availability: `Bash: plannotator --version`
 
 ### 5. Write Session Artifact
 
-After final verification passes, write a single session artifact to `.light/artifacts/YYYY-MM-DD-{topic}.md`. This is the ONLY persistent artifact from the entire research → plan → implement flow.
+After final verification passes, write a single session artifact to `.light/sessions/YYYY-MM-DD-{topic}.md`. This is the ONLY persistent artifact from the entire research → plan → implement flow.
 
 **Required sections:**
 - **Research Summary** — Key findings from the plan's inline research section (or "No research phase" if skipped)
@@ -193,6 +196,17 @@ After final verification passes, write a single session artifact to `.light/arti
 - **Outcome** — Final test suite result, acceptance criteria status
 
 Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).
+
+### 5b. Write Session Manifest
+
+After writing the session artifact, write a JSON manifest to `.light/sessions/YYYY-MM-DD-{topic}.manifest.json` using the same topic slug. This enables automated commit-time verification that the lightfactory workflow was followed. See [session-manifest.md](references/session-manifest.md) for the full schema and field reference.
+
+Build the manifest from data collected during orchestration:
+- **`files_created` / `files_modified`** — from the running file lists maintained in step 2
+- **`workflow_steps`** — check if `.light/sessions/{bare-topic}-research.md` exists (note: research artifacts use the bare topic without the `YYYY-MM-DD-` date prefix) → include `"research"`; always include `"plan"` and `"implement"`
+- **`gates`** — count RED/GREEN/VALIDATE passes from the execution log
+- **`phases_completed` / `total_phases`** — from the task graph state
+- **`test_suite_passed`** — from final verification (step 4)
 
 ### 6. Post-Execution Recommendations
 

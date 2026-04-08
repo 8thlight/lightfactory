@@ -612,6 +612,82 @@ tests:
       skill: implement
       grading: llm-judge
 
+  # implement-07: Session manifest written after final verification with correct structure
+  - description: "[implement-07] Session manifest written with correct file lists and gate counts"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with two TDD phases: P1-Core-Logic (write-test, implement, validate) and
+        P2-HTTP-Route (write-test, implement, validate). All gates pass. A research artifact
+        exists at .light/sessions/discount-codes-research.md. Agent reports include:
+        - agent-test P1: Files created: src/lib/discount.test.ts
+        - agent-impl P1: Files created/modified: src/lib/discount.ts
+        - agent-test P2: Files created: src/app/api/discounts/route.test.ts
+        - agent-impl P2: Files created/modified: src/app/api/discounts/route.ts
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: ".manifest.json"
+      - type: icontains
+        value: '"version"'
+      - type: icontains
+        value: '"files_created"'
+      - type: icontains
+        value: '"files_modified"'
+      - type: icontains
+        value: '"workflow_steps"'
+      - type: regex
+        value: '"gates".*"red_passed".*"green_passed".*"validate_passed"'
+      - type: icontains
+        value: '"test_suite_passed"'
+    metadata:
+      skill: implement
+      grading: code
+
+  # implement-08: Session manifest correctly classifies files from agent-no-test phases
+  - description: "[implement-08] Session manifest classifies agent-no-test files by pre-existence"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P1-Schema-Setup (no-test, creates prisma migration) and P2-Core-Logic (TDD).
+        Agent reports include:
+        - agent-no-test P1: Files created/modified: prisma/schema.prisma, prisma/migrations/001_add_discounts/migration.sql
+        - agent-test P2: Files created: src/lib/discount.test.ts
+        - agent-impl P2: Files created/modified: src/lib/discount.ts
+        prisma/schema.prisma existed before the session. The migration file did not.
+
+        TASK: implement the feature from the yaks task graph
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill correctly classified files in the session manifest based on pre-existence.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — New file classification (1-3): Was the migration file (which did not exist before) placed in files_created?
+            1 = Migration file placed in files_modified or missing entirely
+            2 = Classification mentioned but ambiguous
+            3 = Migration file clearly placed in files_created
+
+          Dimension 2 — Existing file classification (1-3): Was prisma/schema.prisma (which existed before) placed in files_modified?
+            1 = schema.prisma placed in files_created or missing entirely
+            2 = Classification mentioned but ambiguous
+            3 = schema.prisma clearly placed in files_modified
+
+          Dimension 3 — Agent-test files (1-3): Were files from agent-test reports placed in files_created?
+            1 = Test files placed in files_modified
+            2 = Classification mentioned but not clearly files_created
+            3 = Test files clearly placed in files_created
+
+          Dimension 4 — Pre-existence check (1-3): Did the skill demonstrate awareness that agent-no-test's combined report requires checking file existence?
+            1 = No mention of checking whether files existed before the session
+            2 = Mentioned but did not clearly apply the check
+            3 = Explicitly checked or stated that file existence determines classification for agent-no-test reports
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: implement
+      grading: llm-judge
+
 # ---------------------------------------------------------------------------
 # TDD skill scenarios
 # ---------------------------------------------------------------------------
