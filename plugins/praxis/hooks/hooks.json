@@ -1,5 +1,5 @@
 {
-  "description": "LightFactory Praxis plugin hooks for plan-mode-native RPI workflow",
+  "description": "LightFactory Praxis plugin hooks for RPI workflow",
   "hooks": {
     "PreToolUse": []
   }

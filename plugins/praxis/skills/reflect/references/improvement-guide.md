@@ -52,9 +52,8 @@ Examples:
 Examples:
 - Add a PreToolUse hook that reminds about test isolation before Bash
 - Add a PostToolUse hook that checks for common mistakes after Write
-- Add a PreToolUse hook on EnterPlanMode that surfaces existing research artifacts from `.light/sessions/`
 
-**Always read `.claude/settings.json` and `.claude/settings.local.json` first** to avoid duplicating existing hooks. The praxis plugin uses a PreToolUse hook on EnterPlanMode to surface research artifacts — check for this before proposing similar hooks.
+**Always read `.claude/settings.json` and `.claude/settings.local.json` first** to avoid duplicating existing hooks.
 
 ### `plan-template`
 

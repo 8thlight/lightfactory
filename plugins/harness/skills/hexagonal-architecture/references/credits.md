@@ -1,1 +1,0 @@
-Adapted from Lada Kessler's AI augmented patterns, https://github.com/lexler/skill-factory

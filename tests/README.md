@@ -18,9 +18,8 @@ The testable unit is the `description` frontmatter field. Probe with: "When woul
 
 Express expected behaviors as Given/When/Then assertions. Skills fall into grading categories:
 
-- Category A (structured output): research, plan-tasks, implement, tdd, refactor — code-grading viable
-- Category B (behavioral/interactive): pair, reflect — LLM-as-judge required
-- Category C (audit/fix hybrid): tidy, diagram — mix of both
+- Category A (structured output): research, plan-tasks, implement, tdd, adr — code-grading viable
+- Category B (behavioral/interactive): reflect — LLM-as-judge required
 
 **3. Performance** — Does the skill improve over baseline?
 
@@ -96,7 +95,7 @@ Each file in `tests/scenarios/` covers one skill.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `skill` | string | yes | Kebab-case skill name matching a directory under `plugins/praxis/skills/` or `plugins/harness/skills/` |
+| `skill` | string | yes | Kebab-case skill name matching a directory under `plugins/praxis/skills/` |
 | `version` | string | yes | Date-stamped version (`YYYY-MM-DD`) |
 | `category` | string | yes | `structured-output`, `behavioral`, `audit-fix`, or `reference` |
 | `triggering.positive` | list of strings | yes | Phrases that SHOULD cause the skill to load |

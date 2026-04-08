@@ -12,7 +12,7 @@ allowed-tools: Read Glob Write Bash
 
 # Test-Driven Development Process
 
-> **For automated multi-phase execution** of a pre-planned feature, use `/implement` instead. This skill is for interactive, human-in-the-loop TDD on individual modules where you want to stay in the RED → GREEN → REFACTOR loop yourself.
+> **For automated multi-phase execution** of a pre-planned feature, use `/implement` instead. This skill is for interactive, human-in-the-loop TDD on individual modules where you want to stay in the RED → GREEN → REFACTOR loop yourself. Implement's `agent-test` and `agent-impl` agents follow the same RED → GREEN discipline and Core Rules defined here.
 
 TDD is a design technique that uses tests as a tool. Design emerges from usage, not speculation. Short feedback loops let you course-correct immediately. The resulting architecture is testable by design, not retrofitted. We are not trying to rush towards a feature completion, it's important that the code is correct and well-designed, it's crucial to be thorough and only add what tests demand. 
 

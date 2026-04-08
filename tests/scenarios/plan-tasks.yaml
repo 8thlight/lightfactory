@@ -170,3 +170,17 @@ functional:
       - "No yx commands are issued"
       - "No beads commands are issued"
     notes: "Exercises the third tier of the fallback chain: yaks and beads both unavailable, native TaskCreate used"
+
+  - id: plan-tasks-08
+    description: Plan revision loop — updates plan and task graph after user feedback
+    grading: llm-judge
+    given: |
+      A project where yaks is available. Skill has written the initial plan and presented it for review.
+      User responds with feedback: "Phase 3 should come before Phase 2 — the repository layer needs to exist first."
+    when: "plan the implementation for adding a new notification system"
+    then:
+      - "Skill updates the plan file to reorder phases based on user feedback"
+      - "Skill re-presents the updated plan for review (via plannotator or AskUserQuestion)"
+      - "Skill does NOT create the task graph until the plan is approved"
+      - "When finally approved, the task graph reflects the revised phase ordering"
+    notes: "Tests the plan revision loop. Common failure: skill creates task graph before getting approval."

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 This project is a Claude Code plugin marketplace containing **skills** — structured markdown workflow documents. There is no application code or build system. Skills are validated by a three-layer test pipeline (see Testing Skills below).
 
-For project architecture, key concepts (RPI methodology, testing philosophy, hexagonal architecture), artifact lifecycle, and installation commands, see `docs/architecture.md`.
+The core workflow follows the **RPI methodology** (Research → Plan → Implement) for non-trivial features. Skills are validated by a three-layer test pipeline (see Testing Skills below).
 
 ## Skill Authoring Guidelines
 
@@ -32,15 +32,17 @@ allowed-tools: Read Glob Write
 - `triggers` — List of phrases that activate the skill. Use specific multi-word phrases; avoid bare single-word triggers that risk false activation.
 - `allowed-tools` — Space-separated list of Claude Code tools the skill may use.
 
-## Core Workflow (Plan Mode Native)
+## Core Workflow (RPI)
 
-The primary workflow aligns with Claude Code's native plan mode:
+The primary workflow flows seamlessly through three phases, with artifacts at `.light/sessions/` as handoff points:
 
-1. **Research** (outside plan mode) — Assess complexity, dispatch parallel subagents if warranted, write temporary artifact to `.light/sessions/`
-2. **Plan** (inside plan mode) — Draft behavior activates, produces plan summarizing research with Agent Context blocks
-3. **Execute** (`/implement`) — Creates task graph from approved plan, runs three-agent TDD orchestration, writes session artifact to `.light/sessions/`
+1. **Research** (`/research`) — Assess complexity, dispatch parallel subagents if warranted, write research artifact to `.light/sessions/`
+2. **Plan** (`/plan-tasks`) — Consumes research artifact, produces plan with Agent Context blocks + task graph
+3. **Execute** (`/implement`) — Executes task graph with three-agent TDD orchestration, writes session artifact to `.light/sessions/`
 4. **Post-execution** — code-review, simplify, reflect recommendations
 5. **Reflect** (`/reflect`) — Optional post-session learning loop
+
+Each phase flows directly into the next. Context clearing is only suggested when the conversation is extensive — the artifacts carry all needed context forward.
 
 ## Creating New Skills
 
@@ -51,8 +53,7 @@ Before creating a skill, review the Skill Authoring Guidelines and Frontmatter F
 ### Where Skills Live
 
 ```
-plugins/praxis/skills/   — research, plan-tasks, implement, tdd, refactor, reflect
-plugins/harness/skills/  — adr, diagram, distill, hexagonal-architecture, scaffold
+plugins/praxis/skills/   — research, plan-tasks, implement, tdd, adr, reflect
 ```
 
 Each skill directory contains:

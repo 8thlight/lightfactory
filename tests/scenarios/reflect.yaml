@@ -63,7 +63,7 @@ triggering:
 
     # Completely unrelated
     - "what does git rebase do?"
-    - "explain hexagonal architecture"
+    - "explain what dependency injection is"
     - "fix the broken import in OrderService.ts"
 
     # Ambiguous edge case: "review" could mean code review, not session reflection

@@ -1,6 +1,6 @@
 ---
 name: plan-tasks
-description: Plan phase of RPI methodology. Consumes research artifact or topic and produces compact implementation plan with test specs and Agent Context blocks. Activates naturally inside plan mode for non-trivial work, or invoke explicitly with /plan-tasks. Use after research or to start planning a non-trivial feature.
+description: Create a detailed implementation plan with test specs, phased task breakdown, and Agent Context blocks for agent-driven execution. Consumes a research artifact or works from a feature description directly. Creates a task graph in yaks, beads, or native tasks. Use when the user wants to plan a feature, create an implementation roadmap, break down work into tasks, or prepare for TDD implementation. Do NOT use for codebase exploration (use research instead) or executing a plan (use implement instead). Triggers on phrases like "plan the implementation", "create a roadmap", "break this into tasks", "plan before coding", "draft a plan", "turn research into a plan", or "create task breakdown".
 triggers:
   - "draft plan"
   - "implementation plan"
@@ -10,7 +10,7 @@ triggers:
   - "plan tasks"
   - "plan task graph"
   - "build a plan"
-allowed-tools: Read Glob Write Bash AskUserQuestion Skill ExitPlanMode
+allowed-tools: Read Glob Write Bash AskUserQuestion Skill
 ---
 
 # Plan Tasks Skill
@@ -19,12 +19,10 @@ allowed-tools: Read Glob Write Bash AskUserQuestion Skill ExitPlanMode
 
 Use this skill after research (or standalone) to create a compact implementation plan with behavioral test specifications and Agent Context blocks for each phase.
 
-**Plan-mode-native:** When Claude is inside plan mode for non-trivial work, this skill's planning behavior applies naturally — no slash command required. The research skill transitions into plan mode automatically after research is complete.
-
 ## Phase Contract
 
 **Receives:** Research artifact at `.light/sessions/{topic}-research.md` (or inline feature description if no research phase was run)
-**Produces:** Plan in the Claude Code session plan file + task graph (yaks, beads, or native tasks) created after plan approval
+**Produces:** Plan artifact at `.light/sessions/{topic}-plan.md` + task graph (yaks, beads, or native tasks) created after plan approval
 **Hands off to:** `/implement` — consumes the task graph, NOT the plan file
 
 ## Purpose
@@ -42,7 +40,7 @@ The Plan phase creates a compact spec that fits in context by:
 ## When to Use
 
 Use this skill when:
-- Inside plan mode after completing research (has research artifact in `.light/sessions/`)
+- After completing research (has research artifact in `.light/sessions/`)
 - Starting a non-trivial feature (no research artifact, will explore inline)
 - Need a clear implementation roadmap before coding
 - Want to specify test boundaries before implementing
@@ -75,9 +73,9 @@ Ask the user to clarify if needed:
 - Are there specific constraints or preferences?
 - What's the priority (MVP vs full feature)?
 
-### 3. Write Plan to Session Plan File
+### 3. Write Plan Artifact
 
-Write the plan to the Claude Code session plan file. This is the plan mode's native output — the user sees it for approval before exiting plan mode.
+Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output — the user reviews and approves it before task graph creation.
 
 **Required sections:**
 - **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used
@@ -111,15 +109,15 @@ For content or configuration projects with no application code, use flat `[no-te
 
 Check plannotator availability: `Bash: plannotator --version`
 
-**If available:** Run `plannotator annotate` on the plan file via Bash. Iterate on non-empty annotation feedback. Empty annotations = approved.
+**If available:** Run `plannotator annotate .light/sessions/{topic}-plan.md` via Bash. Iterate on non-empty annotation feedback. Empty annotations = approved.
 
 **If unavailable:** Present a brief summary (goal, phases, acceptance criteria) via `AskUserQuestion`. Iterate until approved.
 
-### 5. Exit Plan Mode and Create Task Graph
+### 5. Create Task Graph
 
-Once the plan is approved, call `ExitPlanMode`. Then immediately create the task graph — this is the **commitment point** where the approved plan becomes executable.
+Once the plan is approved, immediately create the task graph — this is the **commitment point** where the approved plan becomes executable.
 
-See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature.
+See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and `echo "..." | yx context` for piping agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
 
 Report the result:
 ```
@@ -130,21 +128,26 @@ Ready to execute with /implement.
 
 ### 6. Prompt Next Steps
 
+**Context check:** If the conversation has been extensive (research phase + planning), suggest clearing context before implementation. The task graph and plan artifact carry all needed context forward.
+
 Use `AskUserQuestion` to present:
 
 ```
 Plan approved. Task graph: {name} ({N} tasks, {tracker} mode)
+Plan artifact: .light/sessions/{topic}-plan.md
 
 What would you like to do?
 
-1. Run /implement — execute the plan now
-2. Inspect task graph — review tasks before executing
-3. Request changes — describe what to adjust (I'll update the graph)
+1. Continue to implementation — run /implement now (recommended)
+2. Clear context first — if conversation is long, run /clear then /implement
+3. Inspect task graph — review tasks before executing
+4. Request changes — describe what to adjust (I'll update the graph)
 ```
 
-- **Option 1:** STOP. The user will run `/implement`.
-- **Option 2:** Show the task graph (e.g., `yx list` for yaks), then re-present options.
-- **Option 3:** Update the task graph, then re-present options.
+- **Option 1:** Invoke `/implement` directly via `Skill: implement`. The flow continues seamlessly in the same conversation.
+- **Option 2:** STOP. The user will run `/clear` and then `/implement` manually. The task graph provides full context for implementation.
+- **Option 3:** Show the task graph (e.g., `yx list` for yaks), then re-present options.
+- **Option 4:** Update the task graph, then re-present options.
 
 ## Test Specifications at Boundaries
 
@@ -169,6 +172,8 @@ Describe the HTTP contract:
 - **Bad:** Testing internal handler implementation details
 
 See [template.md](references/template.md) for detailed guidelines.
+
+For detailed L3/L4 testing guidelines including property-based tests and architectural anti-patterns, see [boundary-testing.md](../tdd/references/boundary-testing.md).
 
 ## Agent Context Blocks
 

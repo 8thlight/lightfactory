@@ -1,6 +1,0 @@
-{
-  "description": "Harness plugin hooks",
-  "hooks": {
-    "PreToolUse": [ ]
-  }
-}

@@ -7,7 +7,7 @@ triggers:
   - "session reflection"
   - "what did we learn"
   - "post-mortem review"
-allowed-tools: Read Glob Grep Bash Task TaskOutput Write AskUserQuestion EnterPlanMode ExitPlanMode
+allowed-tools: Read Glob Grep Bash Task TaskOutput Write AskUserQuestion
 ---
 
 # Reflect Skill
@@ -40,7 +40,7 @@ Use this skill when:
 
 ## Workflow
 
-### 1. Establish Session Context — BEFORE Plan Mode
+### 1. Establish Session Context
 
 If the trigger includes a topic, use it. Otherwise, use `AskUserQuestion` to ask:
 - What session or feature did you just finish?
@@ -49,11 +49,9 @@ If the trigger includes a topic, use it. Otherwise, use `AskUserQuestion` to ask
 
 Derive a reflection slug from the topic (e.g., `auth-feature`, `payment-refactor`).
 
-### 2. Dispatch 4 Parallel Context Agents — BEFORE Plan Mode
+### 2. Dispatch 4 Parallel Context Agents
 
 **CRITICAL: Dispatch ALL agents in a SINGLE message with `run_in_background: true`.**
-
-Agents need full tool access, so this step MUST happen before plan mode.
 
 See [agent prompts](references/agent-prompts.md) for full templates.
 
@@ -90,18 +88,14 @@ If git is unavailable (e.g., eval sandbox), include a **Commits (Simulated)** se
 - `reflect: {description of improvement 2}`
 ```
 
-### 3. Collect Agent Results — BEFORE Plan Mode
+### 3. Collect Agent Results
 
 - Poll agents with `TaskOutput block: false` to check progress
 - Collect completed results with `TaskOutput block: true`
 - If `TaskOutput` is unavailable, run agents in foreground mode (omit `run_in_background`) and collect results directly
 - If an agent returns thin results, note the gap — do NOT dispatch a follow-up
 
-### 4. Enter Plan Mode
-
-Call `EnterPlanMode` — synthesis is a read/write-only activity.
-
-### 5. Synthesize and Write Reflection Artifact — IN Plan Mode
+### 4. Synthesize and Write Reflection Artifact
 
 Use the [reflection artifact template](references/template.md) to structure the output.
 
@@ -127,15 +121,13 @@ Categorize each improvement using the taxonomy from the [improvement guide](refe
 - Cap at **5 proposals max**, priority-ordered
 - Each proposal includes: Type, Priority (P1-P3), Target file, Current state (quoted), Proposed change, Rationale
 
-Write the reflection artifact to the plan file.
+Write the reflection artifact to `.light/YYYY-MM-DD-{topic}-reflection.md`.
 
-### 6. Exit Plan Mode — User Reviews
+### 5. Present for Review
 
-Call `ExitPlanMode` to present the reflection for review.
+Use `AskUserQuestion` to list each proposal with its type and target. Ask the user to pick: **All / None / specific items by number**.
 
-Then use `AskUserQuestion` to list each proposal with its type and target. Ask the user to pick: **All / None / specific items by number**.
-
-### 7. Apply Approved Improvements
+### 6. Apply Approved Improvements
 
 For each approved proposal:
 1. Read the target file
@@ -144,14 +136,9 @@ For each approved proposal:
 
 One improvement per commit. Do NOT bundle multiple changes.
 
-### 8. Persist Artifact
+### 7. Commit Artifact
 
-Save the reflection artifact:
-```
-.light/YYYY-MM-DD-{topic}-reflection.md
-```
-
-Commit with: `reflect: add session reflection for {topic}`
+Commit the reflection artifact with: `reflect: add session reflection for {topic}`
 
 ## Anti-Patterns to Avoid
 
@@ -160,7 +147,7 @@ Commit with: `reflect: add session reflection for {topic}`
 - **Don't bundle multiple fixes in one commit** — one improvement per commit
 - **Don't update `~/.claude/CLAUDE.md`** — it's auto-overwritten by tech-pass; use `~/.claude/CLAUDE.local.md`
 - **Don't add hooks that already exist** — read `.claude/settings.json` first
-- **Don't dispatch agents inside plan mode** — they need full tool access; dispatch before entering plan mode
+- **Don't skip agent dispatch** — agents provide the raw material for meaningful reflection
 - **Don't propose sweeping rewrites** — small, targeted improvements compound better
 
 ## After Reflect

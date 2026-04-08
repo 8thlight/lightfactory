@@ -1,12 +1,12 @@
 ---
 name: research
-description: Research phase of RPI methodology. Spawns parallel subagents for codebase exploration AND web/pattern research, then synthesizes findings for user review. Produces a temporary research artifact at .light/sessions/ and transitions into plan mode. Use before implementing non-trivial features to understand what already exists.
+description: Explore a codebase and research external patterns before building a non-trivial feature. Spawns parallel subagents for codebase exploration AND web/pattern research, then synthesizes findings into a compact research artifact at .light/sessions/. Use when the user wants to understand existing code, investigate architecture, find best practices, or scope out a feature before planning or implementing. Do NOT use for debugging failures, fixing bugs, or post-implementation reflection. Triggers on phrases like "research the codebase", "explore before building", "understand how X works", "what exists for Y", "help me scope this feature", "deep dive into", or "before I start building".
 triggers:
   - "research the codebase"
   - "explore codebase"
   - "investigate the code"
   - "research before implementing"
-allowed-tools: Read Glob Grep Task TaskOutput WebSearch WebFetch AskUserQuestion Write EnterPlanMode Bash(plannotator:*)
+allowed-tools: Read Glob Grep Task TaskOutput WebSearch WebFetch AskUserQuestion Write Bash(plannotator:*)
 ---
 
 # Research Skill
@@ -19,7 +19,7 @@ Use this skill at the start of non-trivial features to explore the codebase AND 
 
 **Receives:** User's feature description (or codebase context from previous conversation)
 **Produces:** Temporary research artifact at `.light/sessions/{topic}-research.md` (~200 lines)
-**Hands off to:** Plan mode — entering plan mode is the context compaction boundary where draft behavior activates
+**Hands off to:** `/plan-tasks` — the research artifact carries all context forward
 
 ## Purpose
 
@@ -139,7 +139,9 @@ Run `plannotator annotate .light/sessions/{topic}-research.md` via Bash. This op
 **If plannotator is not available (command not found):**
 Fall back to `AskUserQuestion`: present a summary of key findings (3-5 bullet points) and the artifact path. If the user requests edits → update the artifact with `Write`, then ask again. Repeat until approved.
 
-### 6. Transition to Plan Mode
+### 6. Transition to Planning
+
+**Context check:** If the conversation has been extensive (3+ agents dispatched, significant exploration), suggest clearing context before planning. The research artifact carries all needed context forward.
 
 Use `AskUserQuestion` to present the following options:
 
@@ -148,33 +150,35 @@ Research complete. Artifact saved: `.light/sessions/{topic}-research.md`
 
 What would you like to do next?
 
-1. Enter plan mode — begin planning (recommended)
-2. Request more research — describe what else to investigate
-3. Edit the artifact — describe changes and I'll update it
+1. Continue to planning — run /plan-tasks now (recommended)
+2. Clear context first — if conversation is long, run /clear then /plan-tasks
+3. Request more research — describe what else to investigate
+4. Edit the artifact — describe changes and I'll update it
 ```
 
 Replace `{topic}` with the actual artifact path.
 
-- **Option 1:** Call `EnterPlanMode`. This transitions into the planning phase where draft behavior activates. The plan mode entry IS the context compaction boundary — it replaces the old `/clear` ritual. The research artifact at `.light/sessions/` will be read during planning.
-- **Option 2:** Return to Step 2 (dispatch additional agents), then repeat Steps 4-6.
-- **Option 3:** Update artifact with `Write`, then re-present Step 6 options.
+**IMPORTANT:** Wait for the user's explicit choice before taking any action. Do NOT auto-invoke `/plan-tasks` or proceed without user input.
 
-**After entering plan mode, STOP. Draft behavior takes over inside plan mode.**
+- **Option 1 (user selects):** Invoke `/plan-tasks` via `Skill: plan-tasks`. The flow continues in the same conversation.
+- **Option 2 (user selects):** STOP. The user will run `/clear` and then `/plan-tasks` manually. The research artifact at `.light/sessions/` provides full context for planning.
+- **Option 3 (user selects):** Return to Step 2 (dispatch additional agents), then repeat Steps 4-6.
+- **Option 4 (user selects):** Update artifact with `Write`, then re-present Step 6 options.
 
 ## Anti-Patterns to Avoid
 
 - **Don't copy entire files** — note file paths and purpose only
 - **Don't write code yet** — this is research, not implementation
-- **Don't create plans** — that happens in plan mode (draft behavior)
+- **Don't create plans** — that happens in `/plan-tasks`
 - **Don't research sequentially** — use parallel agents dispatched in a single message
 - **Don't include irrelevant details** — stay focused on the feature
 - **Don't present web findings without confidence levels** — every web finding needs High/Medium/Low
 - **Don't trust a single web source** — cross-reference when possible
 
-## Context Compaction
+## Context Management
 
 **Why research first?** The research phase is a compaction point:
 - **Before research:** Entire codebase + unbounded web knowledge (too much context)
 - **After research:** Compact artifact (~200 lines, only relevant details from both sources)
-- **Plan mode** works from compact artifact, not raw codebase or web searches
-- **Entering plan mode** is the boundary — research context stays behind, only the artifact carries forward
+- **Planning** works from compact artifact, not raw codebase or web searches
+- The artifact at `.light/sessions/` is the handoff mechanism — if context is heavy, the user can `/clear` and the next skill reads the artifact fresh

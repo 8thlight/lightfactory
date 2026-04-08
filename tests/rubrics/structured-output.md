@@ -74,6 +74,7 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Fitness tests | `file-exists` | `fitness/architecture.test.ts`, `fitness/naming.test.ts`, `fitness/complexity.test.ts`, `fitness/coupling.test.ts` |
 | Architecture fitness content | `string-match` | `fitness/architecture.test.ts` contains `infrastructure` and `domain` |
 
+
 ## tdd
 
 | Check | Type | Assertion |
@@ -82,19 +83,6 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Phase entries | `string-match` | `\[PLAN\]`, `\[RED-PREDICT\]`, `\[RED-CONFIRM\]`, `\[GREEN\]`, `\[REFACTOR\]` present in session log |
 | TEST comments | `string-match` | Lines matching `\[TEST\]` appear in test files |
 | ZOMBIES | `string-match` | `<- Z`, `<- O`, `<- M`, `<- B`, `<- I`, `<- E`, `<- S` each present at least once |
-
-## refactor
-
-| Check | Type | Assertion |
-|-------|------|-----------|
-| Summary artifact | `file-exists` | `REFACTORING_SUMMARY.md` in project root |
-| Initial sections | `section-present` | `^## Baseline`, `^## Steps` present after Prep stage |
-| Baseline fields | `string-match` | `## Baseline` section contains `Files in scope:` and `Test result:` |
-| Step entries | `string-match` | Each step heading matches `^### Step \d+:` and its block contains `Commit:`, `Test result: PASS`, `Files changed:` |
-| Commit format | `string-match` | Every commit message value in Steps matches `- r .+` |
-| Final section | `section-present` | `^## Final` present after Summary stage |
-| Final fields | `string-match` | `## Final` section contains `Total steps:`, `Files touched:`, `All commits:`, `Final test result: PASS` |
-| No test assertion changes | `string-absent` | No test assertion lines changed (diff of test files before/after shows only import/rename updates) |
 
 ## adr
 
@@ -110,21 +98,6 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | At least two options | `quantitative` | `Options Considered` section contains `>= 2` option headings (`^### `) |
 | Consequences tradeoffs | `string-match` | `Good:` and `Bad:` both present in `## Consequences` section |
 | No trivial ADRs | `string-absent` | File MUST NOT be created when no Harmel-Law decision filter signals are present |
-
-## diagram
-
-| Check | Type | Assertion |
-|-------|------|-----------|
-| LikeC4 file path | `file-exists` | `docs/architecture/[a-z0-9-]+\.likec4` (for likec4-c4 and likec4-dynamic subtypes) |
-| Data-flow file path | `file-exists` | `docs/architecture/data-flow-[a-z0-9-]+\.md` (for data-flow subtype) |
-| Dynamic view file path | `file-exists` | `docs/architecture/views/flows/[a-z0-9-]+\.likec4` (for likec4-dynamic subtype) |
-| LikeC4 specification block | `string-match` | `specification \{` present in generated `.likec4` file |
-| LikeC4 model block | `string-match` | `model \{` present in generated `.likec4` file |
-| LikeC4 views block | `string-match` | `views \{` present in generated `.likec4` file |
-| LikeC4 block order | `quantitative` | Line position of `specification {` < line position of `model {` < line position of `views {` |
-| No duplicate identifiers | `string-absent` | Same identifier token does not appear more than once as a top-level element declaration within a single `.likec4` file |
-| DFD Mermaid block | `string-match` | `flowchart` keyword present in data-flow output file |
-| DFD classDef present | `string-match` | `classDef` present in data-flow output file (entities, processes, data stores styled) |
 
 ---
 
