@@ -21,5 +21,6 @@ Each phase flows directly into the next. Context clearing is only suggested when
 | [plan-tasks](plan-tasks/) | `/plan-tasks` | Produces a compact implementation plan with L3/L4 test specs and Agent Context blocks |
 | [implement](implement/) | `/implement` | Executes a task-graph-driven implementation plan with RED/GREEN/VALIDATE gate enforcement; delegates to `/plan-tasks` to create the task graph if one does not yet exist |
 | [tdd](tdd/) | `/tdd` | Boundary-focused TDD workflow for interactive, human-in-the-loop development |
+| [harness](harness/) | `/harness` | Audits the agentic coding environment (instruction files, hooks, type safety, linting, pre-commit, CI gates, sandbox, secret scanning) and produces a gap analysis with actionable improvements |
 | [adr](adr/) | `/adr` | Guides writing minimal Architecture Decision Records |
 | [reflect](reflect/) | `/reflect` | Post-session reflection that extracts learnings and produces improvement proposals |

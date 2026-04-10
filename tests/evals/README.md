@@ -70,8 +70,9 @@ additional API call per assertion (the judge model evaluates the output).
 | plan-tasks    | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
 | implement     | 6          | 3 (implement-03, -05, -06) | 9 |
 | tdd           | 5          | 2 (tdd-04, -05)     | 7 |
+| harness       | 3          | 2 (harness-02, -03) | 5 |
 | reflect       | 3          | 1 (reflect-03)      | 4 |
-| **Total**     | **26**     | **13**              | **~37** |
+| **Total**     | **29**     | **15**              | **~42** |
 
 At typical Sonnet pricing (~$0.003 per 1K output tokens), a full eval run is
 estimated at **$0.50–$2.00** depending on response length. LLM-judge calls add
@@ -122,11 +123,14 @@ Run frequency recommendations:
 | tdd-03 | tdd | All 7 ZOMBIES letters present | code |
 | tdd-04 | tdd | Phase separation — RED confirmed before implementation | llm-judge |
 | tdd-05 | tdd | Simplification removes unjustified code after GREEN | llm-judge |
+| harness-01 | harness | Audit table with all nine pillars and status values | code |
+| harness-02 | harness | Interactive choice and implements selected improvements | llm-judge |
+| harness-03 | harness | Detects strong controls, avoids unnecessary changes | llm-judge |
 | reflect-01 | reflect | Agent Dispatch Manifest with all 4 agent rows | code |
 | reflect-02 | reflect | Proposals capped at 5, priority-ordered, complete fields | code |
 | reflect-03 | reflect | Proposals actionable and session-relevant | llm-judge |
 
-**Total: 26 test cases — 13 code-graded, 13 llm-judge**
+**Total: 29 test cases — 14 code-graded, 15 llm-judge**
 
 ---
 

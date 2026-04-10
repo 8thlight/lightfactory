@@ -6,8 +6,16 @@
 description: lightfactory skill functional evals
 
 providers:
-  - id: exec:claude --print "{{prompt}}"
+  - id: exec:bash claude-provider.sh
     label: claude-cli
+
+# Use the same claude CLI (Bedrock-authenticated) as the LLM judge
+# for llm-rubric assertions — no OPENAI_API_KEY needed.
+defaultTest:
+  options:
+    provider:
+      id: exec:bash claude-provider.sh
+      label: claude-cli-judge
 
 # ---------------------------------------------------------------------------
 # RESEARCH skill scenarios
@@ -835,6 +843,164 @@ tests:
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
       skill: tdd
+      grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# HARNESS skill scenarios
+# ---------------------------------------------------------------------------
+
+  # harness-01: Harness audit contains all nine pillars with correct status values
+  # Note: --print mode cannot write files, so we test content quality rather than file creation.
+  - description: "[harness-01] Harness audit contains all nine pillars with status values"
+    vars:
+      prompt: |
+        GIVEN: A TypeScript project with: package.json, tsconfig.json (strict: false), no .pre-commit-config.yaml,
+        no .claude/settings.json, a basic .github/workflows/ci.yml that only runs tests, CLAUDE.md at 50 lines,
+        .eslintrc.json with only recommended rules, no gitleaks config, no architecture test tools.
+
+        TASK: audit my harness — I want to know what controls are missing in this TypeScript project
+    assert:
+      # Key pillar concepts present (model may use variant labels)
+      - type: regex
+        value: "CLAUDE\\.md|[Ii]nstruction [Ff]ile"
+      - type: regex
+        value: "[Hh]ooks|settings\\.json"
+      - type: regex
+        value: "[Tt]ype [Ss]afety|tsconfig|strict"
+      - type: regex
+        value: "[Ll]int"
+      - type: regex
+        value: "[Pp]re-commit"
+      - type: regex
+        value: "[Aa]rchitect"
+      - type: regex
+        value: "CI|[Gg]ate|pipeline"
+      - type: regex
+        value: "[Ss]ecret"
+      # Status-like values present (model may use Strong/Partial/Missing or emoji equivalents)
+      - type: regex
+        value: "Missing|Weak|Partial|Strong|N/A|❌|⚠️|✅"
+      # Correct assessment of specific pillars
+      - type: llm-rubric
+        value: |
+          Evaluate whether the harness audit correctly assessed this TypeScript project:
+          - tsconfig.json with strict: false → Type Safety should be weak/partial (not strong or fully missing)
+          - No .claude/settings.json → Hooks should be missing
+          - No .pre-commit-config.yaml → Pre-commit should be missing
+          - CLAUDE.md exists at 50 lines → Instruction files should be partial/weak (exists but insufficient)
+          - .eslintrc.json with only recommended rules → Linting should be partial/weak
+
+          PASS if at least 4 of 5 pillar statuses are directionally correct. FAIL otherwise.
+          Return: PASS or FAIL, with a count of correct/incorrect pillar assessments.
+    metadata:
+      skill: harness
+      grading: code
+
+  # harness-02: Audit correctly identifies Python-specific gaps and recommends appropriate tools
+  - description: "[harness-02] Python project audit identifies correct gaps and recommends Python tools"
+    vars:
+      prompt: |
+        GIVEN: A Python project with: pyproject.toml (no ruff config), no .pre-commit-config.yaml,
+        CLAUDE.md at 100 lines, no .claude/settings.json, no mypy.ini or pyrightconfig.json,
+        a basic .github/workflows/ci.yml that only runs pytest.
+
+        TASK: audit my harness for this Python project and tell me what I should strengthen
+    assert:
+      # Python-specific tool recommendations (case-insensitive via character classes)
+      - type: regex
+        value: "[Rr]uff|[Pp]yright|[Mm]ypy"
+      - type: regex
+        value: "pre-commit|[Gg]itleaks"
+      # Correct pillar statuses for this project
+      - type: icontains
+        value: "Missing"
+      - type: icontains
+        value: "Hooks"
+      - type: icontains
+        value: "Type Safety"
+      - type: llm-rubric
+        value: |
+          Evaluate whether the harness audit for this Python project is accurate and recommends the right tools.
+
+          The project has: pyproject.toml (no ruff), no pre-commit, CLAUDE.md at 100 lines, no .claude/settings.json,
+          no mypy/pyright, basic CI that only runs pytest.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Python-specific recommendations (1-3): Does the audit recommend Python tools (ruff, pyright/mypy, pip-audit)?
+            1 = Generic recommendations not specific to Python
+            2 = Some Python tools mentioned but missing key ones (e.g., no type checker recommendation)
+            3 = Recommends ruff for linting, pyright or mypy for type checking, and Python-appropriate pre-commit hooks
+
+          Dimension 2 — Gap accuracy (1-3): Are the Missing/Partial statuses correct?
+            1 = Multiple pillar statuses are wrong
+            2 = Most are correct but 1-2 are miscategorized
+            3 = Hooks=Missing, Type Safety=Missing, Linting=Missing, Pre-commit=Missing are all correct
+
+          Dimension 3 — Actionable output (1-3): Does the audit provide enough detail to act on?
+            1 = Only lists pillar names and statuses with no specifics
+            2 = Some detail but missing concrete tool/config recommendations
+            3 = Each gap includes specific tools, config files, and what to change
+
+          Dimension 4 — Prioritization (1-3): Does the audit suggest which improvements to tackle first?
+            1 = No prioritization or ordering
+            2 = Some implicit ordering but not explicit
+            3 = Explicit recommendation of which pillars are highest leverage
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: harness
+      grading: llm-judge
+
+  # harness-03: Harness skill produces an accurate audit and avoids proposing changes for already-strong pillars
+  # Note: In --print mode, the model may audit the actual repo rather than the hypothetical GIVEN.
+  # The judge accepts either interpretation as long as the audit is internally consistent.
+  - description: "[harness-03] Produces accurate audit and avoids changes for strong pillars"
+    vars:
+      prompt: |
+        Assume this is a TypeScript project with these files already configured:
+        - tsconfig.json with strict: true and noUncheckedIndexedAccess: true
+        - .eslintrc.json with @typescript-eslint/recommended-type-checked + strict rules
+        - .pre-commit-config.yaml with gitleaks, eslint, and tsc hooks
+        - .claude/settings.json with PostToolUse hooks that run eslint after edits
+        - .github/workflows/ci.yml with three sequential gates: lint, test, integration
+        - CLAUDE.md at 150 lines covering build commands, test runners, and conventions
+
+        Based on this project description, audit the harness and identify which pillars are strong vs missing.
+    assert:
+      - type: icontains
+        value: "Strong"
+      - type: icontains
+        value: "Type Safety"
+      - type: icontains
+        value: "Linting"
+      - type: llm-rubric
+        value: |
+          Evaluate whether the harness audit correctly assesses the described TypeScript project.
+
+          The project has: strict TypeScript, type-checked ESLint, pre-commit with gitleaks+eslint+tsc,
+          PostToolUse hooks, three-gate CI, and a well-sized CLAUDE.md.
+
+          Score each dimension 1-3. Pass threshold: 6 out of 9.
+
+          Dimension 1 — Strong detection (1-3): Did the audit identify that multiple pillars are well-configured?
+            1 = Audit says most things are missing despite the described config
+            2 = Some pillars correctly assessed but the audit underestimates the project's maturity
+            3 = Audit recognizes that Type Safety, Linting, Pre-commit, Hooks, and CI Gates are well-configured
+
+          Dimension 2 — No unnecessary proposals (1-3): Did the skill avoid proposing changes for pillars it assessed as strong?
+            1 = Proposed changes for pillars it marked as well-configured
+            2 = Minor suggestions for already-strong pillars
+            3 = No changes proposed for pillars assessed as strong or well-configured
+
+          Dimension 3 — Internal consistency (1-3): Is the audit internally consistent (status matches findings)?
+            1 = Status labels contradict the findings text
+            2 = Mostly consistent with minor inconsistencies
+            3 = Every pillar's status label matches its finding description
+
+          Return: PASS or FAIL, total score (e.g. "7/9"), one sentence per dimension.
+    metadata:
+      skill: harness
       grading: llm-judge
 
 # ---------------------------------------------------------------------------
