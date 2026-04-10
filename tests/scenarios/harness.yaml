@@ -1,0 +1,121 @@
+skill: harness
+version: "2026-04-09"
+category: structured-output
+
+# Triggering tests for the harness skill.
+#
+# The testable unit is the description field:
+#   "Assess and strengthen the agentic coding environment surrounding a codebase.
+#    Audits instruction files, hooks, type safety, linting, pre-commit, architecture
+#    tests, CI gates, and sandbox permissions — then produces a gap analysis with
+#    actionable improvements."
+#
+# Probe with: "When would you use the harness skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "audit my harness and tell me what's missing"
+    - "strengthen the harness for this TypeScript project"
+    - "improve the harness — we keep getting preventable errors"
+
+    # Phrases aligned with the description's "assess and strengthen" intent
+    - "what controls am I missing in my dev environment for agentic coding?"
+    - "add guardrails to this repo — the agent keeps writing bad imports"
+    - "make this repo more agent-friendly before we start the feature"
+
+    # Phrases emphasizing specific pillars
+    - "set up hooks and pre-commit for this project so the agent gets better feedback"
+    - "audit our linting and type safety setup — is it strict enough for AI?"
+    - "we have no secret scanning or CI gates — help me add them"
+
+    # Edge case: user doesn't say "harness" but clearly wants environment improvements
+    - "the agent keeps introducing type errors — what can we do to prevent that?"
+    - "I want to set up my Claude Code environment properly from scratch"
+
+  negative:
+    # Should trigger research instead (exploring codebase, not auditing environment)
+    - "research how the authentication module works before we refactor"
+    - "explore the codebase to understand the payment flow"
+
+    # Should trigger plan-tasks instead (planning a feature, not auditing)
+    - "plan the implementation of the new user dashboard"
+    - "create a task graph for the API migration"
+
+    # Should trigger implement instead (building, not auditing)
+    - "implement the feature from the plan"
+    - "execute the task graph and dispatch agents"
+
+    # Should trigger reflect instead (post-session learning, not pre-session hardening)
+    - "reflect on the session — what did we learn?"
+    - "retrospective on the implement session we just finished"
+
+    # Should trigger tdd instead (test-writing, not environment setup)
+    - "write tests first using TDD for the discount validator"
+    - "red green refactor the cart calculation"
+
+    # CLAUDE.md-specific work — delegate to claude-md-improver
+    - "rewrite and restructure the CLAUDE.md file completely"
+    - "audit the CLAUDE.md for quality and fix all issues"
+
+    # Generic coding tasks
+    - "fix the broken import in OrderService.ts"
+    - "explain what dependency injection is"
+    - "what does git rebase do?"
+
+    # Ambiguous: "setup" could mean project setup, not harness setup
+    - "set up the project for the first time with npm install"
+    - "configure the database connection for development"
+
+functional:
+  - id: harness-01
+    description: Harness report contains audit table with all nine pillars and correct status values
+    grading: code
+    given: |
+      A TypeScript project with: package.json, tsconfig.json (strict: false), no .pre-commit-config.yaml,
+      no .claude/settings.json, a basic .github/workflows/ci.yml that only runs tests, CLAUDE.md at 50 lines,
+      .eslintrc.json with only recommended rules, no gitleaks config, no architecture test tools.
+    when: "audit my harness — I want to know what controls are missing in this TypeScript project"
+    then:
+      - "Harness report exists at .light/sessions/*-harness-report.md"
+      - "Report contains section: ## Audit Summary"
+      - "Audit Summary table has exactly 9 rows (one per pillar)"
+      - "Each row has a Status value of Strong, Partial, Missing, or N/A"
+      - "Type Safety row shows Partial (tsconfig exists but strict is false)"
+      - "Hooks row shows Missing (no .claude/settings.json)"
+      - "Pre-commit row shows Missing (no .pre-commit-config.yaml)"
+    notes: "Haiku may miss the nuance of Partial vs Missing — verify it checks tsconfig.strict specifically"
+
+  - id: harness-02
+    description: Gap analysis presents interactive choice and implements selected improvements
+    grading: code
+    given: |
+      A Python project with: pyproject.toml (no ruff config), no .pre-commit-config.yaml,
+      CLAUDE.md at 100 lines, no .claude/settings.json, no mypy.ini or pyrightconfig.json,
+      a basic .github/workflows/ci.yml. User responds to AskUserQuestion with "2, 3, 4".
+    when: "strengthen my harness — I want better controls for this Python project"
+    then:
+      - "AskUserQuestion is called presenting the audit results with pillar numbers"
+      - "After user selects '2, 3, 4', improvements are applied for Hooks, Type Safety, and Linting"
+      - "Each improvement is committed separately with message format: harness: <pillar> — <description>"
+      - "Harness report at .light/sessions/ documents what was applied and what was deferred"
+    notes: "The user's response '2, 3, 4' maps to Hooks, Type Safety, Linting — verify correct pillar mapping"
+
+  - id: harness-03
+    description: Harness skill detects existing strong controls and does not propose unnecessary changes
+    grading: code
+    given: |
+      A TypeScript project with: tsconfig.json (strict: true, noUncheckedIndexedAccess: true),
+      .eslintrc.json with @typescript-eslint/recommended-type-checked + strict,
+      .pre-commit-config.yaml with gitleaks + eslint + tsc,
+      .claude/settings.json with PostToolUse hooks for linting,
+      .github/workflows/ci.yml with three gates (lint, test, integration),
+      CLAUDE.md at 150 lines with build/test commands.
+    when: "audit my harness"
+    then:
+      - "Multiple pillars show Status: Strong"
+      - "Type Safety shows Strong (strict mode enabled with extra flags)"
+      - "Linting shows Strong (recommended-type-checked + strict rules)"
+      - "Pre-commit shows Strong (gitleaks + lint + type check pipeline)"
+      - "Report does not propose changes for Strong pillars"
+    notes: "This tests the 'don't fix what isn't broken' principle — the skill should recognize a well-configured project"

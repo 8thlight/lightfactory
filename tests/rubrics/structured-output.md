@@ -84,6 +84,18 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | TEST comments | `string-match` | Lines matching `\[TEST\]` appear in test files |
 | ZOMBIES | `string-match` | `<- Z`, `<- O`, `<- M`, `<- B`, `<- I`, `<- E`, `<- S` each present at least once |
 
+## harness
+
+| Check | Type | Assertion |
+|-------|------|-----------|
+| Report path | `file-exists` | `.light/sessions/\d{4}-\d{2}-\d{2}-[a-z0-9-]*harness-report.md` |
+| Audit table | `section-present` | `^## Audit Summary` |
+| Nine pillars | `quantitative` | Audit Summary table contains exactly 9 data rows |
+| Status values | `string-match` | Each pillar row status matches `Strong\|Partial\|Missing\|N/A` |
+| Changes section | `section-present` | `^## Changes Applied` or `^## Deferred Items` |
+| Toolchain info | `string-match` | Report contains `Language:` and `Toolchain:` fields |
+| Commit format | `string-match` | Commits match `harness: .+ — .+` (when changes are applied) |
+
 ## adr
 
 | Check | Type | Assertion |
