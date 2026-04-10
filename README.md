@@ -40,6 +40,7 @@ git clone https://github.com/8thlight/lightfactory
 | **plan-tasks** | `/plan-tasks` | Consumes research artifact and produces a compact implementation plan with L3/L4 test specs |
 | **implement** | `/implement` | Executes an implementation plan phase by phase with strict test-first discipline |
 | **tdd** | `/tdd` | Boundary-focused TDD workflow enforcing L3/L4 altitude testing and property-based tests |
+| **harness** | `/harness` | Audits the agentic coding environment across nine pillars and produces a gap analysis with actionable improvements |
 | **adr** | `/adr` | Guides writing minimal Architecture Decision Records |
 | **reflect** | `/reflect` | Post-session reflection that mines git history and artifacts to produce improvement proposals |
 
@@ -62,6 +63,7 @@ The praxis plugin's core workflow for non-trivial features follows three phases:
 
 - **TDD** (`/tdd`) — For interactive, human-in-the-loop test-driven development outside the full RPI flow. Enforces boundary-focused testing at the L3/L4 altitude with ZOMBIES progression.
 - **ADR** (`/adr`) — Guides writing Architecture Decision Records following the Harmel-Law signal check pattern. Ensures decisions are actually made before documenting them.
+- **Harness** (`/harness`) — Audits the agentic coding environment (instruction files, hooks, type safety, linting, pre-commit, architecture tests, CI gates, sandbox, secret scanning) and implements selected improvements. Based on Fowler's feedforward/feedback control model.
 - **Reflect** (`/reflect`) — Post-session learning loop that mines git history and session artifacts to produce improvement proposals for skills, CLAUDE.md, and hooks.
 
 ## Testing
