@@ -1,20 +1,21 @@
 ---
 name: tdd
-description: Boundary-focused TDD workflow enforcing L3/L4 altitude testing, property-based tests, and red-green-refactor phase separation. Use when starting a new module or feature with test-first discipline.
+description: "Interactive test-driven development workflow that guides writing one test at a time through red-green-refactor cycles with ZOMBIES test discovery, enforces boundary-level and integration testing with property-based tests, and tracks session progress in a structured log. Use when starting a new module or feature with test-first discipline, writing unit tests, doing TDD, or when the user says 'write tests first', 'start with tests', or 'red green refactor'. Do NOT use for automated multi-phase plan execution (use implement instead)."
 triggers:
   - "TDD workflow"
   - "test driven development"
   - "red green refactor"
   - "write tests first"
   - "test-first implementation"
+  - "unit tests for this module"
+  - "start with tests"
+  - "TDD this feature"
 allowed-tools: Read Glob Write Bash
 ---
 
 # Test-Driven Development Process
 
 > **For automated multi-phase execution** of a pre-planned feature, use `/implement` instead. This skill is for interactive, human-in-the-loop TDD on individual modules where you want to stay in the RED → GREEN → REFACTOR loop yourself. Implement's `agent-test` and `agent-impl` agents follow the same RED → GREEN discipline and Core Rules defined here.
-
-TDD is a design technique that uses tests as a tool. Design emerges from usage, not speculation. Short feedback loops let you course-correct immediately. The resulting architecture is testable by design, not retrofitted. We are not trying to rush towards a feature completion, it's important that the code is correct and well-designed, it's crucial to be thorough and only add what tests demand. 
 
 When starting, announce: "Using TDD skill in mode: [auto|human]"
 
@@ -39,7 +40,7 @@ MODE (user specifies, default: auto)
 
 ## Boundary Testing (Layered Architectures)
 
-For layered architectures, see [boundary-testing.md](references/boundary-testing.md) for L3/L4 altitude testing, property-based tests with fast-check, behavioral assertions, HTTP contract tests, and architecture-specific anti-patterns.
+For layered architectures, see [boundary-testing.md](references/boundary-testing.md) for boundary and integration-level testing (L3/L4 altitude), property-based tests with fast-check, behavioral assertions, HTTP contract tests, and architecture-specific anti-patterns.
 
 ## Session Log
 
