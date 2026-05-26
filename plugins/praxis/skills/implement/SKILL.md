@@ -176,7 +176,7 @@ After all tasks in the epic are done:
 2. Verify all acceptance criteria from the epic are met
 3. Report the agent execution summary (tasks closed, remediations)
 
-Check plannotator availability: `Bash: plannotator --version`
+Check plannotator availability: `Bash: plannotator --help`
 
 **If available:** Run `plannotator review` via Bash to open the full git diff in the browser code review UI. Wait for the result:
 - **"LGTM" returned:** Proceed to the next-steps prompt.

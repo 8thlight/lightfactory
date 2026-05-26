@@ -1,6 +1,6 @@
 {
   "name": "praxis",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Agentic engineering skills for software development patterns and best practices including TDD, harness engineering, refactoring, architecture patterns, and AI development workflows.",
   "author": {
     "name": "Eric Olson"
