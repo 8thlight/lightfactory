@@ -128,7 +128,7 @@ Use the [research artifact template](references/template.md). Target ~200 lines.
 
 Check if plannotator is available:
 ```
-Bash: plannotator --version
+Bash: plannotator --help
 ```
 
 **If plannotator is available:**

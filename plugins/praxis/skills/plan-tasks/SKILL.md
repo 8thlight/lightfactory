@@ -107,7 +107,7 @@ For content or configuration projects with no application code, use flat `[no-te
 
 ### 4. Present Plan for Review
 
-Check plannotator availability: `Bash: plannotator --version`
+Check plannotator availability: `Bash: plannotator --help`
 
 **If available:** Run `plannotator annotate .light/sessions/{topic}-plan.md` via Bash. Iterate on non-empty annotation feedback. Empty annotations = approved.
 
