@@ -16,8 +16,14 @@ Write failing tests ONLY. Do NOT write any implementation code.
 1. Read the issue description provided in your prompt — it contains file paths, test spec, and test command
 2. Read the project's CLAUDE.md to understand testing patterns and conventions
 3. Write test files at the paths specified in the issue's Agent Context
-4. Run the test command from the issue — tests MUST fail (RED gate)
-5. If tests pass immediately, STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
+4. Run the test command, capturing full output to a log file named after the branch
+   and current task or phase:
+   `<test-command> 2>&1 | tee .light/red-gate-<branch>-<phase>.log`
+   Example: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
+5. Read the log file. Find and extract the specific assertion failure —
+   the line starting with "expected:" or the @Test method name plus exception message.
+   Do NOT rely on in-conversation output — read the file.
+6. If tests pass immediately, STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
 
 ## Rules
 
@@ -32,5 +38,7 @@ Write failing tests ONLY. Do NOT write any implementation code.
 After writing tests:
 - Files created: [list paths]
 - Test command: [the command you ran]
-- Test output: [paste output showing failures]
+- Log file: [path to the tee'd log]
+- Failure excerpt: [the specific assertion or exception, e.g.,
+  "expected: <ConflictException> but nothing was thrown"]
 - RED gate: PASS (tests fail as expected) or FAIL (tests pass without implementation)
