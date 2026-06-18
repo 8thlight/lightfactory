@@ -29,13 +29,18 @@ Write failing tests ONLY. Do NOT write any implementation code.
    status=${PIPESTATUS[0]}   # exit code of the test command, not tee
    ```
    Example log path: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
-5. Read the log file (do NOT rely on in-conversation output) and classify the failure:
-   - **Assertion failure** (expected RED): extract the specific assertion — the line
-     starting with "expected:" or the @Test method name plus exception message.
-   - **Compilation or configuration error** (wrong-reason RED): there is no `expected:`
-     line. The build failed before the assertion ran (missing symbol, bad import,
-     fixture/config error). STOP and report this as a **RED gate FAIL** with the
-     relevant error excerpt — the test is not failing for the intended reason.
+5. Read the log file (do NOT rely on in-conversation output) and determine *why* it
+   failed. The exact wording is framework-specific — consult CLAUDE.md or any
+   language/framework testing guidance for what an assertion failure looks like —
+   but the distinction is universal:
+   - **Failed at the assertion** (intended RED): the test ran and the asserted
+     behavior was absent or wrong. Extract the specific assertion/failure message
+     (e.g. the expected-vs-actual line, the failing test name plus its error).
+   - **Failed before the assertion ran** (wrong-reason RED): the test never reached
+     its assertion — a compile/syntax error, unresolved import or symbol, missing
+     dependency, or fixture/setup/config failure. STOP and report this as a
+     **RED gate FAIL** with the relevant error excerpt — the test is not failing for
+     the intended reason.
 6. If tests pass immediately (`status` is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
 
 ## Rules
@@ -52,9 +57,8 @@ After writing tests:
 - Files created: [list paths]
 - Test command: [the command you ran]
 - Log file: [path to the tee'd log]
-- Failure type: assertion failure | compilation/configuration error | tests passed
-- Failure excerpt: [the specific assertion or exception for an assertion failure, e.g.,
-  "expected: <ConflictException> but nothing was thrown"; for a compile/config error,
-  the relevant error line instead]
-- RED gate: PASS (tests fail on the expected assertion) or FAIL (tests pass without
-  implementation, or the build failed for the wrong reason — compile/config error)
+- Failure mode: failed at assertion | failed before assertion (compile/import/setup) | tests passed
+- Failure excerpt: [the specific assertion/failure message when it failed at the
+  assertion; otherwise the relevant compile/import/setup error line]
+- RED gate: PASS (failed at the assertion) or FAIL (tests passed without
+  implementation, or failed before the assertion ran — wrong reason)
