@@ -90,7 +90,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 - **Files to create:** `{test file path}`, `{implementation file path}`
 - **Test spec:** {Behavioral description of what to test — properties, invariants, edge cases. Reference project CLAUDE.md for testing tools and patterns.}
 - **Test command:** `{project test command}`
-- **RED gate:** Tests fail because implementation does not exist yet
+- **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "assertion fails: split total != original total" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All tests pass with minimal implementation
 - **Architectural constraints:** Pure functions only, no I/O, no side effects
 
@@ -138,7 +138,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 - **Files to create:** `{test file path}`, `{feature file path}`
 - **Test spec:** {Behavioral description — what the use case should do on success, what it should return on each error case. Reference project CLAUDE.md for integration test patterns.}
 - **Test command:** `{project integration test command}`
-- **RED gate:** Tests fail because feature implementation does not exist yet
+- **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "use case returns null / 404 instead of the created entity" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All integration tests pass
 - **Architectural constraints:** Orchestration only — delegates to core logic and repository, no direct database access
 
@@ -170,7 +170,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 - **Files to modify:** `{app registration file}`
 - **Test spec:** {HTTP contract description — method, path, request body shape, success response shape and status, each error response shape and status. Reference project CLAUDE.md for HTTP test patterns.}
 - **Test command:** `{project e2e/HTTP test command}`
-- **RED gate:** Tests fail because route handler does not exist yet
+- **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "request returns 404, expected 201 with body {id}" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All HTTP contract tests pass
 - **Architectural constraints:** Thin adapter — validates input, delegates to feature, maps result to HTTP response
 
@@ -250,7 +250,7 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **Files to create:** `{test file path(s)}`
 - **Test spec:** {Behavioral description — properties, invariants, contracts to test. Be specific.}
 - **Test command:** `{shell command to run tests}`
-- **RED gate:** Tests fail because `{implementation file}` does not exist yet
+- **RED gate:** {Expected initial failure for this phase, in the framework's terms — what assertion fails and why. Consult the project/user testing skill if one exists. A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **Architectural constraints:** {L3/L4 boundary, property-based with fast-check, no mocks, etc.}
 
 ### Instructions

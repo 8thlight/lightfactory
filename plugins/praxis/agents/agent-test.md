@@ -29,18 +29,23 @@ Write failing tests ONLY. Do NOT write any implementation code.
    status=${PIPESTATUS[0]}   # exit code of the test command, not tee
    ```
    Example log path: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
-5. Read the log file (do NOT rely on in-conversation output) and determine *why* it
-   failed. The exact wording is framework-specific — consult CLAUDE.md or any
-   language/framework testing guidance for what an assertion failure looks like —
-   but the distinction is universal:
-   - **Failed at the assertion** (intended RED): the test ran and the asserted
-     behavior was absent or wrong. Extract the specific assertion/failure message
-     (e.g. the expected-vs-actual line, the failing test name plus its error).
-   - **Failed before the assertion ran** (wrong-reason RED): the test never reached
-     its assertion — a compile/syntax error, unresolved import or symbol, missing
-     dependency, or fixture/setup/config failure. STOP and report this as a
-     **RED gate FAIL** with the relevant error excerpt — the test is not failing for
-     the intended reason.
+5. Read the log file (do NOT rely on in-conversation output) and judge the failure
+   against the **RED gate** signature in your Agent Context — the plan states what a
+   correct initial failure looks like for this phase (which assertion fails and why),
+   authored in the project's framework terms.
+   - **Matches the expected RED gate** (intended RED): the test ran and failed for the
+     stated reason — the asserted behavior is absent. Extract the specific
+     assertion/failure message as evidence.
+   - **Failed for a different reason** (wrong-reason RED): the failure does not match
+     the expected signature — typically the test never reached its assertion (compile/
+     syntax error, unresolved import or symbol, missing dependency, fixture/setup/config
+     failure). STOP and report this as a **RED gate FAIL** with the relevant error
+     excerpt — the test is not failing for the intended reason.
+
+   If the Agent Context has no specific RED gate signature (older plans, ad-hoc runs),
+   fall back to the universal distinction: **failed at the assertion** (intended RED)
+   vs. **failed before the assertion ran** (wrong-reason RED). Consult CLAUDE.md or any
+   project/user testing guidance for what each looks like in this framework.
 6. If tests pass immediately (`status` is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
 
 ## Rules
@@ -57,8 +62,9 @@ After writing tests:
 - Files created: [list paths]
 - Test command: [the command you ran]
 - Log file: [path to the tee'd log]
-- Failure mode: failed at assertion | failed before assertion (compile/import/setup) | tests passed
-- Failure excerpt: [the specific assertion/failure message when it failed at the
-  assertion; otherwise the relevant compile/import/setup error line]
-- RED gate: PASS (failed at the assertion) or FAIL (tests passed without
-  implementation, or failed before the assertion ran — wrong reason)
+- Expected RED gate: [the signature from your Agent Context, or "none specified — used fallback"]
+- Failure mode: matched expected RED | wrong reason (failed before assertion: compile/import/setup) | tests passed
+- Failure excerpt: [the specific assertion/failure message when it matched; otherwise
+  the relevant compile/import/setup error line]
+- RED gate: PASS (failed for the expected reason) or FAIL (tests passed without
+  implementation, or failed for a different reason — wrong reason)
