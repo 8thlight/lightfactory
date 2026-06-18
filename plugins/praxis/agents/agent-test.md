@@ -17,13 +17,26 @@ Write failing tests ONLY. Do NOT write any implementation code.
 2. Read the project's CLAUDE.md to understand testing patterns and conventions
 3. Write test files at the paths specified in the issue's Agent Context
 4. Run the test command, capturing full output to a log file named after the branch
-   and current task or phase:
-   `<test-command> 2>&1 | tee .light/red-gate-<branch>-<phase>.log`
-   Example: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
-5. Read the log file. Find and extract the specific assertion failure —
-   the line starting with "expected:" or the @Test method name plus exception message.
-   Do NOT rely on in-conversation output — read the file.
-6. If tests pass immediately, STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
+   and current task or phase. Ensure `.light/` exists, replace `/` in the branch name
+   with `-` so the path stays a single file, and preserve the test command's exit
+   status (not `tee`'s) so a failing build is not masked:
+   ```bash
+   set -o pipefail
+   mkdir -p .light
+   slug="$(git rev-parse --abbrev-ref HEAD | tr '/' '-')"
+   log=".light/red-gate-${slug}-<phase>.log"
+   <test-command> 2>&1 | tee "$log"
+   status=${PIPESTATUS[0]}   # exit code of the test command, not tee
+   ```
+   Example log path: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
+5. Read the log file (do NOT rely on in-conversation output) and classify the failure:
+   - **Assertion failure** (expected RED): extract the specific assertion — the line
+     starting with "expected:" or the @Test method name plus exception message.
+   - **Compilation or configuration error** (wrong-reason RED): there is no `expected:`
+     line. The build failed before the assertion ran (missing symbol, bad import,
+     fixture/config error). STOP and report this as a **RED gate FAIL** with the
+     relevant error excerpt — the test is not failing for the intended reason.
+6. If tests pass immediately (`status` is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
 
 ## Rules
 
@@ -39,6 +52,9 @@ After writing tests:
 - Files created: [list paths]
 - Test command: [the command you ran]
 - Log file: [path to the tee'd log]
-- Failure excerpt: [the specific assertion or exception, e.g.,
-  "expected: <ConflictException> but nothing was thrown"]
-- RED gate: PASS (tests fail as expected) or FAIL (tests pass without implementation)
+- Failure type: assertion failure | compilation/configuration error | tests passed
+- Failure excerpt: [the specific assertion or exception for an assertion failure, e.g.,
+  "expected: <ConflictException> but nothing was thrown"; for a compile/config error,
+  the relevant error line instead]
+- RED gate: PASS (tests fail on the expected assertion) or FAIL (tests pass without
+  implementation, or the build failed for the wrong reason — compile/config error)
