@@ -253,17 +253,7 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — what assertion fails and why. Consult the project/user testing skill if one exists. A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **Architectural constraints:** {L3/L4 boundary, property-based with fast-check, no mocks, etc.}
 
-### Instructions
-1. Read the project's CLAUDE.md for testing tools and conventions
-2. Read existing test files to match style
-3. Write test file(s) at the specified paths
-4. Run the test command
-5. Verify tests FAIL (RED gate)
-
-### Report
-- Test files created: [list paths]
-- Test command output: [paste]
-- RED gate status: PASS (tests fail as expected) or FAIL
+Follow your `praxis:agent-test` definition for the procedure (output capture to a log file, judging the failure against the RED gate above) and report format. The Agent Context above is your task input.
 ```
 
 ### Implement Yak (agent-impl)
@@ -280,17 +270,7 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **GREEN gate:** All tests pass
 - **Architectural constraints:** {Pure functions, no side effects, adapter layer, etc.}
 
-### Instructions
-1. Read the test files to understand expected behavior
-2. Read the project's CLAUDE.md for coding patterns
-3. Write minimal implementation to pass all tests
-4. Run the test command
-5. Verify tests PASS (GREEN gate)
-
-### Report
-- Implementation files created/modified: [list paths]
-- Test command output: [paste]
-- GREEN gate status: PASS or FAIL
+Follow your `praxis:agent-impl` definition for the procedure and report format. The Agent Context above is your task input.
 ```
 
 ### Validate Yak (agent-validate)
@@ -305,14 +285,7 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **Phase test files:** `{test file path(s)}`
 - **Phase impl files:** `{implementation file path(s)}`
 
-### Instructions
-1. Run the full test suite
-2. Report results — both new and pre-existing tests
-
-### Report
-- Result: ALL PASS or FAILURES FOUND
-- Total tests: [count]
-- Failures: [count and details]
+Follow your `praxis:agent-validate` definition for the procedure and report format. The Agent Context above is your task input.
 ```
 
 ### No-Test Yak (no-test)
@@ -328,16 +301,7 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **Acceptance gate:** {Observable success criterion — e.g., "Migration applies without error"}
 - **Architectural constraints:** {Any relevant constraints}
 
-### Instructions
-1. Read the project's CLAUDE.md for conventions
-2. Execute the tasks listed above
-3. Verify the acceptance gate
-
-### Report
-- Files created/modified: [list paths]
-- Task completed: [brief description]
-- Acceptance gate: PASS or FAIL
-- Details: [any relevant output or notes]
+Follow your `praxis:agent-no-test` definition for the procedure and report format. The Agent Context above is your task input.
 ```
 
 ### Remediation Yak (agent-remediate)
@@ -356,16 +320,5 @@ Created dynamically by `/implement` when validation fails. Not created during `/
 - **Failure output from validation:**
 {paste Agent 3's failure output}
 
-### Instructions
-1. Read the failing tests to understand expected behavior
-2. Read the implementation files to find the issue
-3. Fix the implementation — minimal changes only
-4. Run the full test suite
-5. Verify ALL tests pass
-
-### Report
-- Files modified: [list paths]
-- What was fixed: [brief description]
-- Test command output: [paste]
-- Result: ALL PASS or STILL FAILING
+Follow your `praxis:agent-remediate` definition for the procedure and report format. The Agent Context above is your task input.
 ```
