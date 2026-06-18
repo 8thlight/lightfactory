@@ -11,10 +11,9 @@ Run:
 
 ```bash
 git diff --name-only HEAD
-git diff --name-only --cached
 ```
 
-Collect all unique paths from both outputs that match the pattern `plugins/*/plugin.json` or `plugins/*/.claude-plugin/plugin.json`.
+Collect all paths from the output that match the pattern `plugins/*/.claude-plugin/plugin.json`.
 
 If no plugin.json files are modified (staged or unstaged), print:
 
