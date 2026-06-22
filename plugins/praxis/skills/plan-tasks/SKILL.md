@@ -186,6 +186,17 @@ Every implementation phase with tests MUST include an `#### Agent Context` subse
 - **RED gate / GREEN gate** — observable success criteria
 - **Architectural constraints** — boundaries the agent must respect
 
+**Authoring the RED gate signature:** The RED gate field tells `agent-test` what a
+*correct* initial failure looks like for this phase — so it can distinguish the
+intended failure (the asserted behavior is absent) from a wrong-reason failure
+(compile/import/setup error, or tests passing outright). Make it specific to the
+phase's framework and test tier rather than generic. Where the project or user has a
+testing skill or guideline (e.g. a framework-specific testing skill referenced from
+CLAUDE.md), consult it to describe the expected failure in that framework's terms. If
+no such guidance exists, describe the expected failure behaviorally (which assertion
+fails and why) and `agent-test` falls back to a generic at-assertion vs.
+before-assertion check.
+
 See [template.md](references/template.md) for the Agent Context block reference and task context templates.
 
 ## Phase Boundaries
