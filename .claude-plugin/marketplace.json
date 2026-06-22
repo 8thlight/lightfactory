@@ -18,6 +18,17 @@
       },
       "repository": "https://github.com/8thlight/lightfactory",
       "category": "agentic-engineering"
+    },
+    {
+      "name": "plugin-maintenance",
+      "source": "./plugins/plugin-maintenance",
+      "description": "Maintenance utilities for Claude Code plugins, including version bumping for modified plugins.",
+      "version": "1.0.0",
+      "author": {
+        "name": "8th Light"
+      },
+      "repository": "https://github.com/8thlight/lightfactory",
+      "category": "tooling"
     }
   ]
 }
