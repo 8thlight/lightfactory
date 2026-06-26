@@ -1,6 +1,6 @@
 {
   "name": "plugin-maintenance",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Maintenance utilities for Claude Code plugins, including version bumping for modified plugins.",
   "commands": [
     "./commands/bump-version.md"
