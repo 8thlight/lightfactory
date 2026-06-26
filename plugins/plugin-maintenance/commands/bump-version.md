@@ -5,25 +5,29 @@ allowed-tools: Bash(git diff:*) Read Write
 
 ## Your Task
 
-### 1. Find modified plugin.json files
+### 1. Find plugins with modified files
 
 Run:
 
 ```bash
-git diff --name-only HEAD
+git diff --name-only origin/HEAD
 ```
 
-Collect all paths from the output that match the pattern `plugins/*/.claude-plugin/plugin.json`.
+> If this errors with "unknown revision", run `git remote set-head origin -a` to sync the remote's default branch pointer, then retry.
 
-If no plugin.json files are modified (staged or unstaged), print:
+Collect all paths that begin with `plugins/`. Extract the unique plugin directory names (the segment at `plugins/<name>/`). These are the plugins that need a version bump.
+
+If no files under `plugins/` differ from `origin/HEAD`, print:
 
 ```
-No modified plugin.json files found. Nothing to bump.
+No modified plugin files found relative to origin/HEAD. Nothing to bump.
 ```
 
 Then stop.
 
-### 2. For each modified plugin.json
+For each plugin with modified files, the target manifest is `plugins/<name>/.claude-plugin/plugin.json`.
+
+### 2. For each affected plugin.json
 
 Read the file and extract the current `"version"` field (semver string, e.g. `"1.4.1"`).
 
