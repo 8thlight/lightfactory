@@ -1,0 +1,100 @@
+skill: review-output-format
+version: "2026-07-15"
+category: structured-output
+
+# Triggering tests for the review-output-format skill.
+#
+# This skill has `disable-model-invocation: true` — it is an internal
+# formatting contract, not something a user should trigger directly via
+# natural language. It is invoked programmatically by review specialists and
+# the review orchestrator (plugins/review/skills/review/SKILL.md) to keep
+# finding structure consistent across specialists.
+#
+# The "positive" list below is intentionally thin: it exists so Check 6
+# (trigger-vocabulary matching) has something to verify against the
+# description, not to claim this skill should fire from open-ended chat.
+# The testable unit is the description field:
+#   "Canonical per-finding markdown template and severity tier definitions
+#    (CRITICAL/MAJOR/MINOR) shared by every review specialist agent in
+#    plugins/review/agents/. Internal formatting contract, not user-triggered
+#    directly — invoked by review specialists and the review orchestrator to
+#    keep report structure consistent across specialists."
+#
+# Probe with: "When would you use the review-output-format skill?"
+
+triggering:
+  positive:
+    # The single literal trigger phrase declared in frontmatter
+    - "review output format"
+
+    # Phrases an orchestrator/specialist context would reference internally
+    - "what's the canonical finding template for review specialists?"
+    - "what are the severity tier definitions for review findings?"
+
+  negative:
+    # Should trigger review instead (running an actual review, not asking about its format)
+    - "review my changes"
+    - "run a review before I open the PR"
+    - "check for accessibility issues in this diff"
+
+    # Should trigger other skills entirely
+    - "implement the discount feature from the plan"
+    - "write tests first for the coupon validator"
+    - "reflect on what we learned from this session"
+
+    # Completely unrelated
+    - "what's the weather in Seattle?"
+    - "fix this null pointer exception in OrderService"
+
+    # Ambiguous edge case: asking about formatting in a completely different context
+    - "format this JSON file for readability"
+
+functional:
+  - id: review-output-format-01
+    description: Every specialist agent that reports CRITICAL/MAJOR/MINOR severity uses the canonical per-finding template fields
+    grading: code
+    given: |
+      The specialist definitions in plugins/review/agents/ (agent-basic-quality,
+      agent-database, agent-diff-cleanliness, agent-frontend, agent-security,
+      agent-react, agent-rails, agent-stimulus-turbo, agent-ci-conventions).
+    when: "each specialist documents or produces a finding"
+    then:
+      - "Each finding includes a severity tag matching [CRITICAL/MAJOR/MINOR] or [CRITICAL], [MAJOR], [MINOR]"
+      - "Each finding includes a Location field with file:line"
+      - "Each finding includes an Issue field describing what's wrong"
+      - "Each finding includes an Impact field describing why it matters"
+      - "Each finding includes a Fix field describing how to resolve it"
+    notes: "Extensions (e.g. agent-stimulus-turbo's Reference field) are allowed; the five core fields must not be redefined."
+
+  - id: review-output-format-02
+    description: agent-accessibility is the documented exception and reports High/Medium/Low natively instead of CRITICAL/MAJOR/MINOR
+    grading: code
+    given: |
+      plugins/review/agents/agent-accessibility.md and
+      plugins/review/skills/review-output-format/SKILL.md
+    when: "agent-accessibility reports a finding"
+    then:
+      - "agent-accessibility's findings use High/Medium/Low severity, not CRITICAL/MAJOR/MINOR"
+      - "review-output-format/SKILL.md explicitly documents this exception"
+      - "review/SKILL.md Step 4 documents the CRITICAL→High, MAJOR→Medium, MINOR→Low normalization used when compiling the combined report"
+
+  - id: review-output-format-03
+    description: An empty result (no issues found in a category) is stated explicitly, never omitted
+    grading: code
+    given: |
+      review-output-format/SKILL.md's stated rule about empty results.
+    when: "a specialist finds no issues in its domain"
+    then:
+      - "review-output-format/SKILL.md states that an empty result must be said explicitly (e.g. 'No basic quality issues found.')"
+      - "review-output-format/SKILL.md states the report must never omit or leave an empty category implicit"
+
+  - id: review-output-format-04
+    description: Severity tier definitions are defined once and referenced, not redefined per specialist agent
+    grading: code
+    given: |
+      plugins/review/skills/review-output-format/SKILL.md and the specialist
+      agent definitions in plugins/review/agents/.
+    when: "a specialist agent documents its own Severity Guidelines section"
+    then:
+      - "review-output-format/SKILL.md defines CRITICAL, MAJOR, and MINOR tier meanings exactly once"
+      - "Specialist agents map domain-specific examples onto the three tiers rather than redefining what CRITICAL/MAJOR/MINOR mean"

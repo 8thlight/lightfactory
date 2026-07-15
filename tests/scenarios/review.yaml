@@ -1,0 +1,159 @@
+skill: review
+version: "2026-07-15"
+category: behavioral
+
+# Triggering tests for the review skill.
+#
+# The testable unit is the description field:
+#   "Run a multi-pass, human-validated code review of the current diff —
+#    universal checks (basic quality, security, diff cleanliness) always run,
+#    plus conditional specialists (database, frontend, accessibility, react,
+#    rails, stimulus/turbo, CI conventions) dispatched only when relevant files
+#    changed. Use when the user wants a thorough review before opening a PR,
+#    asks to 'review my changes,' 'check for accessibility issues,' 'run a
+#    review,' or wants a second opinion spanning security/database/
+#    accessibility/quality/framework-specific concerns before merging. Never
+#    auto-fixes — surfaces findings for human review."
+#
+# Probe with: "When would you use the review skill?"
+
+triggering:
+  positive:
+    # Direct trigger words from the triggers array
+    - "review my changes"
+    - "review this diff"
+    - "run a review"
+    - "check for accessibility issues"
+    - "multi-pass review"
+    - "review before pr"
+
+    # Phrases aligned with "thorough review before opening a PR"
+    - "can you do a thorough review before I open the PR?"
+    - "I want a second opinion on this diff before merging"
+    - "give this a full pass before it goes out for review"
+
+    # Phrases naming specific specialist domains from the description
+    - "check this migration for database issues before I merge"
+    - "look over this React component for anything I missed"
+    - "review this Rails controller for idioms and bugs"
+    - "check my Stimulus controller and Turbo Stream views"
+
+    # Edge case: user wants findings only, explicitly not fixes
+    - "review my changes but don't fix anything, just tell me what's wrong"
+
+    # Edge case: user wants a review spanning multiple concerns at once
+    - "give me a review covering security, accessibility, and quality before I ship this"
+
+  negative:
+    # Should trigger implement instead (writing code, not reviewing it)
+    - "implement the discount feature from the plan"
+    - "build the OAuth integration from the task graph"
+
+    # Should trigger tdd instead (writing tests, not reviewing a diff)
+    - "let's do TDD on the new payment processor"
+    - "write tests first for the coupon validator"
+
+    # Should trigger research instead (exploration, not reviewing a diff)
+    - "research how authentication is implemented in this codebase"
+    - "explore the codebase before I start this feature"
+
+    # Should trigger plan-tasks instead (planning, not reviewing)
+    - "create an implementation plan for the discount codes feature"
+
+    # Should trigger reflect instead (post-session retrospective, not a diff review)
+    - "reflect on what we learned from this implementation session"
+    - "let's do a retrospective on today's work"
+
+    # Should trigger a11y-validate-plan instead (plan/design conformance, not a code diff)
+    - "validate this plan for WCAG 2.2 AA conformance before we implement it"
+
+    # Completely unrelated
+    - "what's the weather in Seattle?"
+    - "rename this variable to be more descriptive"
+    - "fix this null pointer exception in OrderService"
+
+    # Ambiguous edge case: "check" alone without review intent
+    - "check if the server is running"
+
+functional:
+  - id: review-01
+    description: Determines the diff scope by falling back staged → unstaged → against default branch, and stops cleanly when there is nothing to review
+    grading: llm-judge
+    given: |
+      A git repository with no staged changes, no unstaged changes, and no
+      commits ahead of the default branch.
+    when: "review my changes"
+    then:
+      - "Skill checks `git diff --staged --name-only` first"
+      - "Falls back to `git diff --name-only` when staged is empty"
+      - "Falls back to `git diff main...HEAD --name-only` (or master) when unstaged is also empty"
+      - "When all three are empty, skill tells the user there is nothing to review and stops"
+      - "Skill does NOT dispatch any specialist agents when there is no diff"
+    notes: "Tests the diff-resolution fallback chain in Step 1, and the explicit stop condition."
+
+  - id: review-02
+    description: Dispatches only the specialists relevant to the changed files, always including the three universal specialists, and reports what was skipped and why
+    grading: llm-judge
+    given: |
+      A diff that only touches a Ruby model file and an RSpec spec file —
+      no migration, no frontend, no CI config, no JS/JSX files.
+    when: "review this diff"
+    then:
+      - "agent-basic-quality, agent-security, and agent-diff-cleanliness are dispatched (universal)"
+      - "agent-rails is dispatched (Ruby application files changed)"
+      - "agent-database is NOT dispatched (no migration/schema files changed)"
+      - "agent-frontend, agent-accessibility, agent-react, agent-stimulus-turbo are NOT dispatched (no matching file types)"
+      - "The report explicitly states which specialists ran and which were skipped, with a reason for each skip"
+
+  - id: review-03
+    description: All applicable specialists for a given run are dispatched in a single message, not sequentially
+    grading: llm-judge
+    given: |
+      A diff touching a Rails controller, an ERB view with interactive elements,
+      and a Stimulus controller — enough to trigger at least four specialists.
+    when: "run a review"
+    then:
+      - "Multiple Agent tool calls appear in a single message (not spread across multiple turns)"
+      - "No sequential dispatch pattern: specialist A dispatched, awaited, then specialist B dispatched"
+      - "Each dispatched specialist receives the diff content, not an instruction to read the whole repo"
+    notes: "Mirrors research-02's parallel-dispatch assertion. Haiku may dispatch specialists one at a time — known failure mode."
+
+  - id: review-04
+    description: Compiles a single report with findings normalized to High/Medium/Low, de-duplicated across specialists, and never edits files or auto-fixes
+    grading: llm-judge
+    given: |
+      Two specialists (agent-frontend and agent-accessibility) both flag the
+      same missing alt-text issue on the same image element. agent-security
+      reports one CRITICAL finding and agent-basic-quality reports one MINOR finding.
+    when: "review my changes"
+    then:
+      - "Final report has High/Medium/Low priority sections (not raw CRITICAL/MAJOR/MINOR)"
+      - "The duplicate missing-alt-text finding appears exactly once, noting both specialists agreed"
+      - "The CRITICAL security finding appears under High Priority"
+      - "The MINOR basic-quality finding appears under Low Priority / Discussion"
+      - "No file on disk is modified as part of producing the report"
+      - "No PR comment, tracker issue, or commit is created automatically"
+      - "A 'Specialists Run' section lists what ran and what was skipped"
+
+  - id: review-05
+    description: A specialist reporting no issues is stated explicitly rather than omitted from the report
+    grading: code
+    given: |
+      A diff where agent-database was dispatched (a migration file changed)
+      but found no issues.
+    when: "review this diff"
+    then:
+      - "The report contains an explicit statement that agent-database found no issues (e.g. 'No database issues found.')"
+      - "The database section is not silently omitted from the report"
+
+  - id: review-06
+    description: A failed or timed-out specialist does not block the rest of the review
+    grading: llm-judge
+    given: |
+      Five specialists are dispatched. agent-frontend times out or errors;
+      the other four return findings normally.
+    when: "run a review"
+    then:
+      - "The final report is still produced with the four successful specialists' findings"
+      - "The report notes the agent-frontend section is incomplete due to a failure"
+      - "Claude offers to retry just the failed specialist rather than re-running the whole review"

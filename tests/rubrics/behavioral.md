@@ -9,6 +9,7 @@ Grading rubric for Category B skills. Use when code-grading cannot assess qualit
 | `reflect` | Proposal relevance, actionability, anti-pattern adherence | reflect-02, reflect-03 |
 | `research` (partial) | Parallel dispatch behavior, AskUserQuestion usage | research-02, research-04, research-05 |
 | `implement` (partial) | RED gate hard stop, remediation limit enforcement | implement-03, implement-06 |
+| `review` | Diff-scope resolution, conditional specialist dispatch, parallel fan-out, report normalization/dedup, no-auto-fix enforcement | review-01, review-02, review-03, review-04, review-06 |
 
 ---
 
@@ -56,6 +57,19 @@ Do not give partial credit — choose the closest whole number.
 | Proposal count | Within the 5-proposal cap; 3-4 is ideal |
 
 **Pass threshold:** 9/12. Scenarios: reflect-02 (code-graded structure), reflect-03 (LLM-judge quality).
+
+---
+
+## review
+
+| Dimension | What it measures |
+|-----------|-----------------|
+| Relevance | Dispatched specialists match the files actually changed in the diff (no over- or under-dispatch) |
+| Completeness | Universal specialists always run; report states what ran, what was skipped, and why |
+| Actionability | Findings are normalized, de-duplicated, and never silently omitted (empty result stated explicitly) |
+| Specificity | No auto-fix, no auto-created PR comments or tracker issues — findings only, for human review |
+
+**Pass threshold:** 9/12. Scenarios: review-01 through review-04 and review-06 (LLM-judge); review-05 (code-graded explicit-empty-result check).
 
 ---
 

@@ -111,6 +111,16 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Consequences tradeoffs | `string-match` | `Good:` and `Bad:` both present in `## Consequences` section |
 | No trivial ADRs | `string-absent` | File MUST NOT be created when no Harmel-Law decision filter signals are present |
 
+## review-output-format
+
+| Check | Type | Assertion |
+|-------|------|-----------|
+| Severity tags | `string-match` | Every specialist finding in `plugins/review/agents/*.md` uses `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` (or `agent-accessibility`'s High/Medium/Low exception) |
+| Core fields | `string-match` | Each finding template includes `Location`, `Issue`, `Impact`, `Fix` fields |
+| Accessibility exception | `string-match` | `review-output-format/SKILL.md` documents the `agent-accessibility` High/Medium/Low exception and the normalization mapping used in `review/SKILL.md` Step 4 |
+| Empty result rule | `string-match` | `review-output-format/SKILL.md` states empty results must be said explicitly, never omitted |
+| Single tier definition | `string-absent` | `CRITICAL`/`MAJOR`/`MINOR` tier meanings are not redefined per specialist agent — only mapped to domain examples |
+
 ---
 
 ## Scoring
