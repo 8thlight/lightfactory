@@ -3,13 +3,19 @@
 # Receives the prompt as $1 — writes to a temp file to avoid
 # shell quoting issues with multiline prompts.
 #
-# Loads the praxis plugin skills so evals can test skill behavior.
+# Loads every plugin under plugins/ so evals can test any plugin's skill behavior.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_DIR="${SCRIPT_DIR}/../../plugins/praxis"
+PLUGINS_ROOT="${SCRIPT_DIR}/../../plugins"
+
+PLUGIN_DIR_ARGS=()
+for plugin_dir in "${PLUGINS_ROOT}"/*/; do
+    [[ -d "${plugin_dir}" ]] || continue
+    PLUGIN_DIR_ARGS+=(--plugin-dir "${plugin_dir%/}")
+done
 
 TMPFILE=$(mktemp)
 printf '%s' "$1" > "$TMPFILE"
-claude --print --plugin-dir "$PLUGIN_DIR" < "$TMPFILE"
+claude --print "${PLUGIN_DIR_ARGS[@]}" < "$TMPFILE"
 EXIT_CODE=$?
 rm -f "$TMPFILE"
 exit $EXIT_CODE
