@@ -29,6 +29,17 @@
       },
       "repository": "https://github.com/8thlight/lightfactory",
       "category": "tooling"
+    },
+    {
+      "name": "review",
+      "source": "./plugins/review",
+      "description": "Multi-pass, human-validated code review: universal checks (basic quality, security, diff cleanliness) plus conditional specialists (database, frontend, accessibility) dispatched based on what changed.",
+      "version": "0.1.0",
+      "author": {
+        "name": "8th Light"
+      },
+      "repository": "https://github.com/8thlight/lightfactory",
+      "category": "code-review"
     }
   ]
 }

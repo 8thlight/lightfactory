@@ -18,7 +18,7 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-readonly PLUGIN_SKILLS_DIRS=("${PROJECT_ROOT}/plugins/praxis/skills")
+readonly PLUGIN_SKILLS_DIRS=("${PROJECT_ROOT}"/plugins/*/skills)
 readonly SCENARIOS_DIR="${PROJECT_ROOT}/tests/scenarios"
 readonly RUBRICS_DIR="${PROJECT_ROOT}/tests/rubrics"
 
