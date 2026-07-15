@@ -1105,3 +1105,332 @@ tests:
     metadata:
       skill: reflect
       grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# REVIEW skill scenarios
+# ---------------------------------------------------------------------------
+
+  # review-01: Determines diff scope via staged -> unstaged -> default-branch fallback, stops cleanly when empty
+  - description: "[review-01] Diff-scope fallback chain, clean stop when there is nothing to review"
+    vars:
+      prompt: |
+        GIVEN: A git repository with no staged changes, no unstaged changes, and no commits ahead of the
+        default branch.
+
+        TASK: review my changes
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the review skill correctly resolved diff scope and stopped cleanly.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Fallback chain (1-3): Did the skill check staged, then unstaged, then default-branch diff in order?
+            1 = No evidence of checking multiple diff sources in order
+            2 = Checked more than one source but order is unclear
+            3 = Clearly checked staged first, then unstaged, then default-branch comparison
+
+          Dimension 2 — Empty diff detected (1-3): Did the skill correctly conclude there is nothing to review?
+            1 = Skill proceeded as if there were changes to review
+            2 = Skill hedged or asked the user instead of concluding there was nothing to review
+            3 = Skill explicitly stated there is nothing to review
+
+          Dimension 3 — Clean stop (1-3): Did the skill stop without dispatching any specialist agents?
+            1 = Specialist agents were dispatched despite no diff
+            2 = Unclear whether any dispatch occurred
+            3 = No specialist agents were dispatched
+
+          Dimension 4 — User communication (1-3): Did the skill clearly tell the user why it stopped?
+            1 = No explanation given
+            2 = Vague explanation
+            3 = Clear statement that no diff was found across all three fallback sources
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: review
+      grading: llm-judge
+
+  # review-02: Dispatches only the specialists relevant to changed files, always including universal specialists, and reports skips with reasons
+  - description: "[review-02] Conditional specialist dispatch matches changed files; skips reported with reasons"
+    vars:
+      prompt: |
+        GIVEN: A diff that only touches a Ruby model file and an RSpec spec file — no migration, no
+        frontend, no CI config, no JS/JSX files.
+
+        TASK: review this diff
+    assert:
+      - type: icontains
+        value: "basic-quality"
+      - type: icontains
+        value: "security"
+      - type: icontains
+        value: "diff-cleanliness"
+      - type: icontains
+        value: "rails"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the review skill dispatched only the relevant specialists for a
+          Ruby-only diff (model file + RSpec spec, no migration/frontend/CI files).
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Universal specialists always run (1-3): Were basic-quality, security, and diff-cleanliness all dispatched?
+            1 = One or more universal specialists missing
+            2 = All present but not clearly stated as always-run
+            3 = All three universal specialists clearly dispatched
+
+          Dimension 2 — Rails specialist dispatched (1-3): Was agent-rails dispatched given Ruby application files changed?
+            1 = agent-rails was not dispatched
+            2 = Rails mentioned but dispatch is ambiguous
+            3 = agent-rails clearly dispatched
+
+          Dimension 3 — Irrelevant specialists skipped (1-3): Were database, frontend, accessibility, react, and stimulus-turbo all skipped?
+            1 = One or more irrelevant specialists were dispatched
+            2 = Skipped but without explanation
+            3 = All irrelevant specialists skipped, each with a stated reason (no matching file types)
+
+          Dimension 4 — Skip reasons reported (1-3): Did the report explicitly state which specialists ran vs were skipped and why?
+            1 = No mention of what was skipped
+            2 = Skips mentioned but without reasons
+            3 = Explicit list of specialists run and skipped, each skip with a reason
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: review
+      grading: llm-judge
+
+  # review-03: All applicable specialists are dispatched in a single parallel message, not sequentially
+  - description: "[review-03] Specialists dispatched in parallel, not sequentially"
+    vars:
+      prompt: |
+        GIVEN: A diff touching a Rails controller, an ERB view with interactive elements, and a Stimulus
+        controller — enough to trigger at least four specialists.
+
+        TASK: run a review
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the review skill dispatched specialist agents in parallel.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Parallel dispatch (1-3): Did multiple Agent tool calls appear in a single message?
+            1 = Specialists were dispatched sequentially across multiple turns
+            2 = Some parallelism but not all specialists batched together
+            3 = Multiple Agent calls issued in a single message (true parallel dispatch)
+
+          Dimension 2 — Diff-scoped instructions (1-3): Was each specialist given the diff content rather than told to read the whole repo?
+            1 = Specialists were told to explore the whole codebase
+            2 = Ambiguous scoping instructions
+            3 = Each specialist clearly received the diff content and was scoped to changed lines
+
+          Dimension 3 — No sequential await pattern (1-3): Did the skill avoid dispatching one specialist, awaiting it, then dispatching the next?
+            1 = Clear sequential pattern observed
+            2 = Partially sequential but some batching evident
+            3 = No sequential await pattern detected; all specialists launched together
+
+          Dimension 4 — Coverage (1-3): Did the dispatched set include agent-rails, agent-frontend or agent-accessibility, and agent-stimulus-turbo?
+            1 = Fewer than 2 of the 3 relevant specialists dispatched
+            2 = 2 of the 3 dispatched
+            3 = All 3 relevant specialists dispatched given the changed file types
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: review
+      grading: llm-judge
+
+  # review-04: Compiles a single report with findings normalized, de-duplicated, and never auto-fixes
+  - description: "[review-04] Report normalized to High/Medium/Low, de-duplicated, no auto-fix"
+    vars:
+      prompt: |
+        GIVEN: Two specialists (agent-frontend and agent-accessibility) both flag the same missing
+        alt-text issue on the same image element. agent-security reports one CRITICAL finding and
+        agent-basic-quality reports one MINOR finding.
+
+        TASK: review my changes
+    assert:
+      - type: regex
+        value: "(?i)high priority"
+      - type: regex
+        value: "(?i)medium priority"
+      - type: regex
+        value: "(?i)low priority"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the review skill correctly compiled and normalized its findings.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Severity normalization (1-3): Are findings grouped under High/Medium/Low sections rather than raw CRITICAL/MAJOR/MINOR?
+            1 = Report still uses CRITICAL/MAJOR/MINOR as section headers
+            2 = Mixed labeling
+            3 = Report clearly uses High/Medium/Low priority sections
+
+          Dimension 2 — De-duplication (1-3): Does the duplicate missing-alt-text finding appear exactly once, noting both specialists agreed?
+            1 = Finding appears twice (once per specialist)
+            2 = Appears once but doesn't note specialist agreement
+            3 = Appears exactly once and notes that both specialists flagged it
+
+          Dimension 3 — No auto-fix or side effects (1-3): Did the skill avoid editing files, posting PR comments, or creating tracker issues?
+            1 = Skill took an auto-fix or side-effect action
+            2 = Ambiguous — skill suggested but didn't confirm avoiding action
+            3 = Skill clearly presented findings only, took no file-editing or external action
+
+          Dimension 4 — Specialists Run section (1-3): Does the report include a section listing what ran and what was skipped?
+            1 = No such section
+            2 = Present but incomplete
+            3 = Clear "Specialists Run" section listing what ran and what was skipped
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: review
+      grading: llm-judge
+
+  # review-05: A specialist reporting no issues is stated explicitly rather than omitted
+  - description: "[review-05] Explicit no-issues statement rather than silent omission"
+    vars:
+      prompt: |
+        GIVEN: A diff where agent-database was dispatched (a migration file changed) but found no issues.
+
+        TASK: review this diff
+    assert:
+      - type: regex
+        value: "(?i)no (database )?issues found"
+    metadata:
+      skill: review
+      grading: code
+
+  # review-06: A failed or timed-out specialist does not block the rest of the review
+  - description: "[review-06] Failed specialist does not block the rest of the review"
+    vars:
+      prompt: |
+        GIVEN: Five specialists are dispatched. agent-frontend times out or errors; the other four
+        return findings normally.
+
+        TASK: run a review
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the review skill handled a failed specialist gracefully.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Report still produced (1-3): Was a final report produced despite the failure?
+            1 = No report produced; review aborted
+            2 = Report produced but incomplete without explanation
+            3 = Final report produced with the four successful specialists' findings
+
+          Dimension 2 — Failure noted (1-3): Does the report note that the agent-frontend section is incomplete due to a failure?
+            1 = No mention of the failure
+            2 = Vague mention
+            3 = Clear note that agent-frontend failed/timed out and its section is incomplete
+
+          Dimension 3 — Retry offered (1-3): Did Claude offer to retry just the failed specialist?
+            1 = No retry offered
+            2 = Retry mentioned but as a full re-run rather than targeted
+            3 = Clear offer to retry just the failed specialist
+
+          Dimension 4 — No cascading failure (1-3): Did the other four specialists' findings remain intact and unaffected?
+            1 = Other specialists' findings were dropped or garbled
+            2 = Mostly intact with minor gaps
+            3 = All four successful specialists' findings fully present in the report
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: review
+      grading: llm-judge
+
+# ---------------------------------------------------------------------------
+# REVIEW-OUTPUT-FORMAT skill scenarios
+# ---------------------------------------------------------------------------
+# Note: review-output-format has disable-model-invocation: true — it is never
+# triggered directly by a user prompt. These scenarios exercise its contract
+# indirectly through the review skill, which is the only consumer of the format.
+
+  # review-output-format-01: Every finding compiled into a review report uses the canonical per-finding template fields
+  - description: "[review-output-format-01] Compiled findings use the canonical per-finding template fields"
+    vars:
+      prompt: |
+        GIVEN: A diff touching a Ruby model, an RSpec spec, and a React component — enough to dispatch
+        agent-basic-quality, agent-security, agent-diff-cleanliness, agent-rails, and agent-react, each
+        with at least one finding.
+
+        TASK: review my changes
+    assert:
+      - type: regex
+        value: "\\[(CRITICAL|MAJOR|MINOR)\\]"
+      - type: icontains
+        value: "Location"
+      - type: icontains
+        value: "Issue"
+      - type: icontains
+        value: "Impact"
+      - type: icontains
+        value: "Fix"
+    metadata:
+      skill: review-output-format
+      grading: code
+
+  # review-output-format-02: agent-accessibility findings normalize alongside CRITICAL/MAJOR/MINOR findings into the same High/Medium/Low sections
+  - description: "[review-output-format-02] Accessibility High/Medium/Low findings normalize alongside CRITICAL/MAJOR/MINOR findings"
+    vars:
+      prompt: |
+        GIVEN: A diff touching a JSX component with a missing alt attribute (triggers agent-accessibility,
+        reporting High/Medium/Low) alongside a Ruby controller with a CRITICAL security issue (triggers
+        agent-security, reporting CRITICAL/MAJOR/MINOR).
+
+        TASK: check for accessibility issues in this diff
+    assert:
+      - type: regex
+        value: "(?i)high priority"
+      - type: llm-rubric
+        value: |
+          Evaluate whether the compiled review report correctly normalizes severity across specialists
+          that report in different native scales (agent-accessibility uses High/Medium/Low natively;
+          most other specialists use CRITICAL/MAJOR/MINOR).
+
+          PASS if the report's priority sections are High/Medium/Low, the CRITICAL security finding
+          appears under High Priority, and the accessibility finding appears under the priority section
+          matching its native level, with no specialist re-labeling CRITICAL/MAJOR/MINOR as something else.
+          FAIL if severity sections are inconsistent, mislabeled, or the accessibility finding is dropped.
+    metadata:
+      skill: review-output-format
+      grading: code
+
+  # review-output-format-03: A specialist with no findings is stated explicitly, never silently omitted
+  - description: "[review-output-format-03] Explicit no-issues statement, never silently omitted"
+    vars:
+      prompt: |
+        GIVEN: A diff that changes a database migration file with no actual issues — agent-database is
+        dispatched but has nothing to report.
+
+        TASK: review this diff
+    assert:
+      - type: regex
+        value: "(?i)no (database )?issues found"
+    metadata:
+      skill: review-output-format
+      grading: code
+
+  # review-output-format-04: Severity tier meaning is applied consistently across specialists, never redefined per specialist
+  - description: "[review-output-format-04] Severity tier meaning applied consistently across specialists"
+    vars:
+      prompt: |
+        GIVEN: A diff producing a CRITICAL finding from agent-security and a separate CRITICAL finding
+        from agent-basic-quality.
+
+        TASK: run a review
+    assert:
+      - type: llm-rubric
+        value: |
+          Evaluate whether the compiled review report applies a single, consistent meaning of CRITICAL
+          severity across specialists rather than letting each specialist define its own tier semantics.
+
+          PASS if both CRITICAL findings (from agent-security and agent-basic-quality) land in the same
+          High Priority section and the report does not contain two different explanations of what
+          CRITICAL/High severity means.
+          FAIL if the findings are split into different sections or the report defines CRITICAL
+          differently per specialist.
+    metadata:
+      skill: review-output-format
+      grading: llm-judge

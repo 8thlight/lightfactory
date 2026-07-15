@@ -115,11 +115,11 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 
 | Check | Type | Assertion |
 |-------|------|-----------|
-| Severity tags | `string-match` | Every specialist finding in `plugins/review/agents/*.md` uses `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` (or `agent-accessibility`'s High/Medium/Low exception) |
-| Core fields | `string-match` | Each finding template includes `Location`, `Issue`, `Impact`, `Fix` fields |
-| Accessibility exception | `string-match` | `review-output-format/SKILL.md` documents the `agent-accessibility` High/Medium/Low exception and the normalization mapping used in `review/SKILL.md` Step 4 |
-| Empty result rule | `string-match` | `review-output-format/SKILL.md` states empty results must be said explicitly, never omitted |
-| Single tier definition | `string-absent` | `CRITICAL`/`MAJOR`/`MINOR` tier meanings are not redefined per specialist agent — only mapped to domain examples |
+| Severity tags | `string-match` | Each finding in a compiled review report includes `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` |
+| Core fields | `string-match` | Each finding includes `Location`, `Issue`, `Impact`, `Fix` fields |
+| Accessibility normalization | `string-match` | agent-accessibility's native High/Medium/Low findings land in the report's High/Medium/Low sections alongside normalized CRITICAL→High/MAJOR→Medium/MINOR→Low findings from other specialists |
+| Empty result rule | `string-match` | A specialist with no findings is stated explicitly (e.g. "No database issues found.") rather than omitted from the report |
+| Consistent tier meaning | `quantitative` | Findings sharing a severity tier land in the same priority section regardless of which specialist produced them |
 
 ---
 

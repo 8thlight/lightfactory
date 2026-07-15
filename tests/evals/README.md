@@ -61,21 +61,23 @@ promptfoo eval --output json > results.json
 ## Cost Expectations
 
 Each test case makes one call to the Claude API via the `claude` CLI. The config
-contains **26 test cases** total (see breakdown below). LLM-judge assertions make an
+contains **41 test cases** total (see breakdown below). LLM-judge assertions make an
 additional API call per assertion (the judge model evaluates the output).
 
-| Scenario type | Test cases | LLM-judge assertions | Total API calls (approx.) |
-|---------------|-----------|---------------------|--------------------------|
-| research      | 5          | 3 (research-02, -04, -05) | 8 |
-| plan-tasks    | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
-| implement     | 6          | 3 (implement-03, -05, -06) | 9 |
-| tdd           | 5          | 2 (tdd-04, -05)     | 7 |
-| harness       | 3          | 2 (harness-02, -03) | 5 |
-| reflect       | 3          | 1 (reflect-03)      | 4 |
-| **Total**     | **29**     | **15**              | **~42** |
+| Scenario type       | Test cases | LLM-judge assertions | Total API calls (approx.) |
+|---------------------|-----------|---------------------|--------------------------|
+| research            | 5          | 3 (research-02, -04, -05) | 8 |
+| plan-tasks          | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
+| implement           | 8          | 4 (implement-03, -05, -06, -08) | 12 |
+| tdd                 | 5          | 2 (tdd-04, -05)     | 7 |
+| harness             | 3          | 2 (harness-02, -03) | 5 |
+| reflect             | 3          | 1 (reflect-03)      | 4 |
+| review              | 6          | 5 (review-01, -02, -03, -04, -06) | 11 |
+| review-output-format | 4          | 1 (review-output-format-04) | 5 |
+| **Total**           | **41**     | **22**              | **~63** |
 
 At typical Sonnet pricing (~$0.003 per 1K output tokens), a full eval run is
-estimated at **$0.50–$2.00** depending on response length. LLM-judge calls add
+estimated at **$0.75–$3.00** depending on response length. LLM-judge calls add
 roughly the same amount again.
 
 Run frequency recommendations:
@@ -118,6 +120,8 @@ Run frequency recommendations:
 | implement-04 | implement | GREEN gate fail enters remediation | code |
 | implement-05 | implement | Lint fast path — biome-only failure auto-fixed | llm-judge |
 | implement-06 | implement | Escalates to user after 2 failed remediations | llm-judge |
+| implement-07 | implement | Session manifest written with correct file lists and gate counts | code |
+| implement-08 | implement | Session manifest classifies agent-no-test files by pre-existence | llm-judge |
 | tdd-01 | tdd | tdd-session-log.md created before any code | code |
 | tdd-02 | tdd | [TEST] comments before production code with ZOMBIES | code |
 | tdd-03 | tdd | All 7 ZOMBIES letters present | code |
@@ -129,8 +133,18 @@ Run frequency recommendations:
 | reflect-01 | reflect | Agent Dispatch Manifest with all 4 agent rows | code |
 | reflect-02 | reflect | Proposals capped at 5, priority-ordered, complete fields | code |
 | reflect-03 | reflect | Proposals actionable and session-relevant | llm-judge |
+| review-01 | review | Diff-scope fallback chain, clean stop when nothing to review | llm-judge |
+| review-02 | review | Conditional specialist dispatch matches changed files, skips reported | llm-judge |
+| review-03 | review | Specialists dispatched in parallel, not sequentially | llm-judge |
+| review-04 | review | Report normalized to High/Medium/Low, de-duplicated, no auto-fix | llm-judge |
+| review-05 | review | Explicit no-issues statement rather than silent omission | code |
+| review-06 | review | Failed specialist does not block the rest of the review | llm-judge |
+| review-output-format-01 | review-output-format | Compiled findings use the canonical per-finding template fields | code |
+| review-output-format-02 | review-output-format | Accessibility High/Medium/Low findings normalize alongside CRITICAL/MAJOR/MINOR | code |
+| review-output-format-03 | review-output-format | Explicit no-issues statement, never silently omitted | code |
+| review-output-format-04 | review-output-format | Severity tier meaning applied consistently across specialists | llm-judge |
 
-**Total: 29 test cases — 14 code-graded, 15 llm-judge**
+**Total: 41 test cases — 19 code-graded, 22 llm-judge**
 
 ---
 
