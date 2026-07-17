@@ -9,6 +9,7 @@ Multi-pass, human-validated code review skills.
 | Skill | Command | Description |
 |-------|---------|--------------|
 | [review](review/) | `/review` | Runs a multi-pass review of the current diff — universal checks (basic quality, security, diff cleanliness) always run, plus conditional specialists (database, frontend, accessibility) dispatched based on what changed. Surfaces findings only; never auto-fixes. |
+| [create-local-specialist](create-local-specialist/) | — | Scaffolds a project-local specialist (new, or overriding a built-in) registered via `.claude/review-specialists.yaml` in the consuming project — no changes to this plugin required. |
 
 ## Specialists
 
@@ -22,3 +23,5 @@ Specialist agent definitions live in `../agents/`, not here — each is a standa
 | `agent-database` | Migration/schema files changed |
 | `agent-frontend` | HTML/CSS/JS/template files changed |
 | `agent-accessibility` | Markup/component files with interactive elements changed |
+
+Projects can add their own specialists, or override any of the above, without editing this plugin — see `.claude/review-specialists.yaml` (project-local, optional) documented in `review/SKILL.md` Step 2, and use `create-local-specialist` to scaffold them.

@@ -1,0 +1,27 @@
+# Example .claude/review-specialists.yaml
+#
+# Lives in the *consuming project's* repo root (not this plugin). Optional —
+# `review`'s Step 2 proceeds with built-ins only if this file is absent.
+#
+# Each entry: name, dispatch_condition, location (relative to repo root, or absolute).
+# A name matching a built-in (agent-database, agent-frontend, agent-accessibility,
+# agent-react, agent-rails, agent-stimulus-turbo, agent-ci-conventions,
+# agent-basic-quality, agent-security, agent-diff-cleanliness) overrides it entirely
+# for this project. Any other name is dispatched as an additional specialist.
+
+specialists:
+  # New specialist, inline shape (few tight checks — see create-local-specialist
+  # Step 4a). Adds coverage the built-ins don't have; doesn't collide with any name.
+  - name: agent-payments
+    dispatch_condition: "Changed files include app/services/payments/*, any *.billing.rb, or webhook handlers under app/webhooks/"
+    location: .claude/review-specialists/agent-payments.md
+
+  # Override of a built-in, detection-table + reference-files shape (see
+  # create-local-specialist Step 4b) because this project's migration
+  # conventions need several distinct, example-heavy categories. `review`
+  # skips its built-in agent-database entirely and uses this one instead.
+  - name: agent-database
+    dispatch_condition: "Changed files include db/migrate/*, schema.rb, or Terraform under infra/db/"
+    location: .claude/review-specialists/agent-database.md
+    # Reference files for the entry above live in:
+    #   .claude/review-specialists/references/agent-database-<category>.md
