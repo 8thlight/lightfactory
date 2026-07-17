@@ -1,10 +1,12 @@
 # Example .claude/review-specialists.yaml
 #
-# Lives in the *consuming project's* repo root (not this plugin). Optional —
-# `specialist-review`'s Step 2 proceeds with built-ins only if this file is absent.
+# Lives in the *consuming project's* repo root, or one directory level up in a
+# non-git parent workspace wrapping the repo (not this plugin). Optional —
+# `specialist-review`'s Step 2 proceeds with built-ins only if this file is absent
+# from both locations.
 #
-# Each entry: name, dispatch_condition, location (relative to repo root, or absolute).
-# A name matching a built-in (agent-database, agent-frontend, agent-accessibility,
+# Each entry: name, dispatch_condition, location (relative to wherever this yaml
+# was found, or absolute). A name matching a built-in (agent-database, agent-frontend, agent-accessibility,
 # agent-react, agent-rails, agent-stimulus-turbo, agent-ci-conventions,
 # agent-basic-quality, agent-security, agent-diff-cleanliness) overrides it entirely
 # for this project. Any other name is dispatched as an additional specialist.

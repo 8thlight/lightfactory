@@ -35,21 +35,28 @@ Orchestrates multi-pass review: shallow universal pass + specialist agents dispa
 
 ### Step 2: Load Local Specialist Overrides
 
-Before classifying, check the project root (not cwd) for `.claude/review-specialists.yaml`. This file is optional, project-local, and never bundled with the plugin — it's how a project adds its own specialists or overrides a built-in one without forking this skill.
+Before classifying, look for `.claude/review-specialists.yaml` in two places, in this order:
+
+1. **Repo root** — the diffed repo's own git top-level (`git rev-parse --show-toplevel`).
+2. **Parent workspace root** — one directory level up from the repo root. Covers the common case of a git repo nested inside a non-git parent directory that holds shared tooling/config for multiple sibling repos (e.g. a client-engagement workspace containing the actual app repo as an untracked subdirectory, each with independent git history).
+
+Use the first one found; repo-root wins if both exist. This file is optional, project-local, and never bundled with the plugin — it's how a project (or its wrapping workspace) adds its own specialists or overrides a built-in one without forking this skill.
 
 ```yaml
 specialists:
   - name: agent-payments
     dispatch_condition: "Changed files include app/services/payments/* or any *.billing.rb"
-    location: .claude/review-specialists/agent-payments.md   # relative to repo root, or absolute
+    location: .claude/review-specialists/agent-payments.md   # relative to wherever this yaml was found, or absolute
   - name: agent-database   # matches a built-in name below → overrides it entirely
     dispatch_condition: "Changed files include db/migrate/*, schema.rb, or Terraform under infra/db/"
     location: .claude/review-specialists/agent-database.md
 ```
 
+`location:` paths resolve relative to wherever the yaml itself was found (repo root or parent workspace root) — not always the repo root. If the yaml was found one level up, its relative `location:` paths are one level up too.
+
 - **Name not in the built-in table below** → added as an extra conditional specialist.
 - **Name matches a built-in** → override. Skip that built-in entirely for this run; use the local file's dispatch condition and content instead.
-- File missing → proceed with built-ins only, silently.
+- Neither location has the file → proceed with built-ins only, silently.
 - File present but malformed/unreadable → proceed with built-ins only, note it in the final report rather than failing the review.
 
 Use the `create-local-specialist` skill (`plugins/review/skills/create-local-specialist/`) to scaffold new entries in this file — it keeps generated specialists conformant with the pattern this skill expects. See `plugins/review/skills/create-local-specialist/references/review-specialists.example.yaml` for a worked example.

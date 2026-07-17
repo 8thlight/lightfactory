@@ -26,7 +26,9 @@ Ask (or infer from context) if not already clear:
 
 ### Step 2: Determine Location
 
-Default: `.claude/review-specialists/<name>.md` in the project root. Confirm with the user if they want a different path — relative or absolute both work with `specialist-review`'s loader.
+Default: `.claude/review-specialists/<name>.md` in the project root — the diffed repo's own git top-level. Confirm with the user if they want a different path — relative or absolute both work with `specialist-review`'s loader.
+
+**If the repo is nested inside a non-git parent workspace** (e.g. a client-engagement folder containing the actual app repo as an untracked subdirectory with its own independent git history), the specialist and its `.claude/review-specialists.yaml` registration can live in that parent workspace's `.claude/` instead — `specialist-review`'s loader checks one directory level up from repo root as a fallback. Ask which the user wants: co-located with the repo (travels with it, e.g. if the repo might move to a different parent later) or in the parent workspace (keeps the repo's own working tree/branches untouched by tooling config — useful when the repo is a client's tracked codebase and the wrapping workspace is where engagement-level tooling lives).
 
 ### Step 3: Decide Inline vs. Reference-File Shape
 
@@ -177,7 +179,7 @@ The specialist file still carries its own `## Output Format`, `## Rules`, and `#
 
 ### Step 6: Register in `.claude/review-specialists.yaml`
 
-Create the file if it doesn't exist (repo root, alongside `.claude/settings.json`). Read existing content first if present — this is an append/merge, not an overwrite of the whole file.
+Create the file if it doesn't exist, at whichever location was chosen in Step 2 (repo root alongside `.claude/settings.json`, or the parent workspace root one level up). Read existing content first if present — this is an append/merge, not an overwrite of the whole file.
 
 ```yaml
 specialists:
