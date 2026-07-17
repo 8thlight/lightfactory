@@ -29,7 +29,7 @@ Dispatch when changed file set includes `.rb`, `.erb`, or other Rails app files 
 
 ## Detection Table
 
-Run inline idiom/logic checks (Categories 1-3 below) on every dispatch. For Categories 4-8, read matching section of `references/rails-anti-patterns.md` only if diff matches trigger pattern — otherwise skip that reference entirely.
+Run inline idiom/logic checks (Categories 1-3 below) on every dispatch. For Categories 4-8, `references/rails-anti-patterns.md` holds all categories in one file — there's no partial/heading-scoped read, so a matching trigger means reading the whole file, then applying only the matching section(s). If no Category 4-8 trigger pattern appears in diff, skip reading that reference file entirely — that's where the savings comes from, not from partial reads within it.
 
 | Category | Trigger Pattern | Reference |
 |---|---|---|
@@ -80,7 +80,7 @@ User.where(active: true).find_each { |u| u.send_digest }
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues: "No Rails issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues: "No Rails issues found."
 
 ## Severity Guidelines
 
@@ -108,4 +108,4 @@ Include at end of every report where anti-pattern findings (Categories 4-8) pres
 
 Shared rules (report-only, confidence threshold, file:line citation, no praise, domain ownership, progressive-disclosure architecture) in `plugins/review/agents/CLAUDE.md`. Specific to this specialist:
 
-- Read `references/rails-anti-patterns.md` sections selectively per Detection Table — don't load sections whose trigger pattern doesn't match diff.
+- Read `references/rails-anti-patterns.md` in full when any Category 4-8 trigger matches (no partial-file read available); skip reading it at all when no trigger matches.

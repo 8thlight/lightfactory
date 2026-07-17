@@ -122,7 +122,7 @@ Design tokens can be overridden in project's theme/config file. A token like `bo
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues found: "No frontend issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues found: "No frontend issues found."
 
 ## Severity Guidelines
 

@@ -57,7 +57,7 @@ Conditional specialist. Orchestrating skill dispatches only when changed file se
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues found: "No React issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues found: "No React issues found."
 
 ## Severity Guidelines
 

@@ -35,31 +35,41 @@ Orchestrates multi-pass review: shallow universal pass + specialist agents dispa
 
 ### Step 2: Load Local Specialist Overrides
 
-Before classifying, look for `.claude/review-specialists.yaml` in two places, in this order:
+Local specialists are real project-registered subagents living at `.claude/agents/*.md` in the diffed repo — not a plugin-bundled file, not dispatched generically. A project's `.claude/agents/` may hold agents unrelated to review entirely, so membership in this skill's dispatch set requires an explicit, purpose-specific marker — **not** just the presence of a plausibly-named field a coincidental or copied file might also carry. A file counts as a local review specialist only if its frontmatter has `review_specialist: true`. Treat `dispatch_condition` alone, without that marker, as insufficient — some unrelated custom agent could define a same-named field for its own purposes.
 
-1. **Repo root** — the diffed repo's own git top-level (`git rev-parse --show-toplevel`).
-2. **Parent workspace root** — one directory level up from the repo root. Covers the common case of a git repo nested inside a non-git parent directory that holds shared tooling/config for multiple sibling repos (e.g. a client-engagement workspace containing the actual app repo as an untracked subdirectory, each with independent git history).
-
-Use the first one found; repo-root wins if both exist. This file is optional, project-local, and never bundled with the plugin — it's how a project (or its wrapping workspace) adds its own specialists or overrides a built-in one without forking this skill.
+1. `Glob .claude/agents/*.md` at the repo root (`git rev-parse --show-toplevel`).
+2. For each match, `Read` its frontmatter. Skip any file without `review_specialist: true` — not a review specialist, regardless of what other fields it happens to carry.
+3. For files that do carry the marker, read `dispatch_condition:` (required) and `overrides: <built-in-name>` (optional).
 
 ```yaml
-specialists:
-  - name: agent-payments
-    dispatch_condition: "Changed files include app/services/payments/* or any *.billing.rb"
-    location: .claude/review-specialists/agent-payments.md   # relative to wherever this yaml was found, or absolute
-  - name: agent-database   # matches a built-in name below → overrides it entirely
-    dispatch_condition: "Changed files include db/migrate/*, schema.rb, or Terraform under infra/db/"
-    location: .claude/review-specialists/agent-database.md
+---
+name: agent-payments
+description: "Reviews payments/billing code paths. Report-only."
+model: sonnet
+review_specialist: true
+dispatch_condition: "Changed files include app/services/payments/* or any *.billing.rb"
+---
 ```
 
-`location:` paths resolve relative to wherever the yaml itself was found (repo root or parent workspace root) — not always the repo root. If the yaml was found one level up, its relative `location:` paths are one level up too.
+```yaml
+---
+name: agent-database-local
+description: "Project-specific database review, overrides the built-in agent-database."
+model: sonnet
+review_specialist: true
+dispatch_condition: "Changed files include db/migrate/*, schema.rb, or Terraform under infra/db/"
+overrides: agent-database
+---
+```
 
-- **Name not in the built-in table below** → added as an extra conditional specialist.
-- **Name matches a built-in** → override. Skip that built-in entirely for this run; use the local file's dispatch condition and content instead.
-- Neither location has the file → proceed with built-ins only, silently.
-- File present but malformed/unreadable → proceed with built-ins only, note it in the final report rather than failing the review.
+- No `overrides:` field → added as an extra conditional specialist, dispatched by its own `name`.
+- `overrides: agent-database` → skip the built-in `agent-database` entirely this run; dispatch this local specialist (by its own distinct `name`) in its place.
+- No `.claude/agents/*.md` file carries `review_specialist: true` → proceed with built-ins only, silently.
+- A local specialist's file exists but its `name` isn't yet a resolvable `subagent_type` (created this session, before a restart) → note it in the final report as "created but not yet available — restart the session, then re-run this review" rather than failing the whole review over one specialist.
 
-Use the `create-local-specialist` skill (`plugins/review/skills/create-local-specialist/`) to scaffold new entries in this file — it keeps generated specialists conformant with the pattern this skill expects. See `plugins/review/skills/create-local-specialist/references/review-specialists.example.yaml` for a worked example.
+**Nested-workspace case** (a git repo living inside a non-git parent workspace folder): unlike the old yaml-based lookup, this step can't independently check a parent directory for local specialists — subagent discovery is Claude Code's own mechanism, tied to wherever the session's `.claude/agents/` actually is. Place local specialist files at whatever directory the session is launched from; if that's the parent workspace root, put `.claude/agents/` there, not in the nested repo. Confirm with the user where their session actually starts if unsure — don't assume the diffed repo's own git top-level.
+
+Use the `create-local-specialist` skill (`plugins/review/skills/create-local-specialist/`) to scaffold new specialist files — it keeps generated specialists conformant with the pattern this skill expects.
 
 ### Step 3: Classify Changed Files
 
@@ -78,16 +88,17 @@ From changed-file list, determine which conditional specialists to dispatch. Sta
 | `agent-stimulus-turbo` | Changed files include Stimulus controllers (`*_controller.js`) or Turbo view files (`.turbo_stream.erb`, templates using `<turbo-frame>`/`turbo_frame_tag`) |
 | `agent-ci-conventions` | Changed files include CI/CD workflow config (`.github/workflows/*.yml`, `.gitlab-ci.yml`, `Jenkinsfile`, `.circleci/config.yml`) or test files, or the commit/PR/branch metadata is available and worth checking |
 
-Report which specialists will run before dispatching, e.g.: `"Running: basic-quality, security, diff-cleanliness, frontend, agent-payments (local) — skipping database (overridden by local agent-database), skipping accessibility (no matching files)"`.
+Report which specialists will run before dispatching, e.g.: `"Running: basic-quality, security, diff-cleanliness, frontend, agent-payments (local) — skipping database (overridden by agent-database-local), skipping accessibility (no matching files)"`.
 
 **Opportunistic design context (never blocking):** if a Linear or Figma MCP tool is available this session, a quick best-effort check for linked ticket/design file can give specialists extra context on designer intent — but proceed identically whether or not this succeeds. Don't prompt user to set anything up.
 
 ### Step 4: Dispatch Specialists in Parallel
 
-Launch every applicable specialist from Step 3 via Agent tool, all in same message so they run concurrently. Pass each specialist the diff content from Step 1 (not whole repo), instruct it to scope findings to changed lines — pre-existing issues in unchanged code out of scope.
+Launch every applicable specialist from Step 3 via Agent tool, all in same message so they run concurrently. Pass each specialist the diff content from Step 1 as the primary scope — findings should be about changed lines, pre-existing issues in unchanged code out of scope — but expect and budget for **diff plus targeted verification reads**, not diff-only. Confident findings routinely require reading unchanged code the diff touches or calls into (association/method definitions, other callers, route/config files). Give every specialist Read/Grep access to the repo, not just the diff text. As a standard first step, instruct each specialist to grep the repo for other callers of any newly-touched public method with default create!/update! semantics before concluding no other paths are affected.
 
-- **Built-in specialists** dispatch by their registered subagent type (e.g. `agent-database`) as usual.
-- **Local specialists** (new or overriding a built-in) aren't registered plugin agents, so dispatch them as a generic agent (e.g. `subagent_type: general-purpose`): read the file at `location` from Step 2, and pass its full content as the agent's operating instructions in the prompt, followed by the diff. Since the local file may not have access to `plugins/review/agents/CLAUDE.md`, restate the three shared rules inline in the dispatch prompt: report-only (never edit files), flag only >95% confidence findings, cite every finding with file:line and follow the `review-output-format` per-finding template.
+- **Built-in and local specialists dispatch the same way**: by `subagent_type: <name>` directly (e.g. `agent-database`, or `agent-payments` for a local one) — local specialists scaffolded by `create-local-specialist` are real registered project agents, not generic-agent dispatches with pasted-in content. No prompt assembly needed beyond the diff itself.
+- **If a local specialist's `subagent_type` doesn't resolve** (created this session, before a restart — see Step 2), don't fail the whole review: note it in the final report as unavailable this session, dispatch every other applicable specialist normally, and suggest the user restart before re-running to pick it up.
+- **Metrics/instrumentation passthrough (opt-in):** if this skill is invoked with metrics/instrumentation instructions supplied by the caller (e.g. a wrapper's `--metrics <instructions>` flag), append that instructions text verbatim to every specialist's dispatch prompt this step — built-in and local alike. This skill doesn't define what "recording metrics" means; it only threads whatever text the caller supplies into each dispatch.
 
 ### Step 5: Compile the Report
 
@@ -132,6 +143,6 @@ Specialist agent fails/times out → continue with others, note incomplete secti
 ## Related
 
 - `plugins/review/agents/` — specialist definitions, each self-contained. Universal: `agent-basic-quality`, `agent-security`, `agent-diff-cleanliness`. Conditional: `agent-database`, `agent-frontend`, `agent-accessibility`, `agent-react`, `agent-rails`, `agent-stimulus-turbo`, `agent-ci-conventions`.
-- `.claude/review-specialists.yaml` (project-local, optional) — adds or overrides specialists per-project, see Step 2.
-- `plugins/review/skills/create-local-specialist/` — scaffolds new local specialist files and registers them in `.claude/review-specialists.yaml`.
+- `.claude/agents/*.md` (project-local, optional) — adds or overrides specialists per-project via the `review_specialist: true` marker plus `dispatch_condition`/`overrides` frontmatter, see Step 2. Requires a session restart after creation before dispatchable (subagent discovery happens at session start).
+- `plugins/review/skills/create-local-specialist/` — scaffolds new local specialist files as real registered agents at `.claude/agents/<name>.md`.
 - Superpowers `requesting-code-review:code-reviewer` — general code-review quality reference this orchestration pattern draws from

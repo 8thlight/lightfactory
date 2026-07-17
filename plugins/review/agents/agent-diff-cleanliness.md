@@ -33,10 +33,11 @@ Review diff across four categories:
 - Changes unrelated to PR title/description
 - Multiple concerns in single PR
 - Flag if >3 unrelated changes present
+- **Exception:** test additions that exercise a flag/feature-toggle introduced in this same diff aren't scope creep, even if the flag itself is out of the PR title's stated concern — they're expected coverage for a flag-rollout PR. Only flag if the tests exercise unrelated existing behavior, not the new flag.
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues: "No cleanliness issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues: "No cleanliness issues found."
 
 ## Severity Guidelines
 

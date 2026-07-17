@@ -1,9 +1,8 @@
 ---
 name: review-output-format
-description: Canonical per-finding markdown template and severity tier definitions (CRITICAL/MAJOR/MINOR) shared by every review specialist agent in plugins/review/agents/. Internal formatting contract, not user-triggered directly — invoked by review specialists and the review orchestrator to keep report structure consistent across specialists.
+description: Canonical per-finding markdown template and severity tier definitions (CRITICAL/MAJOR/MINOR) shared by every review specialist agent in plugins/review/agents/. Internal formatting contract, not meant to trigger on ordinary user conversation — invoked by review specialists and the review orchestrator to keep report structure consistent across specialists.
 triggers:
   - "review output format"
-disable-model-invocation: true
 allowed-tools: Read
 ---
 

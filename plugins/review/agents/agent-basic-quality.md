@@ -35,9 +35,13 @@ Per new method/function:
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues: "No basic quality issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues: "No basic quality issues found."
 
 ## Severity Guidelines
 - **CRITICAL:** No error handling on critical paths (payment, auth, data modification)
 - **MAJOR:** Missing tests for new functionality
 - **MINOR:** Naming improvements, non-critical error handling
+
+## Pre-Existing Bugs Newly Exposed by This Diff
+
+Diff can expose a pre-existing bug without introducing it (e.g. adding an `if:` guard around a previously-safe callback, where the guard condition can now be false in a case the old code never hit). Judge severity by user-facing impact after this diff merges, not by which line introduced the underlying flaw — if the diff makes a previously-unreachable bad path reachable, that's a MAJOR finding here, not out-of-scope. If the bug was already reachable before this diff and merely touched incidentally, flag as MINOR/discussion and say so explicitly.

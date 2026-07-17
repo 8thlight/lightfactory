@@ -1,6 +1,6 @@
 ---
 name: create-local-specialist
-description: Scaffold a project-local review specialist agent that plugs into the `specialist-review` skill via `.claude/review-specialists.yaml`, without editing the review plugin itself. Use when a user wants to add a custom review specialist scoped to their own project (e.g. domain-specific checks, or a specialist that overrides a built-in one like agent-database), or asks to "add a review specialist," "create a local review agent," "override the database reviewer for this project."
+description: Scaffold a project-local review specialist as a real registered Claude Code subagent (`.claude/agents/<name>.md`) that plugs into the `specialist-review` skill, without editing the review plugin itself. Use when a user wants to add a custom review specialist scoped to their own project (e.g. domain-specific checks, or a specialist that overrides a built-in one like agent-database), or asks to "add a review specialist," "create a local review agent," "override the database reviewer for this project."
 triggers:
   - "add a review specialist"
   - "create a local review agent"
@@ -11,7 +11,9 @@ allowed-tools: Read Write Edit Glob
 
 # Create Local Specialist
 
-Scaffolds a project-local specialist for the `specialist-review` skill (`plugins/review/skills/specialist-review/`) — one that lives in the *consuming* project, not this plugin, discovered via `.claude/review-specialists.yaml`. Use this instead of hand-writing a specialist file so the generated agent matches the pattern `specialist-review`'s orchestrator expects and gets registered correctly.
+Scaffolds a project-local specialist for the `specialist-review` skill (`plugins/review/skills/specialist-review/`) as a real Claude Code project agent — one that lives in the *consuming* project's `.claude/agents/`, not this plugin. Use this instead of hand-writing a specialist file so the generated agent matches the pattern `specialist-review`'s orchestrator expects and gets registered correctly.
+
+**Important — takes effect next session, not this one.** Claude Code discovers `.claude/agents/*.md` files at session start; a file written mid-session isn't callable as a `subagent_type` until the session restarts. Tell the user this plainly in Step 7 — it isn't a bug, it's how project-agent registration works.
 
 ## Workflow
 
@@ -19,16 +21,16 @@ Scaffolds a project-local specialist for the `specialist-review` skill (`plugins
 
 Ask (or infer from context) if not already clear:
 
-- **Name** — kebab-case, e.g. `agent-payments`. If it matches a built-in specialist name (`agent-database`, `agent-frontend`, `agent-accessibility`, `agent-react`, `agent-rails`, `agent-stimulus-turbo`, `agent-ci-conventions`, `agent-basic-quality`, `agent-security`, `agent-diff-cleanliness`), confirm the user actually intends to **override** that built-in, not create an unrelated specialist that happens to collide.
+- **Name** — kebab-case, e.g. `agent-payments`. If the intent is to **override** a built-in specialist (`agent-database`, `agent-frontend`, `agent-accessibility`, `agent-react`, `agent-rails`, `agent-stimulus-turbo`, `agent-ci-conventions`, `agent-basic-quality`, `agent-security`, `agent-diff-cleanliness`), give the local specialist its **own distinct name** (e.g. `agent-database-local`) rather than reusing the built-in's name — whether a project-registered agent actually shadows a plugin-registered one of the identical name is unverified, so don't rely on it. The `overrides:` frontmatter field (Step 4) is what tells `specialist-review` to skip the built-in, not name collision.
 - **Purpose/scope** — what domain this specialist reviews, in one or two sentences.
 - **Dispatch condition** — what changed-file pattern or condition should trigger it (e.g. "changed files include `app/services/payments/*`").
 - **Checks** — the specific patterns to catch. Ask for at least one concrete Bad/Good example per check; if the user only has a vague idea, help turn it into a checkable pattern rather than scaffolding a vague specialist.
 
 ### Step 2: Determine Location
 
-Default: `.claude/review-specialists/<name>.md` in the project root — the diffed repo's own git top-level. Confirm with the user if they want a different path — relative or absolute both work with `specialist-review`'s loader.
+Default: `.claude/agents/<name>.md` in the project root — the diffed repo's own git top-level. This is Claude Code's own project-agent directory, not a plugin-specific location — the file must live where the session actually discovers project agents.
 
-**If the repo is nested inside a non-git parent workspace** (e.g. a client-engagement folder containing the actual app repo as an untracked subdirectory with its own independent git history), the specialist and its `.claude/review-specialists.yaml` registration can live in that parent workspace's `.claude/` instead — `specialist-review`'s loader checks one directory level up from repo root as a fallback. Ask which the user wants: co-located with the repo (travels with it, e.g. if the repo might move to a different parent later) or in the parent workspace (keeps the repo's own working tree/branches untouched by tooling config — useful when the repo is a client's tracked codebase and the wrapping workspace is where engagement-level tooling lives).
+**If the repo is nested inside a non-git parent workspace** (e.g. a client-engagement folder containing the actual app repo as an untracked subdirectory with its own independent git history), agent discovery is tied to wherever the Claude Code session is launched from — ask the user where that is. If sessions for this repo are launched from the parent workspace root, `.claude/agents/` must live there, not inside the nested repo, or the session won't discover it. Don't assume the repo's own git top-level is the right place.
 
 ### Step 3: Decide Inline vs. Reference-File Shape
 
@@ -51,6 +53,9 @@ Write the file at the location from Step 2. It MUST be self-contained — a proj
 name: <name>
 description: "<one or two sentence purpose + when the orchestrator should dispatch this>. Report-only — never modifies files."
 model: sonnet
+review_specialist: true   # required marker — specialist-review ignores any .claude/agents/*.md file without this, even if it has a dispatch_condition field, since an unrelated custom agent could coincidentally define one
+dispatch_condition: "<condition from Step 1, verbatim — this is what specialist-review's Step 2/3 reads to classify and dispatch this specialist>"
+overrides: <built-in-name>   # omit this line entirely if not overriding a built-in
 ---
 
 # <Title> Review
@@ -115,7 +120,7 @@ Severity: **CRITICAL** = crashes/data loss/security/broken prod path. **MAJOR** 
 
 ### Step 4b: Scaffold the Specialist File (detection-table + reference-files shape)
 
-Same file, same location as Step 4a — but the `## Checks` section is replaced with a **Detection Table**, and each category's actual checklist moves to its own file in a `references/` directory sitting next to the specialist file (e.g. `.claude/review-specialists/references/<name>-<category>.md` for the default location from Step 2). This mirrors `agent-accessibility.md` exactly — read it if you need a worked example.
+Same file, same location as Step 4a — but the `## Checks` section is replaced with a **Detection Table**, and each category's actual checklist moves to its own file in a `references/` directory sitting next to the specialist file (e.g. `.claude/agents/references/<name>-<category>.md` for the default location from Step 2). This mirrors `agent-accessibility.md` exactly — read it if you need a worked example.
 
 Specialist file — Detection Table replaces `## Checks`:
 
@@ -170,37 +175,26 @@ The specialist file still carries its own `## Output Format`, `## Rules`, and `#
 
 ### Step 5: Validate Against Checklist
 
-- [ ] Frontmatter has `name` matching the intended registry name, `description` stating purpose + report-only, no XML tags
+- [ ] Frontmatter has `name` (distinct from any built-in if this overrides one — see Step 1), `description` stating purpose + report-only, `review_specialist: true` (required — without it, `specialist-review` won't recognize this file at all), `dispatch_condition` set verbatim from Step 1, `overrides:` present only if actually overriding a built-in, no XML tags
 - [ ] Inline shape: at least one Check with a concrete Bad/Good example, not just a vague description. Reference-file shape: Detection Table has a real trigger per category, and every reference file has at least one concrete Bad/Good example
 - [ ] Output Format section present, matching the shared per-finding template — don't invent a different shape
 - [ ] Rules section states report-only, >95% confidence threshold, and file:line citation — inline, since the local file can't rely on the plugin's shared `CLAUDE.md`
 - [ ] File is self-contained — no reference to `plugins/review/agents/...` paths a project won't have
+- [ ] File lives at `.claude/agents/<name>.md` in the location confirmed in Step 2 — not a plugin-specific directory
 - [ ] Reference-file shape only: reference files actually live in `references/` next to the specialist file, and every Detection Table row's file path resolves to one that exists
+- [ ] If `<name>` already exists at that path, confirmed with the user this is an intentional replacement, not silently clobbering their prior local specialist
 
-### Step 6: Register in `.claude/review-specialists.yaml`
+### Step 6: Confirm and Flag the Restart Requirement
 
-Create the file if it doesn't exist, at whichever location was chosen in Step 2 (repo root alongside `.claude/settings.json`, or the parent workspace root one level up). Read existing content first if present — this is an append/merge, not an overwrite of the whole file.
+Tell the user, explicitly and without burying it:
 
-```yaml
-specialists:
-  - name: <name>
-    dispatch_condition: "<condition from Step 1>"
-    location: <path from Step 2>
-```
-
-See `references/review-specialists.example.yaml` for a worked example with both a new specialist and a built-in override side by side.
-
-- If `<name>` already exists in the file, confirm with the user this is an intentional replacement (overriding their own prior local specialist, not silently clobbering it) before overwriting that entry.
-- If `<name>` matches a built-in, remind the user: from now on, `specialist-review` will use this local file instead of the built-in for every run in this project, until the entry is removed or renamed.
-
-### Step 7: Confirm
-
-Tell the user what was created and where, and that it takes effect the next time the `specialist-review` skill runs in this project — no plugin changes needed, nothing to reinstall.
+1. What was created and where (`.claude/agents/<name>.md`).
+2. What it does and what triggers it (`dispatch_condition`), and what it overrides if anything.
+3. **It is not usable yet this session.** Claude Code discovers `.claude/agents/*.md` at session start — until the user restarts their Claude Code session, `<name>` isn't a resolvable `subagent_type` and `specialist-review` cannot dispatch it. After restarting, the next `specialist-review` run will pick it up automatically — nothing else to register, no plugin changes, no reinstall.
 
 ## Related
 
-- `plugins/review/skills/specialist-review/SKILL.md` — Step 2 (loads this config), Step 4 (dispatches local specialists as generic agents)
+- `plugins/review/skills/specialist-review/SKILL.md` — Step 2 (discovers `.claude/agents/*.md` local specialists via the `review_specialist: true` marker plus `dispatch_condition`/`overrides` frontmatter), Step 4 (dispatches local specialists by `subagent_type` same as built-ins)
 - `plugins/review/skills/review-output-format/SKILL.md` — canonical per-finding template this scaffold mirrors
 - `plugins/review/agents/CLAUDE.md` — shared rules this scaffold inlines, since local files can't assume plugin context is available
 - `plugins/review/agents/agent-accessibility.md` and `plugins/review/agents/references/` — worked example of the detection-table + reference-files shape Step 4b mirrors
-- `references/review-specialists.example.yaml` — example `.claude/review-specialists.yaml` content, Step 6

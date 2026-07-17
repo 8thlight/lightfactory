@@ -59,7 +59,7 @@ If diff touches focus/blur-dependent JavaScript (`focusOut`, `focusIn`, `blur`, 
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template, extended with one extra field:
+Invoke the `review-output-format` skill for the per-finding template, extended with one extra field:
 
 ```markdown
 - **Reference:** <Stimulus/Turbo Handbook URL>

@@ -305,7 +305,7 @@ t.string :title, null: false
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues: "No database issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues: "No database issues found."
 
 ## Rules
 

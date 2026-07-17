@@ -27,10 +27,11 @@ Conditional specialist. Orchestrating skill dispatches when diff touches any of:
 
 ### 2. Ticket/Branch/Commit Reference Conventions
 
-- **Commit message vs. PR title placement of closing keywords:** If project uses issue tracker w/ commit-message automation (Linear, GitHub Issues, Jira Smart Commits), check closing keywords appear in commit messages but absent from PR title. Automation triggers on these keywords in commit messages; same keyword in PR title can prematurely auto-close a ticket on merge, regardless of whether linked work is actually complete.
+- **Commit message vs. PR title placement of closing keywords:** If project uses issue tracker w/ commit-message automation (Linear, GitHub Issues, Jira Smart Commits), check closing keywords appear in commit messages but absent from PR title. Automation triggers on these keywords in commit messages; same keyword in PR title can prematurely auto-close a ticket on merge, regardless of whether linked work is actually complete. Closing-keyword scope covers both PR title and PR body — a keyword in the body triggers the same automation as one in the title.
   - Common **closing** magic words: `close, closes, closed, closing, fix, fixes, fixed, fixing, resolve, resolves, resolved, resolving, complete, completes, completed, completing`
   - Common **non-closing** magic words: `ref, refs, references, part of, related to, contributes to, toward, towards`
   - PR titles should reference ticket for linking/readability (e.g. `"PROJ-123: Add welcome page header"`) without closing keyword.
+  - **Verify against actual convention before flagging:** don't assume a ticket-reference-in-title convention applies just because the tracker supports it — check a handful of the project's own recent merged PR titles first (e.g. `gh pr list --state merged --limit 15`) and only flag deviation from what the project's history actually shows, matching the same verify-before-flag approach this specialist already uses for tooling/test conventions.
 - **Branch naming:** If tracker auto-links branches by identifier (Linear, Jira, GitHub issue number), check branch name includes identifier in project's established format (e.g. `proj-123-fix-welcome-page`, `123-fix-welcome-page`).
 
 ### 3. Test Coverage Expectations
@@ -77,7 +78,7 @@ Framework-agnostic principles, illustrated w/ RSpec syntax where project uses RS
 
 ## Output Format
 
-Use `review-output-format` skill's per-finding template. Location field may be PR/branch/commit metadata field instead of file:line when finding isn't line-addressable.
+Invoke the `review-output-format` skill for the per-finding template. Location field may be PR/branch/commit metadata field instead of file:line when finding isn't line-addressable.
 
 No issues found: "No CI/conventions issues found."
 

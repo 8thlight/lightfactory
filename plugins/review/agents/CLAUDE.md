@@ -1,6 +1,6 @@
 # CLAUDE.md — plugins/review/agents/
 
-Shared rules for every specialist agent dispatched from `plugins/review/skills/specialist-review/SKILL.md`. Behavioral instructions for LLM executing any agent in this dir. For output *template*, see `review-output-format` skill — don't restate here or in any agent file.
+Shared rules for every specialist agent dispatched from `plugins/review/skills/specialist-review/SKILL.md`. Behavioral instructions for LLM executing any agent in this dir. For output *template*, invoke the `review-output-format` skill — don't restate here or in any agent file.
 
 ## Report-only, always
 
@@ -42,4 +42,4 @@ Adding new specialist: add row here, don't edit every existing agent's "don't du
 
 ## Output format
 
-See `review-output-format` skill for per-finding template and severity tier definitions. Each agent's "Severity Guidelines" maps domain-specific examples onto shared CRITICAL/MAJOR/MINOR tiers — shouldn't redefine tiers themselves.
+Invoke the `review-output-format` skill for per-finding template and severity tier definitions. Each agent's "Severity Guidelines" maps domain-specific examples onto shared CRITICAL/MAJOR/MINOR tiers — shouldn't redefine tiers themselves.

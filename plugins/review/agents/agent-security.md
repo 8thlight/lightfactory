@@ -42,6 +42,8 @@ Site.create(params[:site])
 Site.create(site_params)  # site_params permits only known-safe attributes
 ```
 
+**Sub-pattern — new attribute added specifically to gate callback/logic execution:** not every mass-assignment risk is `.create(params[:x])`-shaped. A plain Ruby attribute (not a params hash) added to a model/service specifically to control whether a callback or branch runs is equally risky if any caller can set it directly, even a caller passing a hardcoded keyword argument today — check whether the attribute's write path stays restricted to trusted call sites as the code evolves, not just whether current callers happen to be safe.
+
 ### Authorization Checks
 
 **Pattern:** Every action touching a user-owned resource must verify current actor is authorized to access/modify it.
@@ -65,6 +67,8 @@ Check for:
 - Scoping queries to current actor for list/index actions
 - Explicit authorization calls for show/update/destroy actions
 - Defined policy/rule set for which attributes a user can modify
+
+**Before flagging a missing in-controller authorization check:** check `config/routes.rb` (or equivalent router config) for route-level auth constraints (e.g. Devise's `authenticate :user do ... end` route blocks). Route-level gating is invisible from the controller file alone — a controller with no visible auth check may still be fully gated at the router level.
 
 ### Authentication Bypasses
 
@@ -222,6 +226,6 @@ resource.update(resource_params)
 
 ## Output Format
 
-Use the `review-output-format` skill's per-finding template. No issues: "No security issues found."
+Invoke the `review-output-format` skill for the per-finding template. No issues: "No security issues found."
 
 **When to escalate:** Auth bypass without clear reason, mass assignment without an allowlist, sensitive data in logs/JSON, string-interpolated queries with user input, unescaped HTML from user content.
