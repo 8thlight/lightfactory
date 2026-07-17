@@ -36,4 +36,4 @@ Each specialist maps its own domain-specific examples onto these three tiers in 
 
 ## Exception: agent-accessibility
 
-`agent-accessibility` reports natively in High/Medium/Low, not CRITICAL/MAJOR/MINOR, because its findings map onto WCAG conformance impact rather than general code-defect severity. The review orchestrator normalizes CRITICAL→High, MAJOR→Medium, MINOR→Low when compiling the combined report (see `plugins/review/skills/review/SKILL.md`, Step 4).
+`agent-accessibility` reports natively in High/Medium/Low, not CRITICAL/MAJOR/MINOR, because its findings map onto WCAG conformance impact rather than general code-defect severity. The `specialist-review` orchestrator normalizes CRITICAL→High, MAJOR→Medium, MINOR→Low when compiling the combined report (see `plugins/review/skills/specialist-review/SKILL.md`, Step 5).

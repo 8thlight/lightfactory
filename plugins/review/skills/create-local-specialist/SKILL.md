@@ -1,6 +1,6 @@
 ---
 name: create-local-specialist
-description: Scaffold a project-local review specialist agent that plugs into the `review` skill via `.claude/review-specialists.yaml`, without editing the review plugin itself. Use when a user wants to add a custom review specialist scoped to their own project (e.g. domain-specific checks, or a specialist that overrides a built-in one like agent-database), or asks to "add a review specialist," "create a local review agent," "override the database reviewer for this project."
+description: Scaffold a project-local review specialist agent that plugs into the `specialist-review` skill via `.claude/review-specialists.yaml`, without editing the review plugin itself. Use when a user wants to add a custom review specialist scoped to their own project (e.g. domain-specific checks, or a specialist that overrides a built-in one like agent-database), or asks to "add a review specialist," "create a local review agent," "override the database reviewer for this project."
 triggers:
   - "add a review specialist"
   - "create a local review agent"
@@ -11,7 +11,7 @@ allowed-tools: Read Write Edit Glob
 
 # Create Local Specialist
 
-Scaffolds a project-local specialist for the `review` skill (`plugins/review/skills/review/`) — one that lives in the *consuming* project, not this plugin, discovered via `.claude/review-specialists.yaml`. Use this instead of hand-writing a specialist file so the generated agent matches the pattern `review`'s orchestrator expects and gets registered correctly.
+Scaffolds a project-local specialist for the `specialist-review` skill (`plugins/review/skills/specialist-review/`) — one that lives in the *consuming* project, not this plugin, discovered via `.claude/review-specialists.yaml`. Use this instead of hand-writing a specialist file so the generated agent matches the pattern `specialist-review`'s orchestrator expects and gets registered correctly.
 
 ## Workflow
 
@@ -26,7 +26,7 @@ Ask (or infer from context) if not already clear:
 
 ### Step 2: Determine Location
 
-Default: `.claude/review-specialists/<name>.md` in the project root. Confirm with the user if they want a different path — relative or absolute both work with `review`'s loader.
+Default: `.claude/review-specialists/<name>.md` in the project root. Confirm with the user if they want a different path — relative or absolute both work with `specialist-review`'s loader.
 
 ### Step 3: Decide Inline vs. Reference-File Shape
 
@@ -189,15 +189,15 @@ specialists:
 See `references/review-specialists.example.yaml` for a worked example with both a new specialist and a built-in override side by side.
 
 - If `<name>` already exists in the file, confirm with the user this is an intentional replacement (overriding their own prior local specialist, not silently clobbering it) before overwriting that entry.
-- If `<name>` matches a built-in, remind the user: from now on, `review` will use this local file instead of the built-in for every run in this project, until the entry is removed or renamed.
+- If `<name>` matches a built-in, remind the user: from now on, `specialist-review` will use this local file instead of the built-in for every run in this project, until the entry is removed or renamed.
 
 ### Step 7: Confirm
 
-Tell the user what was created and where, and that it takes effect the next time the `review` skill runs in this project — no plugin changes needed, nothing to reinstall.
+Tell the user what was created and where, and that it takes effect the next time the `specialist-review` skill runs in this project — no plugin changes needed, nothing to reinstall.
 
 ## Related
 
-- `plugins/review/skills/review/SKILL.md` — Step 2 (loads this config), Step 4 (dispatches local specialists as generic agents)
+- `plugins/review/skills/specialist-review/SKILL.md` — Step 2 (loads this config), Step 4 (dispatches local specialists as generic agents)
 - `plugins/review/skills/review-output-format/SKILL.md` — canonical per-finding template this scaffold mirrors
 - `plugins/review/agents/CLAUDE.md` — shared rules this scaffold inlines, since local files can't assume plugin context is available
 - `plugins/review/agents/agent-accessibility.md` and `plugins/review/agents/references/` — worked example of the detection-table + reference-files shape Step 4b mirrors

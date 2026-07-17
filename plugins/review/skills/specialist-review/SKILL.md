@@ -1,6 +1,6 @@
 ---
-name: review
-description: Run a multi-pass, human-validated code review of the current diff — universal checks (basic quality, security, diff cleanliness) always run, plus conditional specialists (database, frontend, accessibility, react, rails, stimulus/turbo, CI conventions) dispatched only when relevant files changed. Use when the user wants a thorough review before opening a PR, asks to "review my changes," "check for accessibility issues," "run a review," or wants a second opinion spanning security/database/accessibility/quality/framework-specific concerns before merging. Never auto-fixes — surfaces findings for human review.
+name: specialist-review
+description: Run a multi-pass, human-validated code review of the current diff using domain specialist agents — universal checks (basic quality, security, diff cleanliness) always run, plus conditional specialists (database, frontend, accessibility, react, rails, stimulus/turbo, CI conventions) dispatched only when relevant files changed. Use when the user wants a thorough review before opening a PR, asks to "review my changes," "check for accessibility issues," "run a review," or wants a second opinion spanning security/database/accessibility/quality/framework-specific concerns before merging. Never auto-fixes — surfaces findings for human review.
 triggers:
   - "review my changes"
   - "review this diff"
@@ -8,10 +8,11 @@ triggers:
   - "check for accessibility issues"
   - "multi-pass review"
   - "review before pr"
+  - "specialist review"
 allowed-tools: Read Glob Grep Bash Agent
 ---
 
-# Review Skill
+# Specialist Review Skill
 
 Orchestrates multi-pass review: shallow universal pass + specialist agents dispatched by what actually changed. Adapted from EnGen `review-deep` orchestration pattern (parallel specialist dispatch) — see `plugins/review/agents/` for specialists themselves, each with source attribution comment where copied.
 

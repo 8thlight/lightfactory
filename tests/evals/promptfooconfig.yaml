@@ -1107,11 +1107,11 @@ tests:
       grading: llm-judge
 
 # ---------------------------------------------------------------------------
-# REVIEW skill scenarios
+# SPECIALIST-REVIEW skill scenarios
 # ---------------------------------------------------------------------------
 
-  # review-01: Determines diff scope via staged -> unstaged -> default-branch fallback, stops cleanly when empty
-  - description: "[review-01] Diff-scope fallback chain, clean stop when there is nothing to review"
+  # specialist-review-01: Determines diff scope via staged -> unstaged -> default-branch fallback, stops cleanly when empty
+  - description: "[specialist-review-01] Diff-scope fallback chain, clean stop when there is nothing to review"
     vars:
       prompt: |
         GIVEN: A git repository with no staged changes, no unstaged changes, and no commits ahead of the
@@ -1121,7 +1121,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the review skill correctly resolved diff scope and stopped cleanly.
+          You are evaluating whether the specialist-review skill correctly resolved diff scope and stopped cleanly.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -1147,11 +1147,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: review
+      skill: specialist-review
       grading: llm-judge
 
-  # review-02: Dispatches only the specialists relevant to changed files, always including universal specialists, and reports skips with reasons
-  - description: "[review-02] Conditional specialist dispatch matches changed files; skips reported with reasons"
+  # specialist-review-02: Dispatches only the specialists relevant to changed files, always including universal specialists, and reports skips with reasons
+  - description: "[specialist-review-02] Conditional specialist dispatch matches changed files; skips reported with reasons"
     vars:
       prompt: |
         GIVEN: A diff that only touches a Ruby model file and an RSpec spec file — no migration, no
@@ -1169,7 +1169,7 @@ tests:
         value: "rails"
       - type: llm-rubric
         value: |
-          You are evaluating whether the review skill dispatched only the relevant specialists for a
+          You are evaluating whether the specialist-review skill dispatched only the relevant specialists for a
           Ruby-only diff (model file + RSpec spec, no migration/frontend/CI files).
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
@@ -1196,11 +1196,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: review
+      skill: specialist-review
       grading: llm-judge
 
-  # review-03: All applicable specialists are dispatched in a single parallel message, not sequentially
-  - description: "[review-03] Specialists dispatched in parallel, not sequentially"
+  # specialist-review-03: All applicable specialists are dispatched in a single parallel message, not sequentially
+  - description: "[specialist-review-03] Specialists dispatched in parallel, not sequentially"
     vars:
       prompt: |
         GIVEN: A diff touching a Rails controller, an ERB view with interactive elements, and a Stimulus
@@ -1210,7 +1210,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the review skill dispatched specialist agents in parallel.
+          You are evaluating whether the specialist-review skill dispatched specialist agents in parallel.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -1236,11 +1236,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: review
+      skill: specialist-review
       grading: llm-judge
 
-  # review-04: Compiles a single report with findings normalized, de-duplicated, and never auto-fixes
-  - description: "[review-04] Report normalized to High/Medium/Low, de-duplicated, no auto-fix"
+  # specialist-review-04: Compiles a single report with findings normalized, de-duplicated, and never auto-fixes
+  - description: "[specialist-review-04] Report normalized to High/Medium/Low, de-duplicated, no auto-fix"
     vars:
       prompt: |
         GIVEN: Two specialists (agent-frontend and agent-accessibility) both flag the same missing
@@ -1257,7 +1257,7 @@ tests:
         value: "(?i)low priority"
       - type: llm-rubric
         value: |
-          You are evaluating whether the review skill correctly compiled and normalized its findings.
+          You are evaluating whether the specialist-review skill correctly compiled and normalized its findings.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -1283,11 +1283,11 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: review
+      skill: specialist-review
       grading: llm-judge
 
-  # review-05: A specialist reporting no issues is stated explicitly rather than omitted
-  - description: "[review-05] Explicit no-issues statement rather than silent omission"
+  # specialist-review-05: A specialist reporting no issues is stated explicitly rather than omitted
+  - description: "[specialist-review-05] Explicit no-issues statement rather than silent omission"
     vars:
       prompt: |
         GIVEN: A diff where agent-database was dispatched (a migration file changed) but found no issues.
@@ -1297,11 +1297,11 @@ tests:
       - type: regex
         value: "(?i)no (database )?issues found"
     metadata:
-      skill: review
+      skill: specialist-review
       grading: code
 
-  # review-06: A failed or timed-out specialist does not block the rest of the review
-  - description: "[review-06] Failed specialist does not block the rest of the review"
+  # specialist-review-06: A failed or timed-out specialist does not block the rest of the review
+  - description: "[specialist-review-06] Failed specialist does not block the rest of the review"
     vars:
       prompt: |
         GIVEN: Five specialists are dispatched. agent-frontend times out or errors; the other four
@@ -1311,7 +1311,7 @@ tests:
     assert:
       - type: llm-rubric
         value: |
-          You are evaluating whether the review skill handled a failed specialist gracefully.
+          You are evaluating whether the specialist-review skill handled a failed specialist gracefully.
 
           Score each dimension 1-3. Pass threshold: 9 out of 12.
 
@@ -1337,7 +1337,7 @@ tests:
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
-      skill: review
+      skill: specialist-review
       grading: llm-judge
 
 # ---------------------------------------------------------------------------
@@ -1345,7 +1345,7 @@ tests:
 # ---------------------------------------------------------------------------
 # Note: review-output-format has disable-model-invocation: true — it is never
 # triggered directly by a user prompt. These scenarios exercise its contract
-# indirectly through the review skill, which is the only consumer of the format.
+# indirectly through the specialist-review skill, which is the only consumer of the format.
 
   # review-output-format-01: Every finding compiled into a review report uses the canonical per-finding template fields
   - description: "[review-output-format-01] Compiled findings use the canonical per-finding template fields"

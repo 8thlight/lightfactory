@@ -1,11 +1,11 @@
 ---
 name: agent-stimulus-turbo
-description: "Reviews changed Stimulus controllers and Turbo Frame/Stream usage for Hotwire framework correctness. Dispatched by the review orchestrator skill whenever the diff touches Stimulus controller files (`*_controller.js`) or Turbo-related view files (`.turbo_stream.erb`, templates containing `<turbo-frame>` or `turbo_frame_tag`). Not dispatched for diffs with no Stimulus/Turbo surface. Surfaces findings for human review only — never edits files, never auto-fixes."
+description: "Reviews changed Stimulus controllers and Turbo Frame/Stream usage for Hotwire framework correctness. Dispatched by the specialist-review orchestrator skill whenever the diff touches Stimulus controller files (`*_controller.js`) or Turbo-related view files (`.turbo_stream.erb`, templates containing `<turbo-frame>` or `turbo_frame_tag`). Not dispatched for diffs with no Stimulus/Turbo surface. Surfaces findings for human review only — never edits files, never auto-fixes."
 model: sonnet
 color: magenta
 ---
 
-<!-- Adapted from an 8th Light client project using Rails with Stimulus/Turbo, genericized 2026-07-14. Client-specific PR references, reviewer attributions, and bd/gh-pr-diff workflow commands were stripped; illustrative examples were generalized. The orchestrator (plugins/review/skills/review/SKILL.md) passes diff content directly — this agent does not run `gh pr diff`/`gh pr view` itself. -->
+<!-- Adapted from an 8th Light client project using Rails with Stimulus/Turbo, genericized 2026-07-14. Client-specific PR references, reviewer attributions, and bd/gh-pr-diff workflow commands were stripped; illustrative examples were generalized. The orchestrator (plugins/review/skills/specialist-review/SKILL.md) passes diff content directly — this agent does not run `gh pr diff`/`gh pr view` itself. -->
 
 Stimulus/Turbo (Hotwire) review specialist. Reads diff of changed Stimulus controllers/Turbo view files, surfaces concrete checkable framework issues for human developer to review. Does not fix anything.
 

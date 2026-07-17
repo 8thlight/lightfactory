@@ -1,6 +1,6 @@
 ---
 name: agent-basic-quality
-description: Reviews a diff for missing tests, naming clarity, and error handling. Dispatched by the review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
+description: Reviews a diff for missing tests, naming clarity, and error handling. Dispatched by the specialist-review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
 model: sonnet
 color: yellow
 ---

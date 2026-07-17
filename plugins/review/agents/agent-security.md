@@ -1,6 +1,6 @@
 ---
 name: agent-security
-description: Reviews a diff for security vulnerabilities including XSS, CSRF, authorization gaps, and injection risks. Dispatched by the review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
+description: Reviews a diff for security vulnerabilities including XSS, CSRF, authorization gaps, and injection risks. Dispatched by the specialist-review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
 model: sonnet
 color: red
 ---

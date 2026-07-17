@@ -9,7 +9,7 @@ Grading rubric for Category B skills. Use when code-grading cannot assess qualit
 | `reflect` | Proposal relevance, actionability, anti-pattern adherence | reflect-02, reflect-03 |
 | `research` (partial) | Parallel dispatch behavior, AskUserQuestion usage | research-02, research-04, research-05 |
 | `implement` (partial) | RED gate hard stop, remediation limit enforcement | implement-03, implement-06 |
-| `review` | Diff-scope resolution, conditional specialist dispatch, parallel fan-out, report normalization/dedup, no-auto-fix enforcement | review-01, review-02, review-03, review-04, review-06 |
+| `specialist-review` | Diff-scope resolution, conditional specialist dispatch, parallel fan-out, report normalization/dedup, no-auto-fix enforcement | specialist-review-01, specialist-review-02, specialist-review-03, specialist-review-04, specialist-review-06 |
 
 ---
 
@@ -60,7 +60,7 @@ Do not give partial credit — choose the closest whole number.
 
 ---
 
-## review
+## specialist-review
 
 | Dimension | What it measures |
 |-----------|-----------------|
@@ -69,7 +69,7 @@ Do not give partial credit — choose the closest whole number.
 | Actionability | Findings are normalized, de-duplicated, and never silently omitted (empty result stated explicitly) |
 | Specificity | No auto-fix, no auto-created PR comments or tracker issues — findings only, for human review |
 
-**Pass threshold:** 9/12. Scenarios: review-01 through review-04 and review-06 (LLM-judge); review-05 (code-graded explicit-empty-result check).
+**Pass threshold:** 9/12. Scenarios: specialist-review-01 through specialist-review-04 and specialist-review-06 (LLM-judge); specialist-review-05 (code-graded explicit-empty-result check).
 
 ---
 

@@ -1,21 +1,22 @@
-skill: review
-version: "2026-07-15"
+skill: specialist-review
+version: "2026-07-17"
 category: behavioral
 
-# Triggering tests for the review skill.
+# Triggering tests for the specialist-review skill.
 #
 # The testable unit is the description field:
-#   "Run a multi-pass, human-validated code review of the current diff —
-#    universal checks (basic quality, security, diff cleanliness) always run,
-#    plus conditional specialists (database, frontend, accessibility, react,
-#    rails, stimulus/turbo, CI conventions) dispatched only when relevant files
-#    changed. Use when the user wants a thorough review before opening a PR,
-#    asks to 'review my changes,' 'check for accessibility issues,' 'run a
-#    review,' or wants a second opinion spanning security/database/
-#    accessibility/quality/framework-specific concerns before merging. Never
-#    auto-fixes — surfaces findings for human review."
+#   "Run a multi-pass, human-validated code review of the current diff using
+#    domain specialist agents — universal checks (basic quality, security,
+#    diff cleanliness) always run, plus conditional specialists (database,
+#    frontend, accessibility, react, rails, stimulus/turbo, CI conventions)
+#    dispatched only when relevant files changed. Use when the user wants a
+#    thorough review before opening a PR, asks to 'review my changes,' 'check
+#    for accessibility issues,' 'run a review,' or wants a second opinion
+#    spanning security/database/accessibility/quality/framework-specific
+#    concerns before merging. Never auto-fixes — surfaces findings for human
+#    review."
 #
-# Probe with: "When would you use the review skill?"
+# Probe with: "When would you use the specialist-review skill?"
 
 triggering:
   positive:
@@ -26,6 +27,7 @@ triggering:
     - "check for accessibility issues"
     - "multi-pass review"
     - "review before pr"
+    - "specialist review"
 
     # Phrases aligned with "thorough review before opening a PR"
     - "can you do a thorough review before I open the PR?"
@@ -76,7 +78,7 @@ triggering:
     - "check if the server is running"
 
 functional:
-  - id: review-01
+  - id: specialist-review-01
     description: Determines the diff scope by falling back staged → unstaged → against default branch, and stops cleanly when there is nothing to review
     grading: llm-judge
     given: |
@@ -91,7 +93,7 @@ functional:
       - "Skill does NOT dispatch any specialist agents when there is no diff"
     notes: "Tests the diff-resolution fallback chain in Step 1, and the explicit stop condition."
 
-  - id: review-02
+  - id: specialist-review-02
     description: Dispatches only the specialists relevant to the changed files, always including the three universal specialists, and reports what was skipped and why
     grading: llm-judge
     given: |
@@ -105,7 +107,7 @@ functional:
       - "agent-frontend, agent-accessibility, agent-react, agent-stimulus-turbo are NOT dispatched (no matching file types)"
       - "The report explicitly states which specialists ran and which were skipped, with a reason for each skip"
 
-  - id: review-03
+  - id: specialist-review-03
     description: All applicable specialists for a given run are dispatched in a single message, not sequentially
     grading: llm-judge
     given: |
@@ -118,7 +120,7 @@ functional:
       - "Each dispatched specialist receives the diff content, not an instruction to read the whole repo"
     notes: "Mirrors research-02's parallel-dispatch assertion. Haiku may dispatch specialists one at a time — known failure mode."
 
-  - id: review-04
+  - id: specialist-review-04
     description: Compiles a single report with findings normalized to High/Medium/Low, de-duplicated across specialists, and never edits files or auto-fixes
     grading: llm-judge
     given: |
@@ -135,7 +137,7 @@ functional:
       - "No PR comment, tracker issue, or commit is created automatically"
       - "A 'Specialists Run' section lists what ran and what was skipped"
 
-  - id: review-05
+  - id: specialist-review-05
     description: A specialist reporting no issues is stated explicitly rather than omitted from the report
     grading: code
     given: |
@@ -146,7 +148,7 @@ functional:
       - "The report contains an explicit statement that agent-database found no issues (e.g. 'No database issues found.')"
       - "The database section is not silently omitted from the report"
 
-  - id: review-06
+  - id: specialist-review-06
     description: A failed or timed-out specialist does not block the rest of the review
     grading: llm-judge
     given: |

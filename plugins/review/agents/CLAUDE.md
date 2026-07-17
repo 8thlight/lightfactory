@@ -1,6 +1,6 @@
 # CLAUDE.md — plugins/review/agents/
 
-Shared rules for every specialist agent dispatched from `plugins/review/skills/review/SKILL.md`. Behavioral instructions for LLM executing any agent in this dir. For output *template*, see `review-output-format` skill — don't restate here or in any agent file.
+Shared rules for every specialist agent dispatched from `plugins/review/skills/specialist-review/SKILL.md`. Behavioral instructions for LLM executing any agent in this dir. For output *template*, see `review-output-format` skill — don't restate here or in any agent file.
 
 ## Report-only, always
 

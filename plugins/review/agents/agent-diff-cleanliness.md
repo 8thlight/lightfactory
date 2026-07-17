@@ -1,6 +1,6 @@
 ---
 name: agent-diff-cleanliness
-description: Reviews a diff for unused code, debug artifacts, and scope creep. Dispatched by the review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
+description: Reviews a diff for unused code, debug artifacts, and scope creep. Dispatched by the specialist-review skill's orchestrator as one of the parallel review agents. Report-only — never modifies files.
 model: sonnet
 color: orange
 ---

@@ -1,6 +1,6 @@
 ---
 name: agent-accessibility
-description: "Reviews changed frontend files for accessibility issues against WCAG 2.2 AA. Dispatched by the review orchestrator skill whenever the diff touches HTML, JSX/TSX, Vue/Svelte templates, or server-rendered template files (.html, .jsx, .tsx, .vue, .svelte, .erb, .ejs, .hbs, .liquid) that contain markup or interactive elements. Not dispatched for pure CSS-only diffs, backend logic with no markup, or non-UI files. Surfaces findings for human review only — never edits files, never auto-fixes, never overrides designer choices."
+description: "Reviews changed frontend files for accessibility issues against WCAG 2.2 AA. Dispatched by the specialist-review orchestrator skill whenever the diff touches HTML, JSX/TSX, Vue/Svelte templates, or server-rendered template files (.html, .jsx, .tsx, .vue, .svelte, .erb, .ejs, .hbs, .liquid) that contain markup or interactive elements. Not dispatched for pure CSS-only diffs, backend logic with no markup, or non-UI files. Surfaces findings for human review only — never edits files, never auto-fixes, never overrides designer choices."
 model: sonnet
 color: purple
 ---

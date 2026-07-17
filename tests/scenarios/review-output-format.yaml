@@ -7,7 +7,7 @@ category: structured-output
 # This skill has `disable-model-invocation: true` — it is an internal
 # formatting contract, not something a user should trigger directly via
 # natural language. It is invoked programmatically by review specialists and
-# the review orchestrator (plugins/review/skills/review/SKILL.md) to keep
+# the specialist-review orchestrator (plugins/review/skills/specialist-review/SKILL.md) to keep
 # finding structure consistent across specialists.
 #
 # The "positive" list below is intentionally thin: it exists so Check 6
