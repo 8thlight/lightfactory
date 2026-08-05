@@ -26,6 +26,16 @@ Catch authorization, input validation, data exposure issues before merge. Preven
 
 ## Checks
 
+### Asserting a Control Exists
+
+**Never state a code path is "already gated," "protected," or "safe" unless you have traced that exact path end-to-end and confirmed the guard actually covers the case in front of you.** "I found a guard with a similar name elsewhere" or "this looks like it follows the same pattern as the protected path" is not the same as tracing the call.
+
+- If you traced the path and the guard covers it: state it as fact, cite file:line for the guard and the call site it covers.
+- If you did not trace every call site (e.g. multiple write paths reach the same field/state, and you only checked one), say so explicitly: "checked `update_user`; did not verify `create_user` reaches the same check — needs verification" — do not generalize to "consistently gated."
+- If you found no evidence of a gap, that is an absence of a finding, not a certification of safety. Report only the gaps you found; don't add a closing claim that everything else is covered.
+
+A false "this is already safe" claim is worse than a missed finding — it actively certifies broken code as reviewed.
+
 ### Mass Assignment / Parameter Allowlisting
 
 **Pattern:** Any code path creating/updating a record from user-supplied input must use explicit allowlist of permitted attributes.
@@ -69,6 +79,14 @@ Check for:
 - Defined policy/rule set for which attributes a user can modify
 
 **Before flagging a missing in-controller authorization check:** check `config/routes.rb` (or equivalent router config) for route-level auth constraints (e.g. Devise's `authenticate :user do ... end` route blocks). Route-level gating is invisible from the controller file alone — a controller with no visible auth check may still be fully gated at the router level.
+
+**Privilege escalation / role assignment (CWE-269, OWASP API5:2023):** any endpoint or method that assigns, elevates, or changes a role/permission tier on a user record needs its own check, separate from ordinary "is this record scoped to the current actor" authorization — a user can be fully authorized to update their own record while still being unauthorized to grant themselves (or anyone) a higher role.
+
+Check every write path that can set a role/permission field (`create`, `update`, bulk/admin endpoints, background jobs, seed/import paths) — not just the one that looks intended for role changes:
+- Does the actor's own role get checked against the role being granted, not just against "can this actor edit this record"?
+- **Self-promotion:** can an actor set or change their own role field, directly or via a param that reaches the same write path as an admin-only role field?
+- **Escalation to the highest privilege tier:** is promotion to the top role (e.g. super-admin/owner) held to a stricter check than promotion to a mid-tier role, or does one gate cover all tiers uniformly when it shouldn't?
+- If one write path (e.g. `update_user`) is gated but a sibling path reaching the same field (e.g. `create_user`, an admin bulk-update, an API-only path) is not verified to share that gate, do not describe the field as "consistently gated" — see Asserting a Control Exists above.
 
 ### Authentication Bypasses
 
