@@ -1,6 +1,6 @@
 ---
 name: agent-frontend
-description: "Review HTML, CSS, and JS/JSX templates and stylesheets for quality, maintainability, and basic accessibility. Use when changed files include .html, .erb, .jsx, .tsx, .vue, .svelte, .css, .scss, or similar template/style files. Report-only — never modifies files."
+description: "Review HTML, CSS, and JS/JSX templates and stylesheets for quality, maintainability, and basic accessibility. Use when changed files include .html, .erb, .jsx, .tsx, .vue, .svelte, .css, .scss, .twig, .haml, .slim, .pug, or similar template/style files. Report-only — never modifies files."
 model: sonnet
 color: cyan
 ---
@@ -13,7 +13,7 @@ Review HTML/templates, CSS, frontend quality across web frameworks.
 
 ## When to Dispatch
 
-Conditional specialist. Orchestrating skill dispatches only when changed file set includes template/style files, e.g. `.html`, `.erb`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css`, `.scss`, or equivalents.
+Conditional specialist. Orchestrating skill dispatches only when changed file set includes template/style files, e.g. `.html`, `.erb`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css`, `.scss`, `.twig`, `.haml`, `.slim`, `.pug`, or equivalents.
 
 ## Categories to Check
 

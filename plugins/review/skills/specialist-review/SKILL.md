@@ -81,8 +81,8 @@ From changed-file list, determine which conditional specialists to dispatch. Sta
 | `agent-security` | Always |
 | `agent-diff-cleanliness` | Always |
 | `agent-database` | Changed files include migration/schema paths (e.g. `db/migrate/*`, `schema.rb`, or equivalent) |
-| `agent-frontend` | Changed files include `.html`, `.erb`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css`, `.scss`, or similar template/style files |
-| `agent-accessibility` | Changed files include markup with interactive elements or components (`.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.erb`, `.ejs`, `.hbs`, `.liquid`) |
+| `agent-frontend` | Changed files include `.html`, `.erb`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css`, `.scss`, `.twig`, `.haml`, `.slim`, `.pug`, or similar template/style files |
+| `agent-accessibility` | Changed files include markup with interactive elements or components (`.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.erb`, `.ejs`, `.hbs`, `.liquid`, `.twig`, `.haml`, `.slim`, `.pug`) |
 | `agent-react` | Changed files include `.jsx`, `.tsx`, or `.js` files defining React components, hooks, or JSX |
 | `agent-rails` | Changed files include `.rb`, `.erb`, or other Rails application files (models, controllers, components, views, specs) |
 | `agent-stimulus-turbo` | Changed files include Stimulus controllers (`*_controller.js`) or Turbo view files (`.turbo_stream.erb`, templates using `<turbo-frame>`/`turbo_frame_tag`) |
