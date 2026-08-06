@@ -88,6 +88,12 @@ Check every write path that can set a role/permission field (`create`, `update`,
 - **Escalation to the highest privilege tier:** is promotion to the top role (e.g. super-admin/owner) held to a stricter check than promotion to a mid-tier role, or does one gate cover all tiers uniformly when it shouldn't?
 - If one write path (e.g. `update_user`) is gated but a sibling path reaching the same field (e.g. `create_user`, an admin bulk-update, an API-only path) is not verified to share that gate, do not describe the field as "consistently gated" — see Asserting a Control Exists above.
 
+**Enumerate every role value before concluding a role-assignment path is "gated."** Finding one explicit check on a role/permission-assignment path is not evidence the path is safe for every value that field can take — it is evidence for that one value only. Before writing any conclusion that a role-assignment surface is safe/gated:
+- List every distinct value the target role/permission field can take (from its enum, constant list, or type definition) — not just the value(s) whose check happens to be visible in the diff.
+- Confirm each value individually has an explicit check in the code path. A check for `role == ADMIN` says nothing about what happens when `role == SUPER_ADMIN` (or any other value) — checking one and generalizing to "role-escalation paths are gated" is the exact false-vouching pattern this section exists to prevent, and is worse than not checking at all because it actively certifies the unchecked values as safe.
+- If any enumerated value has no matching check, that is a finding (missing check on that specific value), not a caveat on an otherwise-safe conclusion — do not fold it into a blanket "gated" statement.
+- Phrase the conclusion per-value, not per-path: "`ENGEN_ADMIN` assignment is gated by `requires_super_admin` (file:line); no equivalent check found for `SUPER_ADMIN` assignment on the same write path" — not "role-escalation paths are explicitly gated."
+
 ### Authentication Bypasses
 
 **Pattern:** Any code skipping/disabling authentication check requires scrutiny.
