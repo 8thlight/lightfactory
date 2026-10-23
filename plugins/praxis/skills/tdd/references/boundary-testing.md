@@ -27,7 +27,8 @@ When implementing a vertical slice, write tests in this sequence:
 
 1. **Core** - L3 property tests (run unit tests, verify failure)
 2. **Features** - L3 behavioral tests (run integration tests, verify failure)
-3. **HTTP Routes** - L4 contract tests (run e2e tests, verify failure)
+3. **HTTP Routes** - L4 contract tests (run the HTTP contract tests, verify failure)
+4. **Browser journeys** (only for behavior that needs the browser) - `e2e-journey` tier, not L4; see plan-tasks phase tiers
 
 After writing each test, STOP and verify failure before implementing.
 

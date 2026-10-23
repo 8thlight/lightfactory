@@ -55,9 +55,13 @@ Entry format (one per line, append-only):
 [GATE PASS] {task name} — {RED|GREEN|VALIDATE} gate passed
 [GATE FAIL] {task name} — {RED|GREEN|VALIDATE} gate failed: {reason}
 [CLOSED] {task name}
-[REMEDIATION] {task name} — attempt {N}: {description}
+[REMEDIATION] {task name} — attempt {N}: {description} (a wrong test: `cause=TEST-DEFECT`)
 [BLOCKED] {task name} — escalating to user: {reason}
+[BLOCKED] {task name} — close refused by open dependency {id}
+[WRITE] {command} — orchestrator wrote: {files}
 ```
+
+A refused close is never forced without user approval. Ask, then record the approval on the close: `[CLOSED] {task name} — force-closed past {id}; user approval: "{quote}"`.
 
 ## Workflow
 
@@ -96,9 +100,12 @@ Loop:
      - Parse agent report for file paths → update files_created / files_modified lists
      - If gate PASSED → mark done (tracker-specific command below)
      - If RED gate FAILED (tests pass immediately) → STOP, report to user
-     - If GREEN gate FAILED → proceed to validation anyway
+     - If GREEN gate FAILED → proceed to validation anyway (unless TEST-DEFECT: see below)
      - If VALIDATE found failures → create remediation tasks (see Remediation)
-  g. Loop back to (a)
+     - If VALIDATE reports FLAKY → log `[GATE FAIL]` with its rerun count and log path; ask the user
+  g. Commit per the epic's `commit:` field — `per-task` after each task closes, `per-group` after a
+     phase group's last task, `none`/absent never. The orchestrator commits; agents never do
+  h. Loop back to (a)
 ```
 
 **Tracker commands for step (d) read context and step (f) mark done:**
@@ -150,6 +157,8 @@ In all modes: name remediation `04-remediate-attempt-{M}` and re-validation `05-
 
 When Agent 3 (Validate) reports that tests and type-checks pass but only the linter fails (e.g., biome exits non-zero while tsc and test runner exit 0):
 
+The orchestrator runs this itself — `agent-validate` only reports. The formatter writes project files, so log it (`[WRITE]`) and add the files to `files_modified`.
+
 1. Run the project's lint auto-fix command (e.g., `biome check --write --unsafe` for biome, `eslint --fix` for ESLint)
 2. Re-run the full VALIDATE gate
 3. If the re-run passes, log `[GATE PASS]` and proceed — no remediation tasks needed
@@ -193,6 +202,7 @@ After final verification passes, write a single session artifact to `.light/sess
 - **Plan Summary** — Phases, acceptance criteria, architectural decisions
 - **Execution Log** — Agent dispatches, gate results, remediations (from `.light/sessions/YYYY-MM-DD-{topic}-execution.md`)
 - **Outcome** — Final test suite result, acceptance criteria status
+- **RED evidence** (last) — one line per RED gate: `{task} | {decisive error line} | {test/spec file:line}`, ready to paste into the PR description. Plans, task graphs and execution logs stay out of the code repo (they live in `.light/` and the tracker); only this distilled block goes into the PR
 
 Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).
 
@@ -234,6 +244,7 @@ What would you like to do?
 3. **Agent 3 modifies nothing** — only runs tests and reports
 4. **Agent 2-R fixes implementation only** — never modifies test files
 5. **Each agent starts fresh** — no shared context between agents
+6. **Gate predictions stay test-side** — the RED gate signature and profile reach only agent-test and agent-validate, never agent-impl or agent-remediate
 
 ### If RED Gate Fails
 
@@ -252,6 +263,11 @@ Example for a Python project: `mypy . && pytest && ruff check .`
 Agent 3 always derives the actual commands from the project rather than using hardcoded defaults.
 
 ### If GREEN Gate Fails
+
+If Agent 2 reports **TEST-DEFECT** (the test is wrong, not the implementation):
+1. Log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`
+2. Re-dispatch `agent-test` with the defect report to fix the test, then `agent-impl` to resume GREEN
+3. Agent 2 never edits tests; the orchestrator does not either
 
 If Agent 2 cannot make tests pass:
 1. Proceed to Agent 3 anyway (to get full failure report)

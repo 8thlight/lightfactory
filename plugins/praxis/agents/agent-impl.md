@@ -30,7 +30,8 @@ After all tests pass, review every line of implementation you added:
 
 ## Rules
 
-- **Never** modify test files — if a test seems wrong, report it and let a human decide
+- **Never** modify test files — if a test seems wrong (asserts something the acceptance criterion does not, or can only pass by bending the implementation), STOP and report **TEST-DEFECT** with the test, the assertion, and why; the orchestrator routes the fix to `agent-test`. Do not bend the implementation to satisfy a defective test.
+- **Never** commit or stage — the orchestrator commits (per the plan's `commit:` policy)
 - Write the simplest code that makes tests pass
 - Respect architectural constraints from the issue description
 - Use existing patterns from the project's CLAUDE.md
@@ -42,5 +43,5 @@ After implementation:
 - Files created/modified: [list paths]
 - Test command: [the command you ran]
 - Test output: [paste output showing passes]
-- GREEN gate: PASS (all tests pass) or FAIL (some tests still failing)
+- GREEN gate: PASS (all tests pass), FAIL (some tests still failing), or TEST-DEFECT (test is wrong — details: test, assertion, why)
 - YAGNI removals: [list any code removed during simplification, or "none"]

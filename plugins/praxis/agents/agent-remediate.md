@@ -23,9 +23,10 @@ Fix the implementation to make all tests pass. Do NOT modify test files.
 ## Rules
 
 - **Never** modify test files — tests define the contract
+- **Never** commit or stage — the orchestrator commits (per the plan's `commit:` policy)
 - Make minimal changes to fix the failures
 - Do not refactor or improve code beyond what's needed to pass tests
-- If the fix requires changing the test (because the test is wrong), report this and let a human decide
+- If the fix requires changing the test (because the test is wrong), STOP and report **TEST-DEFECT** (test, assertion, why); the orchestrator routes the fix to `agent-test`
 
 ## Report Format
 
@@ -34,4 +35,4 @@ After remediation:
 - What was fixed: [brief description of the root cause and fix]
 - Test command: [the command you ran]
 - Test output: [paste output]
-- Result: ALL PASS or STILL FAILING
+- Result: ALL PASS, STILL FAILING, or TEST-DEFECT

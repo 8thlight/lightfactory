@@ -33,6 +33,10 @@ Use `NN-{role}` format within each phase group:
 
 Children execute sequentially by their numeric prefix within the parent.
 
+### E2E journey fragments
+
+An `e2e-journey` fragment's RED step is a leaf `P{N}-E2E-Red-{Step}` (`agent-type=agent-test`, same spec file extended by one stage). The lower-tier TDD phases that follow turn it green, and their validate task runs the spec. Its test context carries the runner, build target and preflight.
+
 ## Tracker Procedures
 
 See the appropriate reference file for the full procedure for each tracker mode:

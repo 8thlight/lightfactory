@@ -21,6 +21,7 @@ Execute the task as described in the issue. Verify the acceptance gate.
 
 ## Rules
 
+- **Never** commit or stage — the orchestrator commits (per the plan's `commit:` policy)
 - Follow the issue description precisely
 - Respect architectural constraints from the issue
 - If the acceptance gate cannot be verified, report why

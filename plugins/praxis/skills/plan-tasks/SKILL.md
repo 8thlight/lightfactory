@@ -72,13 +72,14 @@ Ask the user to clarify if needed:
 - What are the acceptance criteria?
 - Are there specific constraints or preferences?
 - What's the priority (MVP vs full feature)?
+- Commit policy: `per-task`, `per-group`, or `none` (default `none`)
 
 ### 3. Write Plan Artifact
 
 Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output — the user reviews and approves it before task graph creation.
 
 **Required sections:**
-- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used
+- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used, and `commit: per-task|per-group|none`. The orchestrator (`/implement`) commits per this policy; agents never commit
 - **Context** — Why this change is being made, summarizing research findings
 - **Goal** — 1-2 sentence description of what we're building and why
 - **Acceptance Criteria** — Testable outcomes as checklist
@@ -97,11 +98,27 @@ See [template.md](references/template.md) for the complete template with Agent C
 
 **Phase ordering (application code projects):**
 1. Database Schema (if needed)
-2. Core Logic (L3 boundary — property/invariant tests)
+2. Core Logic (L3 boundary — property/invariant tests) — tier `unit`
 3. Repository Layer (if needed)
-4. Feature Use Cases (L3 boundary — behavioral assertions)
-5. HTTP Routes (L4 boundary — contract tests)
+4. Feature Use Cases (L3 boundary — behavioral assertions) — tier `integration`
+5. HTTP Routes (L4 boundary — contract tests) — tier `http-contract`
 6. Full Integration (verification)
+
+**Phase tiers.** Tag every test phase `unit | integration | http-contract | e2e-journey`
+(`no-test` phases have no tier). Details and the e2e-journey phase shape are in
+[template.md](references/template.md):
+- `e2e-journey` is a browser-driven user journey, used only for behavior that needs the
+  browser; it is distinct from `http-contract` (API-level tests, even if the project
+  keeps them under an `e2e/` directory).
+- An `e2e-journey` phase states its **runner**, **build target** (e.g. production build,
+  not a dev server) and **preflight** (services and ports that must be up).
+- One journey may split into **fragments** (open surface, inputs, submit, result
+  visible). A fragment is its RED step plus the lower-tier phases that turn it green;
+  each is independently verifiable and leaves the suite green.
+- A fragment's RED sits at the **lowest tier that can assert the behavior**; only
+  browser-needing behavior gets an `e2e-journey` RED.
+- A growing spec is **stages**: fragment N extends the same spec, and its RED shows
+  earlier steps passing and step N failing on the predicted locator/testid.
 
 For content or configuration projects with no application code, use flat `[no-test]` phases ordered by dependency. The TDD phase ordering above applies to application code projects.
 
@@ -118,6 +135,8 @@ Check plannotator availability: `Bash: plannotator --help`
 Once the plan is approved, immediately create the task graph — this is the **commitment point** where the approved plan becomes executable.
 
 See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and `echo "..." | yx context` for piping agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
+
+Also record `commit: {policy}` in the epic's context so `/implement` can read it without the plan file (absent = `none`).
 
 Report the result:
 ```
@@ -195,7 +214,35 @@ testing skill or guideline (e.g. a framework-specific testing skill referenced f
 CLAUDE.md), consult it to describe the expected failure in that framework's terms. If
 no such guidance exists, describe the expected failure behaviorally (which assertion
 fails and why) and `agent-test` falls back to a generic at-assertion vs.
-before-assertion check.
+before-assertion check. Write the signature from the acceptance criterion and the agreed
+interface contract (e.g. testids), naming user-visible behavior or contract testids,
+never internals. For `e2e-journey` phases it names the locator/step expected to fail
+(e.g. "earlier steps pass; waiting for `{testid}` times out") — a timeout elsewhere is a
+wrong-reason RED. The signature goes only into the test task (and validate) context,
+never `agent-impl`'s.
+
+### RED gate profile lookup
+
+Repo rule files may already define what a correct RED looks like per area. For each test
+task, before writing its Agent Context (a manual step, not a hook):
+
+1. Collect the files the task will touch (test and implementation paths).
+2. Find rule files whose `paths:` frontmatter globs match any of them —
+   `.claude/rules/*.md`, plus rule files the project's CLAUDE.md references.
+3. In each matching file, take the section whose heading text starts with `RED gate`
+   (through the next heading of equal or higher level).
+4. Copy it **verbatim** into the test task's Agent Context under a `#### RED gate profile`
+   heading, first line `Source: {rule file path}`. Several matches: include each
+   section, each labelled by its source file; prefer splitting the phase by tier when
+   they conflict.
+5. No match: omit the heading; praxis's generic RED definition applies.
+6. Record the file(s) used (or "none — generic") per phase in the plan's **RED Gate
+   Profiles** section so reviewers can see what the gate was judged against.
+
+`agent-test` judges RED against the profile and `agent-validate` uses its wrong-reason
+list. The profile is placed ONLY in test-side and validate-side contexts, never
+`agent-impl`'s or `agent-remediate`'s, which keeps test/implementation segregation.
+No new config: it reuses existing rule files and headings.
 
 See [template.md](references/template.md) for the Agent Context block reference and task context templates.
 
@@ -203,7 +250,7 @@ See [template.md](references/template.md) for the Agent Context block reference 
 
 Each phase should:
 1. **Have a clear goal** — What capability is being added?
-2. **Be independently verifiable** — Can you confirm it works?
+2. **Be independently verifiable** — Can you confirm it works, with the suite green afterwards?
 3. **Be in logical order** — Database → Core → Features → Routes
 4. **Have a self-contained Agent Context** — An isolated agent can execute it
 

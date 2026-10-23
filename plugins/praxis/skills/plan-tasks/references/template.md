@@ -12,6 +12,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 **Date:** YYYY-MM-DD
 **Status:** Plan - Ready for Review
 **Tracker:** yaks|beads|native
+**Commit:** per-task|per-group|none  (orchestrator commits; agents never do)
 **Yaks Epic:** {epic name}
 
 ## Goal
@@ -40,12 +41,22 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 ### Tests
 - `tests/unit/core/{module}/{function}.test.ts` - core boundary tests
 - `tests/integration/features/{feature}.test.ts` - feature boundary tests
-- `tests/e2e/{entity}.test.ts` - HTTP contract tests
+- `tests/e2e/{entity}.test.ts` - HTTP contract tests (tier `http-contract`; the directory name is the project's, not a browser journey)
+- `{journey spec path}` - browser journey stages (tier `e2e-journey`; only when a phase needs the browser)
 
 ## Files to Modify
 
 - `src/db/schema/{entity}.ts` - {what changes}
 - `src/shell/http/app.ts` - {register new routes}
+
+## RED Gate Profiles
+
+Per test phase, the repo rule file(s) whose `RED gate` section was copied into the test
+task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — generic".
+
+| Phase | Profile source |
+|-------|----------------|
+| P2 | `.claude/rules/{file}.md` |
 
 ## Implementation Phases
 
@@ -69,6 +80,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 ---
 
 ### Phase 2: Core Logic (L3 Boundary)
+**Tier:** unit
 **Goal:** Implement pure business logic for {capability}
 
 **Test Spec (Behavioral):**
@@ -117,6 +129,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 ---
 
 ### Phase 4: Feature Use Case (L3 Boundary)
+**Tier:** integration
 **Goal:** Orchestrate {use case} with real database
 
 **Test Spec (Behavioral):**
@@ -145,6 +158,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 ---
 
 ### Phase 5: HTTP Routes (L4 Boundary)
+**Tier:** http-contract
 **Goal:** Expose {use case} via HTTP API
 
 **Test Spec (Contract):**
@@ -169,10 +183,34 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 - **Files to create:** `{test file path}`, `{route file path}`, `{schema file path}`
 - **Files to modify:** `{app registration file}`
 - **Test spec:** {HTTP contract description — method, path, request body shape, success response shape and status, each error response shape and status. Reference project CLAUDE.md for HTTP test patterns.}
-- **Test command:** `{project e2e/HTTP test command}`
+- **Test command:** `{project HTTP contract test command}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "request returns 404, expected 201 with body {id}" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All HTTP contract tests pass
 - **Architectural constraints:** Thin adapter — validates input, delegates to feature, maps result to HTTP response
+
+---
+
+### Phase 5b: Journey Fragment (E2E-Journey, optional)
+**Tier:** e2e-journey — only for behavior that needs the browser; assert everything else at a lower tier.
+**Goal:** Add stage {K} of the {journey} spec: {user-visible step}
+
+**Test Spec (Journey):** Extend the existing spec by one stage. Earlier stages keep passing; the new step is the only new assertion group.
+
+**Tasks:**
+1. Extend the spec (RED) — leaf `agent-test` task; the lower-tier phases that follow turn it green
+2. Preflight, run, verify failure matches the prediction
+
+**Verification:**
+- [ ] Spec stages 1..K pass after the fragment's lower-tier phases; suite green
+
+#### Agent Context
+- **Files to create/modify:** `{spec path}`, `{page object / fixtures path}`
+- **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
+- **Preflight:** {services and ports that must be up, with a check for each}
+- **Test spec:** {user-visible journey step, using the agreed contract testids}
+- **Test command:** `{runner command for this spec}`
+- **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
+- **GREEN gate:** Spec passes through stage K
 
 ---
 
@@ -239,6 +277,8 @@ After human review and approval:
 
 Each yak's context MUST be self-contained — everything an agent needs to execute without reading the plan file. Use these templates when piping context in Step 5.
 
+The RED gate signature and RED gate profile appear **only** in Write Tests and Validate contexts, never in Implement or Remediate.
+
 ### Write Tests Yak (agent-test)
 
 ```markdown
@@ -251,7 +291,12 @@ Each yak's context MUST be self-contained — everything an agent needs to execu
 - **Test spec:** {Behavioral description — properties, invariants, contracts to test. Be specific.}
 - **Test command:** `{shell command to run tests}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — what assertion fails and why. Consult the project/user testing skill if one exists. A compile/import/setup error or a passing test is a wrong-reason RED.}
+- **Tier:** {unit|integration|http-contract|e2e-journey}
+- **Runner / build target / preflight:** {e2e-journey only — runner, build target, services and ports to confirm up before the RED run}
 - **Architectural constraints:** {L3/L4 boundary, property-based with fast-check, no mocks, etc.}
+
+#### RED gate profile
+{Omit when no rule file matched. Otherwise the `RED gate` section(s) copied verbatim from the matching repo rule file(s), each preceded by `Source: {rule file path}`.}
 
 Follow your `praxis:agent-test` definition for the procedure (output capture to a log file, judging the failure against the RED gate above) and report format. The Agent Context above is your task input.
 ```
@@ -284,6 +329,9 @@ Follow your `praxis:agent-impl` definition for the procedure and report format. 
 - **Full test command:** `{full test suite command}`
 - **Phase test files:** `{test file path(s)}`
 - **Phase impl files:** `{implementation file path(s)}`
+
+#### RED gate profile
+{Same verbatim section(s) as the Write Tests yak, with `Source:` lines; omit when none matched.}
 
 Follow your `praxis:agent-validate` definition for the procedure and report format. The Agent Context above is your task input.
 ```
