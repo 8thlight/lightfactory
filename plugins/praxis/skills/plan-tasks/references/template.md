@@ -206,7 +206,7 @@ task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — ge
 #### Agent Context
 - **Files to create/modify:** `{spec path}`, `{page object / fixtures path}`
 - **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
-- **Preflight:** {services and ports that must be up, with a check for each}
+- **Preflight:** {externally managed services and ports that must be up, with a check for each; name anything the runner starts itself (e.g. Playwright `webServer`), which is not preflighted}
 - **Test spec:** {user-visible journey step, using the agreed contract testids}
 - **Test command:** `{runner command for this spec}`
 - **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
@@ -366,6 +366,7 @@ Created dynamically by `/implement` when validation fails. Not created during `/
 - **Files to modify (implementation):** `{implementation file path(s)}`
 - **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
 - **Full test command:** `{the failed validate task's test command}`
+- **Journey spec command:** `{the failed validate task's journey spec command}` — only when it had one; run both
 - **Failure output from validation:**
 {paste Agent 3's failure output}
 

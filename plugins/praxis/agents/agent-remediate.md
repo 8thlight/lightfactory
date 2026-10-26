@@ -17,7 +17,7 @@ Fix the implementation to make all tests pass. Do NOT modify test files.
 2. Read the failing tests to understand expected behavior
 3. Read the implementation files to find the issue
 4. Fix the implementation — minimal changes only
-5. Run the full test suite to verify ALL tests pass
+5. Run the full test suite to verify ALL tests pass — the Full test command in your context, plus its Journey spec command when given
 6. Report results
 
 ## Rules

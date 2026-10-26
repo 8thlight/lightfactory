@@ -138,6 +138,7 @@ Per-tracker commands:
 - **Files to modify (implementation):** `{implementation file path(s)}`
 - **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
 - **Full test command:** `{the failed validate task's test command}`
+- **Journey spec command:** `{the failed validate task's journey spec command}` — only when it had one; run both
 - **Failure output from validation:**
 
 {paste Agent 3's failure output here}
@@ -168,10 +169,10 @@ If attempt count reaches 2 and re-validation still fails:
 
 ### If Agent 1 RED Gate Fails
 
-If tests pass immediately (before implementation):
-1. **STOP** — the test is not testing new behavior
-2. **Do NOT mark the task as done** — leave it
-3. **Report to user** — explain that tests pass without implementation
+If tests pass immediately, fail for the wrong reason, or preflight fails:
+1. **STOP** — passing tests test no new behavior; a wrong reason means setup or environment
+2. **Do NOT mark the task as done or re-dispatch it** — leave it
+3. **Report to user** — explain the failure mode, with the agent's failure excerpt
 4. **Do NOT dispatch Agent 2** — the phase is broken
 
 ### If Phase Cannot Be Completed

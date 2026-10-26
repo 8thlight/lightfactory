@@ -111,7 +111,7 @@ See [template.md](references/template.md) for the complete template with Agent C
   browser; it is distinct from `http-contract` (API-level tests, even if the project
   keeps them under an `e2e/` directory).
 - An `e2e-journey` phase states its **runner**, **build target** (e.g. production build,
-  not a dev server) and **preflight** (services and ports that must be up).
+  not a dev server) and **preflight** (externally managed services and ports that must be up).
 - One journey may split into **fragments** (open surface, inputs, submit, result
   visible). A fragment is its RED step plus the lower-tier phases that turn it green;
   each is independently verifiable and leaves the suite green. Validates inside an open
@@ -229,7 +229,8 @@ task, before writing its Agent Context (a manual step, not a hook):
 
 1. Collect the files the task will touch (test and implementation paths).
 2. Find rule files whose `paths:` frontmatter globs match any of them —
-   `.claude/rules/*.md`, plus rule files the project's CLAUDE.md references.
+   `.claude/rules/**/*.md` (recursive, as Claude Code loads them), plus rule files the
+   project's CLAUDE.md references.
 3. In each matching file, take the section whose heading text starts with `RED gate`
    (through the next heading of equal or higher level).
 4. Copy it **verbatim** into the test task's Agent Context under a `#### RED gate profile`

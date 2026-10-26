@@ -17,10 +17,12 @@ Write failing tests ONLY. Do NOT write any implementation code.
 2. Read the project's CLAUDE.md to understand testing patterns and conventions
 3. Write test files at the paths specified in the issue's Agent Context
 4. **Preflight (browser/e2e runners only).** If the Agent Context names a browser/e2e
-   runner, confirm before the RED run that the services, ports and build target it lists
-   are up (e.g. a health request per port; the build the runner serves exists). If one is
-   not, STOP and report a **RED gate FAIL** (wrong reason) — do not run the spec and do
-   not accept the resulting timeout as RED.
+   runner, confirm before the RED run that the externally managed services, ports and
+   build target it lists are up (e.g. a health request per port; the build the runner
+   serves exists). If one is not, STOP and report a **RED gate FAIL** (wrong reason) — do
+   not run the spec and do not accept the resulting timeout as RED. Anything the runner
+   starts itself (e.g. Playwright's `webServer`) is not preflighted: run the spec, and
+   treat a build or startup failure in the log as a wrong-reason RED.
 5. Run the test command, capturing full output to a log file named after the branch
    and current task or phase. Ensure `.light/` exists, replace `/` in the branch name
    with `-` so the path stays a single file, and preserve the test command's exit
@@ -81,6 +83,7 @@ Write failing tests ONLY. Do NOT write any implementation code.
 
 After writing tests:
 - Files created: [list paths]
+- Files modified: [existing test files changed — an extended journey spec, a TEST-DEFECT fix — or "none"]
 - Test command: [the command you ran]
 - Log file: [path to the tee'd log]
 - Preflight: [services/ports/build confirmed up, or "N/A (not a browser/e2e runner)"]

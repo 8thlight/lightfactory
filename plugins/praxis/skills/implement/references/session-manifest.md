@@ -25,6 +25,8 @@ The manifest makes step 3 possible. Without it, the session artifact (`.md`) wou
 
 Written at the same time as the session artifact (`.light/sessions/YYYY-MM-DD-{topic}.md`), using the same topic slug.
 
+When the epic's `commit:` policy is `per-task` or `per-group`, the orchestrator also writes a draft before each commit so a manifest-checking `commit-msg` hook can see the work: file lists, gates and `phases_completed` so far, and `test_suite_passed: false` (final verification has not run). The final write after the session artifact overwrites the draft.
+
 ## Schema
 
 ```json
@@ -68,7 +70,7 @@ Written at the same time as the session artifact (`.light/sessions/YYYY-MM-DD-{t
 
 Each agent already reports files in its output:
 
-- **agent-test**: `Files created: [list paths]` → all paths go to `files_created`
+- **agent-test**: `Files created: [list paths]` → all paths go to `files_created`; `Files modified: [list paths]` (extended journey specs, TEST-DEFECT fixes) → `files_modified` (unless already in `files_created`)
 - **agent-impl**: `Files created/modified: [list paths]` → paths go to `files_modified` (unless already in `files_created`)
 - **agent-no-test**: `Files created/modified: [list paths]` → paths that did not exist before the session go to `files_created`; paths that already existed go to `files_modified`
 - **agent-remediate**: `Files modified: [list paths]` → all paths go to `files_modified` (unless already in `files_created`)

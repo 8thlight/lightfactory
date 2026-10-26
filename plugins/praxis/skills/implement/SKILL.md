@@ -99,12 +99,15 @@ Loop:
   f. For each completed agent:
      - Parse agent report for file paths → update files_created / files_modified lists
      - If gate PASSED → mark done (tracker-specific command below)
-     - If RED gate FAILED (tests pass immediately) → STOP, report to user
+     - If RED gate FAILED (tests passed, wrong reason, or preflight) → STOP, report to user, leave task open
      - If GREEN gate FAILED → proceed to validation anyway (unless TEST-DEFECT: see below)
-     - If VALIDATE found failures → create remediation tasks (see Remediation)
-     - If VALIDATE reports FLAKY → log `[GATE FAIL]` with its rerun count and log path; ask the user
+     - If VALIDATE reports FLAKY → log `[GATE FAIL]` with its rerun count and log path; leave the
+       task open, create no remediation; STOP and ask the user
+     - Else if VALIDATE found failures → create remediation tasks (see Remediation)
   g. Commit per the epic's `commit:` field — `per-task` after each task closes, `per-group` after a
-     phase group's last task, `none`/absent never. The orchestrator commits; agents never do
+     phase group's last task, `none`/absent never. The orchestrator commits; agents never do.
+     Before each commit, write the step-5b manifest with progress so far and `test_suite_passed:
+     false` (a `commit-msg` hook may require one); step 5b finalizes it
   h. Loop back to (a)
 ```
 
@@ -208,7 +211,7 @@ Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).
 
 ### 5b. Write Session Manifest
 
-After writing the session artifact, write a JSON manifest to `.light/sessions/YYYY-MM-DD-{topic}.manifest.json` using the same topic slug. This enables automated commit-time verification that the lightfactory workflow was followed. See [session-manifest.md](references/session-manifest.md) for the full schema and field reference.
+After writing the session artifact, write (or overwrite the pre-commit draft of) a JSON manifest to `.light/sessions/YYYY-MM-DD-{topic}.manifest.json` using the same topic slug. This enables automated commit-time verification that the lightfactory workflow was followed. See [session-manifest.md](references/session-manifest.md) for the full schema and field reference.
 
 Build the manifest from data collected during orchestration:
 - **`files_created` / `files_modified`** — from the running file lists maintained in step 2
@@ -248,10 +251,10 @@ What would you like to do?
 
 ### If RED Gate Fails
 
-If Agent 1's tests pass immediately (before implementation):
-1. STOP — the test is tautological or the feature already exists
-2. Report to user — explain what happened
-3. Do NOT mark the task as done — leave it for user decision
+If Agent 1 reports RED gate FAIL (tests passed, failed for the wrong reason, or preflight failed):
+1. STOP — passing tests mean a tautological test or an existing feature; a wrong reason means setup or environment, not missing behavior
+2. Report to user — explain what happened, with the agent's failure excerpt
+3. Do NOT mark the task as done or re-dispatch it — leave it for user decision
 
 ### VALIDATE Gate Definition
 
