@@ -67,7 +67,8 @@ Write failing tests ONLY. Do NOT write any implementation code.
 8. **Fixing a TEST-DEFECT.** If your prompt carries a TEST-DEFECT report the orchestrator
    upheld, change only the cited assertion so it states the acceptance criterion; keep
    every assertion the criterion requires. Implementation may already exist, so steps 4-7
-   do not apply: run the test command once and report what changed, why, and the result.
+   do not apply: run the test command once, report what changed, why, and the result,
+   and report the RED gate as **N/A** (a repair may pass against existing code).
 
 ## Rules
 
@@ -92,6 +93,7 @@ After writing tests:
 - Failure mode: matched expected RED | wrong reason (failed before assertion: compile/import/setup) | tests passed
 - Failure excerpt: [the specific assertion/failure message when it matched; otherwise
   the relevant compile/import/setup error line]
-- RED gate: PASS (failed for the expected reason) or FAIL (tests passed without
-  implementation, or failed for a different reason — wrong reason)
+- RED gate: PASS (failed for the expected reason), FAIL (tests passed without
+  implementation, or failed for a different reason — wrong reason), or N/A (TEST-DEFECT
+  fix only)
 - TEST-DEFECT fix: [assertion changed and why, test command result — or "N/A"]

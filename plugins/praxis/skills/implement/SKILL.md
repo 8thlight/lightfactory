@@ -270,7 +270,7 @@ Agent 3 derives the commands from the project unless the task context names them
 If Agent 2 or 2-R reports **TEST-DEFECT** (the test is wrong, not the implementation), the orchestrator decides, never the reporting agent:
 1. Compare the cited assertion with the write-tests task's test spec and the epic's acceptance criteria. Unclear → ask the user
 2. **Rejected** (the assertion follows the criterion): log `[GATE FAIL] {task} — GREEN gate failed: TEST-DEFECT rejected: {why}`; continue as a GREEN failure (below)
-3. **Upheld:** log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`; re-dispatch `agent-test` with the report; review its test diff (a criterion assertion dropped or weakened → ask the user); then re-dispatch `agent-impl`
+3. **Upheld:** log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`; re-dispatch `agent-test` with the report (its RED gate is N/A, not a FAIL); review its test diff (a criterion assertion dropped or weakened → ask the user); then re-dispatch `agent-impl`
 4. Each TEST-DEFECT counts toward the phase's 2 remediation attempts; a second on the same task → STOP, ask the user. Agents 2/2-R never edit tests; the orchestrator does not either
 
 If Agent 2 cannot make tests pass:

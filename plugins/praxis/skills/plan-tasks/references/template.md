@@ -60,6 +60,35 @@ task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — ge
 
 ## Implementation Phases
 
+### Phase 0: Journey Fragment RED (E2E-Journey, optional)
+**Tier:** e2e-journey — only for behavior that needs the browser; assert everything else at a lower tier.
+**Goal:** Add stage {K} of the {journey} spec: {user-visible step}
+
+**Placement:** before the lower-tier phases that turn it green (here Phases 1-5), so its leaf
+gets a lower `P{N}` than theirs. The last of those phases' validate task also carries the **Journey
+spec command**. With several fragments, each fragment's RED comes after the previous
+fragment's phases and before its own.
+
+**Test Spec (Journey):** Extend the existing spec by one stage. Earlier stages keep passing; the new step is the only new assertion group.
+
+**Tasks:**
+1. Extend the spec (RED) — leaf `agent-test` task; the lower-tier phases that follow turn it green
+2. Preflight, run, verify failure matches the prediction
+
+**Verification:**
+- [ ] Spec stages 1..K pass after the fragment's lower-tier phases; suite green
+
+#### Agent Context
+- **Files to create/modify:** `{spec path}`, `{page object / fixtures path}`
+- **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
+- **Preflight:** {externally managed services and ports that must be up, with a check for each; name anything the runner starts itself (e.g. Playwright `webServer`), which is not preflighted}
+- **Test spec:** {user-visible journey step, using the agreed contract testids}
+- **Test command:** `{runner command for this spec}`
+- **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
+- **GREEN gate:** Spec passes through stage K
+
+---
+
 ### Phase 1: Database Schema
 **Goal:** Add database support for {entity}
 
@@ -187,30 +216,6 @@ task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — ge
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "request returns 404, expected 201 with body {id}" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All HTTP contract tests pass
 - **Architectural constraints:** Thin adapter — validates input, delegates to feature, maps result to HTTP response
-
----
-
-### Phase 5b: Journey Fragment (E2E-Journey, optional)
-**Tier:** e2e-journey — only for behavior that needs the browser; assert everything else at a lower tier.
-**Goal:** Add stage {K} of the {journey} spec: {user-visible step}
-
-**Test Spec (Journey):** Extend the existing spec by one stage. Earlier stages keep passing; the new step is the only new assertion group.
-
-**Tasks:**
-1. Extend the spec (RED) — leaf `agent-test` task; the lower-tier phases that follow turn it green
-2. Preflight, run, verify failure matches the prediction
-
-**Verification:**
-- [ ] Spec stages 1..K pass after the fragment's lower-tier phases; suite green
-
-#### Agent Context
-- **Files to create/modify:** `{spec path}`, `{page object / fixtures path}`
-- **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
-- **Preflight:** {externally managed services and ports that must be up, with a check for each; name anything the runner starts itself (e.g. Playwright `webServer`), which is not preflighted}
-- **Test spec:** {user-visible journey step, using the agreed contract testids}
-- **Test command:** `{runner command for this spec}`
-- **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
-- **GREEN gate:** Spec passes through stage K
 
 ---
 

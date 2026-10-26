@@ -184,3 +184,22 @@ functional:
       - "Skill does NOT create the task graph until the plan is approved"
       - "When finally approved, the task graph reflects the revised phase ordering"
     notes: "Tests the plan revision loop. Common failure: skill creates task graph before getting approval."
+
+  - id: plan-tasks-09
+    description: Two-fragment browser journey — each fragment's RED leaf precedes its supporting phases, and only each fragment's last validate runs the journey spec
+    grading: llm-judge
+    given: |
+      A web app project where yaks is available. A Playwright journey spec exists for the
+      checkout flow, and Playwright's webServer starts the production build. The research
+      artifact describes two browser-visible steps: (1) a discount code field appears on the
+      checkout page, (2) applying a valid code shows the discounted total. Each step needs
+      core logic and an HTTP route beneath it.
+    when: "plan the implementation of discount codes in checkout, outside-in from the browser journey"
+    then:
+      - "Phases are tagged with a tier; only the two browser steps are e2e-journey"
+      - "Each fragment has a leaf E2E RED task (agent-test) that extends the same journey spec by one stage"
+      - "Fragment 1's RED leaf has a lower P{N} than fragment 1's supporting phases; fragment 2's RED leaf comes after fragment 1's phases and before fragment 2's"
+      - "Validate tasks inside an open fragment use a test command that excludes the journey spec"
+      - "Each fragment's last validate task also carries a Journey spec command"
+      - "Fragment 2's RED gate predicts stage 1 passing and stage 2 failing on a named testid or locator"
+    notes: "Structural validation cannot catch a misordered graph or an omitted journey gate; this exercises the fragment shape end to end"

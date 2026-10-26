@@ -67,12 +67,12 @@ additional API call per assertion (the judge model evaluates the output).
 | Scenario type | Test cases | LLM-judge assertions | Total API calls (approx.) |
 |---------------|-----------|---------------------|--------------------------|
 | research      | 5          | 3 (research-02, -04, -05) | 8 |
-| plan-tasks    | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
+| plan-tasks    | 8          | 5 (plan-tasks-03, -04, -05, -06, -09) | 13 |
 | implement     | 6          | 3 (implement-03, -05, -06) | 9 |
 | tdd           | 5          | 2 (tdd-04, -05)     | 7 |
 | harness       | 3          | 2 (harness-02, -03) | 5 |
 | reflect       | 3          | 1 (reflect-03)      | 4 |
-| **Total**     | **29**     | **15**              | **~42** |
+| **Total**     | **30**     | **16**              | **~44** |
 
 At typical Sonnet pricing (~$0.003 per 1K output tokens), a full eval run is
 estimated at **$0.50–$2.00** depending on response length. LLM-judge calls add
@@ -112,6 +112,7 @@ Run frequency recommendations:
 | plan-tasks-05 | plan-tasks | Tracker fallback chain when yaks unavailable | llm-judge |
 | plan-tasks-06 | plan-tasks | Falls back to beads when yaks unavailable | llm-judge |
 | plan-tasks-07 | plan-tasks | Falls back to native TaskCreate | code |
+| plan-tasks-09 | plan-tasks | Two-fragment journey ordering and validate scope | llm-judge |
 | implement-01 | implement | implement-execution-log.md created with structured entries | code |
 | implement-02 | implement | Full gate pass path (RED, GREEN, VALIDATE) | code |
 | implement-03 | implement | RED gate fail hard stop | llm-judge |

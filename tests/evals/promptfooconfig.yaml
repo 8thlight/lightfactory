@@ -424,6 +424,49 @@ tests:
       skill: plan-tasks
       grading: code
 
+  # plan-tasks-09: Two-fragment browser journey ordering and validate scope
+  - description: "[plan-tasks-09] Two-fragment journey: RED leaves precede supporting phases, journey spec only in each fragment's last validate"
+    vars:
+      prompt: |
+        GIVEN: A web app project where yaks is available. A Playwright journey spec exists for the
+        checkout flow, and Playwright's webServer starts the production build. The research
+        artifact describes two browser-visible steps: (1) a discount code field appears on the
+        checkout page, (2) applying a valid code shows the discounted total. Each step needs
+        core logic and an HTTP route beneath it.
+
+        TASK: plan the implementation of discount codes in checkout, outside-in from the browser journey
+    assert:
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the plan-tasks skill planned a two-fragment browser journey correctly.
+
+          Score each dimension 1-3. Pass threshold: 9 out of 12.
+
+          Dimension 1 — Tiers and fragment leaves (1-3): Are phases tiered, with a leaf E2E RED task per fragment?
+            1 = No tiers, or the journey is one monolithic e2e phase
+            2 = Tiers present but fragments lack their own leaf RED task, or non-browser behavior is tiered e2e-journey
+            3 = Only the two browser steps are e2e-journey; each has a leaf agent-test RED extending the same spec by one stage
+
+          Dimension 2 — Ordering (1-3): Does each fragment's RED leaf precede the phases that turn it green?
+            1 = Journey RED tasks come after their supporting phases (e.g. at the end before full integration)
+            2 = Fragment 1 is ordered correctly but fragment 2's RED is misplaced
+            3 = Fragment 1's RED has a lower P{N} than its phases; fragment 2's RED comes after fragment 1's phases and before its own
+
+          Dimension 3 — Validate scope (1-3): Do validates exclude the journey spec until each fragment's last validate?
+            1 = Every validate runs the full suite including the still-red journey spec
+            2 = Exclusion is stated but no fragment's last validate carries a Journey spec command
+            3 = Validates inside an open fragment exclude the spec; each fragment's last validate also carries a Journey spec command
+
+          Dimension 4 — Journey RED gates (1-3): Are the e2e-journey RED gates specific and preflight scoped correctly?
+            1 = RED gates are generic ("tests fail")
+            2 = RED gates name a step but not a testid/locator, or preflight checks the runner-managed webServer
+            3 = Fragment 2's gate predicts stage 1 passing and stage 2 failing on a named testid; preflight covers only externally managed services
+
+          Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
 # ---------------------------------------------------------------------------
 # IMPLEMENT skill scenarios
 # ---------------------------------------------------------------------------
