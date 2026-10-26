@@ -62,6 +62,10 @@ Write failing tests ONLY. Do NOT write any implementation code.
    vs. **failed before the assertion ran** (wrong-reason RED). Consult CLAUDE.md or any
    project/user testing guidance for what each looks like in this framework.
 7. If tests pass immediately (`status` is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
+8. **Fixing a TEST-DEFECT.** If your prompt carries a TEST-DEFECT report the orchestrator
+   upheld, change only the cited assertion so it states the acceptance criterion; keep
+   every assertion the criterion requires. Implementation may already exist, so steps 4-7
+   do not apply: run the test command once and report what changed, why, and the result.
 
 ## Rules
 
@@ -87,3 +91,4 @@ After writing tests:
   the relevant compile/import/setup error line]
 - RED gate: PASS (failed for the expected reason) or FAIL (tests passed without
   implementation, or failed for a different reason — wrong reason)
+- TEST-DEFECT fix: [assertion changed and why, test command result — or "N/A"]

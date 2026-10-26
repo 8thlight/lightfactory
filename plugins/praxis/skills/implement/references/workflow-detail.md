@@ -117,7 +117,7 @@ When Agent 3 (Validate) reports failures, create new tasks under the same phase 
 ### Procedure
 
 1. **Create remediation task** (name: `04-remediate-attempt-{M}`, agent-type: `agent-remediate`) — see tracker file for commands
-2. **Create re-validation task** (name: `05-revalidate-attempt-{M}`, agent-type: `agent-validate`) — see tracker file for commands
+2. **Create re-validation task** (name: `05-revalidate-attempt-{M}`, agent-type: `agent-validate`) with the original validate task's commands (a validate inside an open e2e-journey fragment keeps excluding the journey spec) — see tracker file for commands
 3. **Mark the original validate task as done** — it completed its job (reporting failures) — see tracker file for commands
 4. The sequential naming (`04-`, `05-`) ensures remediation runs next, then re-validation
 
@@ -137,7 +137,7 @@ Per-tracker commands:
 ### Agent Context
 - **Files to modify (implementation):** `{implementation file path(s)}`
 - **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
-- **Full test command:** `{full test suite command}`
+- **Full test command:** `{the failed validate task's test command}`
 - **Failure output from validation:**
 
 {paste Agent 3's failure output here}
@@ -153,7 +153,7 @@ Per-tracker commands:
 - Files modified: [list paths]
 - What was fixed: [brief description]
 - Test command output: [paste]
-- Result: ALL PASS or STILL FAILING
+- Result: ALL PASS, STILL FAILING, or TEST-DEFECT (test, assertion, why)
 ```
 
 ### Escalation

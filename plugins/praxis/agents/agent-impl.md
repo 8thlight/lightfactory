@@ -30,7 +30,7 @@ After all tests pass, review every line of implementation you added:
 
 ## Rules
 
-- **Never** modify test files — if a test seems wrong (asserts something the acceptance criterion does not, or can only pass by bending the implementation), STOP and report **TEST-DEFECT** with the test, the assertion, and why; the orchestrator routes the fix to `agent-test`. Do not bend the implementation to satisfy a defective test.
+- **Never** modify test files — if a test seems wrong (asserts something the acceptance criterion does not, or can only pass by bending the implementation), STOP and report **TEST-DEFECT** with the test, the assertion, and why; the orchestrator checks the claim against the acceptance criterion and, if upheld, routes the fix to `agent-test` (every claim, upheld or not, uses one of the phase's 2 remediation attempts). Do not bend the implementation to satisfy a defective test.
 - **Never** commit or stage — the orchestrator commits (per the plan's `commit:` policy)
 - Write the simplest code that makes tests pass
 - Respect architectural constraints from the issue description

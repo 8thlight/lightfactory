@@ -35,7 +35,7 @@ Children execute sequentially by their numeric prefix within the parent.
 
 ### E2E journey fragments
 
-An `e2e-journey` fragment's RED step is a leaf `P{N}-E2E-Red-{Step}` (`agent-type=agent-test`, same spec file extended by one stage). The lower-tier TDD phases that follow turn it green, and their validate task runs the spec. Its test context carries the runner, build target and preflight.
+An `e2e-journey` fragment's RED step is a leaf `P{N}-E2E-Red-{Step}` (`agent-type=agent-test`, same spec file extended by one stage). The lower-tier TDD phases that follow turn it green. Their validate tasks run the lower-tier suite **without** the journey spec (it stays red until the fragment is done); only the fragment's last validate task also runs the spec, and stages 1..K must pass. Its test context carries the runner, build target and preflight.
 
 ## Tracker Procedures
 

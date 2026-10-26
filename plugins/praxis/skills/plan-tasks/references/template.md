@@ -326,7 +326,8 @@ Follow your `praxis:agent-impl` definition for the procedure and report format. 
 **Role:** Run the full test suite and report. Do NOT modify any files.
 
 ### Agent Context
-- **Full test command:** `{full test suite command}`
+- **Full test command:** `{full test suite command — inside an open e2e-journey fragment, the lower-tier command that excludes the journey spec}`
+- **Journey spec command:** `{runner command for the spec}` — only on a fragment's last validate task (stages 1..K must pass); omit elsewhere
 - **Phase test files:** `{test file path(s)}`
 - **Phase impl files:** `{implementation file path(s)}`
 
@@ -364,7 +365,7 @@ Created dynamically by `/implement` when validation fails. Not created during `/
 ### Agent Context
 - **Files to modify (implementation):** `{implementation file path(s)}`
 - **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
-- **Full test command:** `{full test suite command}`
+- **Full test command:** `{the failed validate task's test command}`
 - **Failure output from validation:**
 {paste Agent 3's failure output}
 

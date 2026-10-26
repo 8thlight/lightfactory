@@ -114,7 +114,8 @@ See [template.md](references/template.md) for the complete template with Agent C
   not a dev server) and **preflight** (services and ports that must be up).
 - One journey may split into **fragments** (open surface, inputs, submit, result
   visible). A fragment is its RED step plus the lower-tier phases that turn it green;
-  each is independently verifiable and leaves the suite green.
+  each is independently verifiable and leaves the suite green. Validates inside an open
+  fragment run the lower tiers only; the fragment's last validate also runs the spec.
 - A fragment's RED sits at the **lowest tier that can assert the behavior**; only
   browser-needing behavior gets an `e2e-journey` RED.
 - A growing spec is **stages**: fragment N extends the same spec, and its RED shows

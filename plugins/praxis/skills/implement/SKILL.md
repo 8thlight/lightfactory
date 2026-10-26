@@ -260,14 +260,15 @@ The VALIDATE gate is the project's full test and lint suite. Agent 3 determines 
 Example for a TypeScript/Bun project: `tsc --noEmit && vitest run && biome check .`
 Example for a Python project: `mypy . && pytest && ruff check .`
 
-Agent 3 always derives the actual commands from the project rather than using hardcoded defaults.
+Agent 3 derives the commands from the project unless the task context names them (a validate inside an open e2e-journey fragment excludes that spec until the fragment's last validate).
 
 ### If GREEN Gate Fails
 
-If Agent 2 reports **TEST-DEFECT** (the test is wrong, not the implementation):
-1. Log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`
-2. Re-dispatch `agent-test` with the defect report to fix the test, then `agent-impl` to resume GREEN
-3. Agent 2 never edits tests; the orchestrator does not either
+If Agent 2 or 2-R reports **TEST-DEFECT** (the test is wrong, not the implementation), the orchestrator decides, never the reporting agent:
+1. Compare the cited assertion with the write-tests task's test spec and the epic's acceptance criteria. Unclear → ask the user
+2. **Rejected** (the assertion follows the criterion): log `[GATE FAIL] {task} — GREEN gate failed: TEST-DEFECT rejected: {why}`; continue as a GREEN failure (below)
+3. **Upheld:** log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`; re-dispatch `agent-test` with the report; review its test diff (a criterion assertion dropped or weakened → ask the user); then re-dispatch `agent-impl`
+4. Each TEST-DEFECT counts toward the phase's 2 remediation attempts; a second on the same task → STOP, ask the user. Agents 2/2-R never edit tests; the orchestrator does not either
 
 If Agent 2 cannot make tests pass:
 1. Proceed to Agent 3 anyway (to get full failure report)

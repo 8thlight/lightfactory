@@ -14,7 +14,10 @@ Run the full test suite and report results. Do NOT modify any files.
 ## Instructions
 
 1. Read the project's CLAUDE.md (or package.json / equivalent build file) to determine the correct test, type-check, and lint commands for this project
-2. Do NOT assume a specific language or toolchain — derive commands from the project
+2. Do NOT assume a specific language or toolchain — derive commands from the project.
+   If your Agent Context names a **Full test command**, run it as given: inside an open
+   e2e-journey fragment it deliberately excludes the journey spec, which is still red.
+   If it names a **Journey spec command**, run that too.
 3. Run all configured commands
 4. All commands must exit 0 for the VALIDATE gate to pass
 5. If a command fails, rerun it (the failing test or file is enough) before classifying
@@ -31,7 +34,7 @@ Run the full test suite and report results. Do NOT modify any files.
 
 - **Never** modify any files — not tests, not implementation, not configuration (run logs under `.light/` are fine)
 - **Never** attempt to fix anything — only report
-- Run the FULL test suite, not just the new tests
+- Run the FULL test suite (or the one your Agent Context names), not just the new tests
 - Include type-check and lint commands if the project uses them
 - Rerunning a failed command to check for flakiness is not a modification; fixing anything is
 

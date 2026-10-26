@@ -26,7 +26,7 @@ Fix the implementation to make all tests pass. Do NOT modify test files.
 - **Never** commit or stage — the orchestrator commits (per the plan's `commit:` policy)
 - Make minimal changes to fix the failures
 - Do not refactor or improve code beyond what's needed to pass tests
-- If the fix requires changing the test (because the test is wrong), STOP and report **TEST-DEFECT** (test, assertion, why); the orchestrator routes the fix to `agent-test`
+- If the fix requires changing the test (because the test is wrong), STOP and report **TEST-DEFECT** (test, assertion, why); the orchestrator checks the claim against the acceptance criterion and, if upheld, routes the fix to `agent-test`
 
 ## Report Format
 
