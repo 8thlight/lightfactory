@@ -97,7 +97,8 @@ Loop:
   g. Commit per the `commit:` line in the epic context (workflow-detail.md, Commits):
      `per-task` before each task is marked done, `per-group` before a group's last task is
      (a journey fragment commits once, at its last validate), `none`/absent never. Only the
-     orchestrator commits
+     orchestrator commits, staging only that commit's files; it stops if the index already
+     holds staged files
   h. Loop back to (a)
 ```
 
@@ -245,7 +246,7 @@ Example for a Python project: `mypy . && pytest && ruff check .`
 
 **YAKS:** Run `yx list --format json` for the epic and recompute readiness. Done tasks = completed work; ready tasks = next to dispatch; waiting tasks = predecessors not yet done. No special recovery logic needed.
 
-**All trackers:** append to the existing execution log and rebuild the file lists from its `files:` entries. A ready task whose last log entry is `[GATE FAIL]` or `[BLOCKED]` waits for the user's decision instead of being re-dispatched.
+**All trackers:** append to the existing execution log and rebuild the file lists, and each task's files still to commit, from its `files:` and `[WRITE]` entries (workflow-detail.md, Execution Log Format). A ready task whose last log entry is `[GATE FAIL]` or `[BLOCKED]` waits for the user's decision instead of being re-dispatched.
 
 **BEADS:** Same as YAKS — use `Skill: beads:list` and `Skill: beads:ready`. Bead state persists cross-session.
 

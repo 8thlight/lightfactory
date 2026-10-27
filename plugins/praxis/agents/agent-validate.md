@@ -25,8 +25,9 @@ Run the validate task's tests, type-check and lint, and report results. Do NOT m
 4. All commands must exit 0 for the VALIDATE gate to pass
 5. If a command fails, rerun it (the failing test or file is enough) before classifying
    the failure. Passes on rerun: report **FLAKY** with the rerun count and the log path
-   (tee each run to a log file under `.light/`); the gate stays FAIL for the orchestrator
-   to decide. Fails again: report as a real failure. Never classify a failure as flaky
+   (log each run with `set -o pipefail; { <command>; } 2>&1 | tee "$log"; rc=$?;
+   echo "exit status: $rc"`, so `tee` cannot mask a failure); the gate stays FAIL for the
+   orchestrator to decide. Fails again: report as a real failure. Never classify a failure as flaky
    without a rerun.
 6. Classify each failing test as **behavior**, **environmental**, or **FLAKY** (step 5).
    Environmental means a cause outside the code: a Preflight service down, a refused port,

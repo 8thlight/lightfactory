@@ -62,18 +62,24 @@ def compute_ready(epic_json):
 
 ## Remediation Commands
 
+Write contexts with a quoted heredoc (`<<'CONTEXT'`), never `echo "…"`: they contain backticks and `$`.
+
 ### Create remediation task
 
 ```bash
 yx add "04-remediate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-remediate"
-echo "{remediation context}" | yx context "04-remediate-attempt-1"
+yx context "04-remediate-attempt-1" <<'CONTEXT'
+{remediation context}
+CONTEXT
 ```
 
 ### Create re-validation task
 
 ```bash
 yx add "05-revalidate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-validate"
-echo "{the original validate task's context}" | yx context "05-revalidate-attempt-1"
+yx context "05-revalidate-attempt-1" <<'CONTEXT'
+{the original validate task's context}
+CONTEXT
 ```
 
 ### Mark original validate task as done
@@ -88,7 +94,9 @@ For an upheld claim from `02-implement` (from `04-remediate-attempt-{M}`, use `0
 
 ```bash
 yx add "01r-test-repair-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-test"
-echo "{repair context}" | yx context "01r-test-repair-attempt-1"
+yx context "01r-test-repair-attempt-1" <<'CONTEXT'
+{repair context}
+CONTEXT
 ```
 
 Name sorting puts it after `01-write-tests` and before `02-implement`, so readiness dispatches it next.

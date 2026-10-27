@@ -147,7 +147,7 @@ Check plannotator availability: `Bash: plannotator --help`
 
 Once the plan is approved, immediately create the task graph — this is the **commitment point** where the approved plan becomes executable.
 
-See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and `echo "..." | yx context` for piping agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
+See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and a quoted heredoc into `yx context` (`<<'CONTEXT'`) for agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
 
 Write the epic's own context in tracker step 1: a `commit: {policy}` line and the Acceptance Criteria, so `/implement` can read both without the plan file (absent `commit:` = `none`).
 

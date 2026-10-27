@@ -33,15 +33,17 @@ only when the test file itself fails to compile or load, or its fixtures, setup 
    or startup failure in the log as a wrong-reason RED.
 5. Run the test command, capturing full output to a log file named after the branch
    and current task or phase. Ensure `.light/` exists, replace `/` in the branch name
-   with `-` so the path stays a single file, and preserve the test command's exit
-   status (not `tee`'s) so a failing build is not masked:
+   with `-` so the path stays a single file. Group the whole test command in `{ …; }` so
+   every step of it (e.g. a build before the runner) is logged, and keep its exit status
+   (not `tee`'s) so a failing build is not masked:
    ```bash
    set -o pipefail
    mkdir -p .light
    slug="$(git rev-parse --abbrev-ref HEAD | tr '/' '-')"
    log=".light/red-gate-${slug}-<phase>.log"
-   <test-command> 2>&1 | tee "$log"
-   status=${PIPESTATUS[0]}   # exit code of the test command, not tee
+   { <test-command>; } 2>&1 | tee "$log"
+   rc=$?   # with pipefail: the test command's exit status, not tee's (bash and zsh)
+   echo "exit status: $rc"   # shell variables do not survive to the next call
    ```
    Example log path: `.light/red-gate-feature-DEV-3658-P2-capacity-check.log`
 6. Read the log file (do NOT rely on in-conversation output) and judge the failure
@@ -71,7 +73,7 @@ only when the test file itself fails to compile or load, or its fixtures, setup 
    fall back to the universal distinction: **failed at the assertion** (intended RED)
    vs. **failed before the assertion ran** (wrong-reason RED). Consult CLAUDE.md or any
    project/user testing guidance for what each looks like in this framework.
-7. If tests pass immediately (`status` is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
+7. If tests pass immediately (the printed exit status is 0), STOP and report this as a **RED gate FAIL** — the test is tautological or the feature already exists
 
 ## Rules
 

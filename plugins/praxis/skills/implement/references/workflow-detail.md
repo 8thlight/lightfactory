@@ -145,18 +145,21 @@ a leaf group uses its own name), because child names repeat in every group.
 [GATE PASS] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate passed (RED: {decisive line} @ {file:line}); files: {paths}
 [GATE PASS] {task} — RED gate N/A: test repair accepted; files: {paths}
 [GATE FAIL] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate failed: {reason}; files: {paths}
-[REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {why}}
-[BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}[: TEST-DEFECT {test, assertion, why}]
+[REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {why}}[; files: {paths}]
+[BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}[: TEST-DEFECT {test, assertion, why}][; files: {paths}]
 [CLOSED] {task}[ — user approval: "{quote}"]
-[WRITE] {command} — orchestrator wrote: {files}
+[WRITE] {task} — {command}; orchestrator wrote: {files}
 ```
 
-`files:` lists the files the agent reported creating or modifying (omit when none). On resume,
-rebuild `files_created`/`files_modified` and the files still to commit from these lines (those
-after the last `[WRITE] git commit`). RED gate N/A lines are not counted as RED passes in the
-session manifest. `[WRITE]` covers every file the orchestrator itself writes to the project: the
-lint fast path's formatter, and each commit (`[WRITE] git commit {sha} — orchestrator wrote:
-{files}`). Record each user decision as a quote on the next entry for that task (e.g.
+`files:` lists the files the agent reported creating or modifying (omit when none). `[WRITE]`
+covers every file the orchestrator itself writes to the project — the lint fast path's
+formatter, a `.orig` restore, and each commit (`[WRITE] {task} — git commit {sha}; orchestrator
+wrote: {files}`) — and names the task it serves (`final` after the loop). On resume, rebuild
+`files_created`/`files_modified` and the files still to commit, per task, from these lines: a
+file is still to commit for a task when an entry for that task lists it after the last commit
+line that lists it (parallel groups commit separately, so the last commit overall is not a
+cutoff). RED gate N/A lines are not counted as RED passes in the session manifest. Record
+each user decision as a quote on the next entry for that task (e.g.
 `[DISPATCHED] {task} — … — user decision: "{quote}"`). A close the tracker refuses (open
 dependency) is never forced without user approval; record the approval on the close:
 `[CLOSED] {task} — force-closed past {id}; user approval: "{quote}"`.
@@ -167,7 +170,9 @@ agent-impl or agent-remediate reports TEST-DEFECT (test, assertion, why) when a 
 wrong. The orchestrator decides the claim; the reporting agent never does. Tests change only
 through agent-test: no implementation agent edits them, and the orchestrator edits them only
 through the [Lint Fast Path](#lint-fast-path)'s formatter or by restoring a `.orig` copy at the
-user's request (step 7), each logged `[WRITE]`.
+user's request (step 7), each logged `[WRITE]`. Agents may edit files before a stop, so every
+`[REMEDIATION]` or `[BLOCKED]` entry this route logs ends with `; files: {paths}` from the report
+it acts on (the reporting agent's, or the repair's in step 7).
 
 1. **Owner.** Find the task that wrote the cited test: the phase's `01-write-tests`, or for a
    journey spec the `P{N}-E2E-Red-*` leaf that wrote the cited stage. If no task in the graph
@@ -189,12 +194,13 @@ user's request (step 7), each logged `[WRITE]`.
    task in the same group that sorts just before the reporting task — `01r-test-repair-attempt-{N}`
    for `02-implement`, `03r-test-repair-attempt-{N}` for `04-remediate-attempt-{M}` (agent-type
    `agent-test`; tracker commands in the tracker files; `M` is the attempt number in the
-   reporting task's name) — and, for a claim from
-   `04-remediate-attempt-{M}`, mark that task done (its `05-revalidate-attempt-{M}` then runs
-   after the repair). Then log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`.
-   The repair's context is the owner's write-tests context (with its runner, preflight and RED
-   gate profile), the TEST-DEFECT report, and the violated acceptance criterion. On resume, an
-   upheld-claim line with no repair task means this step did not finish: finish it.
+   reporting task's name). Then log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT:
+   {test, why}`, and, for a claim from `04-remediate-attempt-{M}`, mark that task done (its
+   `05-revalidate-attempt-{M}` then runs after the repair). The repair's context is the owner's
+   write-tests context (with its runner, preflight and RED gate profile), the TEST-DEFECT
+   report, and the violated acceptance criterion. On resume, an upheld-claim line with no
+   repair task, or with its `04-remediate-attempt-{M}` still open, means this step did not
+   finish: finish it.
 6. **Repair result.** agent-test reports RED gate N/A when its run passes or fails anywhere in
    the code under test; go to step 7. A failure of the test file itself (it does not compile or
    load, or its fixtures, setup or preflight fail) is a RED gate FAIL (see [Gate Outcomes](#gate-outcomes)).
@@ -202,8 +208,8 @@ user's request (step 7), each logged `[WRITE]`.
    exactly the cited file, only the cited assertion changed, and no assertion the criterion
    requires was dropped or weakened, log `[GATE PASS] {repair} — RED gate N/A: test repair
    accepted` and mark the repair done; readiness then re-dispatches `02-implement` or runs the
-   re-validation. Otherwise log `[BLOCKED] {repair} — repair diff rejected: {assertion}`, leave
-   the repair open, STOP and ask the user.
+   re-validation. Otherwise log `[BLOCKED] {repair} — repair diff rejected: {assertion}; files:
+   {paths}`, leave the repair open, STOP and ask the user.
 
 **After a stop on this route,** the user's answer replaces step 3 and waives the budget:
 reject → step 4; uphold → step 5 with the next `N`. After a rejected repair diff, the user
@@ -292,14 +298,20 @@ The policy is the `commit:` line in the epic context: `per-task`, `per-group`, o
   user); `per-group` commits nothing in that span, the leaf included, then commits the whole
   fragment right before marking that validate done. If hooks or CI run the test suite on every commit, prefer
   `per-group` or `none`.
-- **Never stage** `.light/`. If nothing is staged, skip the commit.
+- **Stage only this commit's files.** First check the index (`git diff --cached --name-only`):
+  a commit takes everything already staged, so if it lists anything, log `[BLOCKED] {task} —
+  commit rejected: already staged: {paths}`, leave the task open, STOP and ask the user. Then
+  `git add -- {files}`; if it fails, treat it like a rejected commit (below). Never stage
+  `.light/`. If nothing is staged, skip the commit.
 - **Draft manifest.** Before each commit, write the session manifest with progress so far,
   `"draft": true` and `test_suite_passed: false` (see [session-manifest.md](session-manifest.md)),
   so a manifest-checking `commit-msg` hook can see the work. Step 5b's final write replaces it.
-- **Log** `[WRITE] git commit {sha} — orchestrator wrote: {files}`.
-- **A hook rejects the commit:** log `[BLOCKED] {task} — commit rejected: {hook output line}`,
-  leave the task open (it was not yet marked done), STOP and ask the user. Never commit with
-  `--no-verify`.
+- **Log** `[WRITE] {task} — git commit {sha}; orchestrator wrote: {files}`, where `{task}` is
+  the task about to be marked done.
+- **A hook rejects the commit:** unstage this commit's files (`git restore --staged --
+  {files}`) so a retry passes the index check, log `[BLOCKED] {task} — commit rejected: {hook
+  output line}`, leave the task open (it was not yet marked done), STOP and ask the user. Never
+  commit with `--no-verify`.
 
 ---
 
