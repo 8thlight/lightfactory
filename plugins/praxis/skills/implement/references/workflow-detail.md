@@ -124,8 +124,8 @@ calls for it (see [Commits](#commits)), close the task in the tracker, then log 
 | agent-impl: GREEN gate PASS | Log `[GATE PASS]`, mark done |
 | agent-impl: GREEN gate FAIL | Log `[GATE FAIL]`, mark done; its validate runs next and reports the failures |
 | agent-impl or agent-remediate: TEST-DEFECT | [TEST-DEFECT Route](#test-defect-route) |
-| agent-validate: PASS | Log `[GATE PASS]`, mark done |
-| agent-validate: failures | Take the first match: (1) a behavior test failure or a type-check failure → [Remediation](#remediation), with any FLAKY or environmental failures listed in the remediation context as not to fix; (2) otherwise a lint failure → [Lint Fast Path](#lint-fast-path); (3) otherwise only FLAKY or environmental test failures → log `[GATE FAIL] {task} — VALIDATE gate failed: {FLAKY: command, reruns, log path / environmental: line}` and `[BLOCKED]`, leave the task open, STOP and ask. The user accepts (close with `[CLOSED] {task} — user approval: "{quote}"`), asks for a rerun (re-dispatch the task), or fixes the environment or test and then asks for a rerun |
+| agent-validate: PASS | Log `[GATE PASS]`, mark done. When the context has a Journey spec command, it is a PASS only if the report's Journey spec line says PASS; a "not run" line is an environmental failure (next row). A missing line: re-dispatch the task once; missing again, log `[BLOCKED]`, leave it open, STOP and ask |
+| agent-validate: failures | Take the first match: (1) a behavior test failure or a type-check failure → [Remediation](#remediation), with any FLAKY or environmental failures listed in the remediation context as not to fix; (2) otherwise a lint failure → [Lint Fast Path](#lint-fast-path); (3) otherwise only FLAKY or environmental test failures → log `[GATE FAIL] {task} — VALIDATE gate failed: {FLAKY: command, reruns, log path / environmental: line}` and `[BLOCKED]`, leave the task open, STOP and ask. The user accepts (mark done, logging `[CLOSED] {task} — user approval: "{quote}"`), asks for a rerun (re-dispatch the task), or fixes the environment or test and then asks for a rerun |
 | agent-remediate: ALL PASS or STILL FAILING | Log `[GATE PASS]` or `[GATE FAIL] {task} — GREEN gate …`, mark done; its re-validation runs next |
 | agent-no-test: acceptance gate PASS | Log `[GATE PASS]`, mark done |
 | agent-no-test: acceptance gate FAIL | Log `[GATE FAIL]` and `[BLOCKED]`, leave the task open, STOP and ask |
@@ -145,7 +145,7 @@ a leaf group uses its own name), because child names repeat in every group.
 [GATE PASS] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate passed (RED: {decisive line} @ {file:line}); files: {paths}
 [GATE PASS] {task} — RED gate N/A: test repair accepted; files: {paths}
 [GATE FAIL] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate failed: {reason}; files: {paths}
-[REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {why}}[; files: {paths}]
+[REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {test, assertion}: {why}}[; files: {paths}]
 [BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}[: TEST-DEFECT {test, assertion, why}][; files: {paths}]
 [CLOSED] {task}[ — user approval: "{quote}"]
 [WRITE] {task} — {command}; orchestrator wrote: {files}
@@ -182,25 +182,28 @@ it acts on (the reporting agent's, or the repair's in step 7).
    `[REMEDIATION]` lines already logged for the group. If this is the group's second claim,
    or `N` > 2, log `[BLOCKED] {task} — attempt limit: TEST-DEFECT {test, assertion, why}`, leave
    the reporting task open, STOP and ask the user.
-3. **Decide.** Compare the cited assertion with the owner's test spec and the acceptance
-   criteria in the epic context. If that does not settle it, log `[BLOCKED] {task} — pending
-   user decision: TEST-DEFECT {test, assertion, why}`, leave the reporting task open, and ask
-   the user.
-4. **Rejected** (the assertion states the criterion): log
-   `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT rejected: {why}` and mark the
-   reporting task done. Its validate (`03-validate` or `05-revalidate-attempt-{M}`) runs next,
-   and the next remediation context carries `Rejected TEST-DEFECT: {why}`.
-5. **Upheld:** copy the cited file to `.light/test-defect-{group}-{child}.orig`, create a repair
-   task in the same group that sorts just before the reporting task — `01r-test-repair-attempt-{N}`
-   for `02-implement`, `03r-test-repair-attempt-{N}` for `04-remediate-attempt-{M}` (agent-type
+3. **Decide.** Compare the cited assertion with the acceptance criteria in the epic context,
+   the Interface contract in the group's `02-implement` context, and the owner's test spec.
+   Uphold the claim only if the assertion contradicts a criterion or the contract (no
+   implementation that meets them could pass it); reject it if the assertion follows from them,
+   or from the owner's test spec where they say nothing. If neither settles it, log `[BLOCKED] {task} —
+   pending user decision: TEST-DEFECT {test, assertion, why}`, leave the reporting task open,
+   and ask the user.
+4. **Rejected:** log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT rejected: {test,
+   assertion}: {why}` and mark the reporting task done. Its validate (`03-validate` or
+   `05-revalidate-attempt-{M}`) runs next, and the next remediation context carries
+   `Rejected TEST-DEFECT: {test, assertion} — {why}`.
+5. **Upheld:** first log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT: {test, why}`.
+   Then copy the cited file to `.light/test-defect-{group}-attempt-{N}.orig`, create a repair task in
+   the same group that sorts just before the reporting task — `01r-test-repair-attempt-{N}` for
+   `02-implement`, `03r-test-repair-attempt-{N}` for `04-remediate-attempt-{M}` (agent-type
    `agent-test`; tracker commands in the tracker files; `M` is the attempt number in the
-   reporting task's name). Then log `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT:
-   {test, why}`, and, for a claim from `04-remediate-attempt-{M}`, mark that task done (its
-   `05-revalidate-attempt-{M}` then runs after the repair). The repair's context is the owner's
-   write-tests context (with its runner, preflight and RED gate profile), the TEST-DEFECT
-   report, and the violated acceptance criterion. On resume, an upheld-claim line with no
-   repair task, or with its `04-remediate-attempt-{M}` still open, means this step did not
-   finish: finish it.
+   reporting task's name) — and, for a claim from `04-remediate-attempt-{M}`, mark that task done
+   (its `05-revalidate-attempt-{M}` then runs after the repair). The repair's context is the
+   owner's write-tests context (with its runner, preflight and RED gate profile), the TEST-DEFECT
+   report, and the violated acceptance criterion. On resume, an upheld-claim line whose `.orig`
+   copy or repair task is missing, or whose `04-remediate-attempt-{M}` is still open, means this
+   step stopped part-way: finish the missing parts (never re-copy an existing `.orig`).
 6. **Repair result.** agent-test reports RED gate N/A when its run passes or fails anywhere in
    the code under test; go to step 7. A failure of the test file itself (it does not compile or
    load, or its fixtures, setup or preflight fail) is a RED gate FAIL (see [Gate Outcomes](#gate-outcomes)).
@@ -239,7 +242,10 @@ the commands differ.
 5. **Mark the failed validate task done**: it did its job by reporting the failures.
 
 The sequential naming (`04-`, `05-`) makes remediation run next, then re-validation. A
-re-validation that fails starts the next attempt from step 1.
+re-validation that fails starts the next attempt from step 1. On resume, a validate's
+`[REMEDIATION]` line whose `04-`/`05-` tasks are missing, or whose validate is still open, means
+this procedure stopped part-way: create only the missing `04-`/`05-` task (never a second copy),
+then do step 5, instead of re-dispatching the validate.
 
 Per-tracker commands:
 
@@ -256,13 +262,14 @@ Per-tracker commands:
 
 ### Agent Context
 - **Files to modify (implementation):** `{the phase's implementation files — for a journey fragment's last validate, every implementation file in the fragment}`
-- **Files to read (tests, DO NOT MODIFY):** `{test file path(s)} — for a journey fragment's last validate, also the journey spec`
+- **Files to read (tests, DO NOT MODIFY):** `{test file path(s)} — for a journey fragment's last validate, also the journey spec and its page objects and fixtures; the test-runner config is test-side too`
 - **Acceptance criterion:** {copied from the phase's `02-implement` context — for a journey fragment's last validate, every criterion the fragment serves}
+- **Interface contract:** {copied from the phase's `02-implement` context — for a journey fragment's last validate, every phase's contract in the fragment; omit when none}
 - **Full test command:** `{the failed validate task's Full test command}`
 - **Journey spec command:** `{the failed validate task's Journey spec command}` — omit when it had none
 - **Preflight:** {the failed validate task's Preflight — omit when it had none}
 - **Not behavior (don't fix):** {FLAKY or environmental failures from the same report — omit when none}
-- **Rejected TEST-DEFECT:** {why the orchestrator rejected a claim on this phase — omit when none}
+- **Rejected TEST-DEFECT:** {test, assertion} — {why the orchestrator rejected the claim; one line per rejected claim on this phase — omit when none}
 - **Failure output from validation:**
 
 {paste Agent 3's failure output here}
@@ -280,14 +287,22 @@ instead of creating remediation (`agent-validate` only reports):
    restore on the TEST-DEFECT route, this formatter is the only way the orchestrator may touch a
    test file. Log `[WRITE]` and add the files to `files_modified`.
 2. Re-dispatch the validate task.
-3. If it passes, the validate task is done as usual. If lint still fails, go to
-   [Remediation](#remediation) (any FLAKY or environmental failures go under Not behavior);
-   otherwise act on the result per [Gate Outcomes](#gate-outcomes).
+3. If it passes, the validate task is done as usual. If lint still fails in implementation
+   files, go to [Remediation](#remediation) (any FLAKY or environmental failures go under Not
+   behavior). If it still fails only in test files, no implementation agent may fix it: log
+   `[GATE FAIL]` and `[BLOCKED]`, leave the validate open, STOP and ask the user. Otherwise act
+   on the result per [Gate Outcomes](#gate-outcomes).
 
 ## Commits
 
 The policy is the `commit:` line in the epic context: `per-task`, `per-group`, or `none`
 (also when absent). Only the orchestrator commits; agents never commit or stage.
+
+- **Clean start.** On a fresh run (not a resume) whose policy commits, check
+  `git status --porcelain --untracked-files=no` before dispatching anything. If it lists a file
+  outside `.light/` and `.beads/` (tracker state), STOP and ask the user to commit or stash it:
+  `git add` stages whole files, so a task's commit would take the user's own edits in any file
+  the task also touched.
 
 - **When.** With `per-task`, commit right before marking each task done, staging only the
   files that task reported (and the orchestrator's own `[WRITE]` files for it); each commit
@@ -301,15 +316,17 @@ The policy is the `commit:` line in the epic context: `per-task`, `per-group`, o
 - **Stage only this commit's files.** First check the index (`git diff --cached --name-only`):
   a commit takes everything already staged, so if it lists anything, log `[BLOCKED] {task} —
   commit rejected: already staged: {paths}`, leave the task open, STOP and ask the user. Then
-  `git add -- {files}`; if it fails, treat it like a rejected commit (below). Never stage
-  `.light/`. If nothing is staged, skip the commit.
+  stage with `git --literal-pathspecs add -- {files}`, each path quoted (paths such as
+  `app/[id]/page.tsx` are otherwise globs), leaving out paths `git check-ignore` reports and
+  `.light/`; if it fails, treat it like a rejected commit (below). If nothing is staged, skip
+  the commit.
 - **Draft manifest.** Before each commit, write the session manifest with progress so far,
   `"draft": true` and `test_suite_passed: false` (see [session-manifest.md](session-manifest.md)),
   so a manifest-checking `commit-msg` hook can see the work. Step 5b's final write replaces it.
 - **Log** `[WRITE] {task} — git commit {sha}; orchestrator wrote: {files}`, where `{task}` is
   the task about to be marked done.
-- **A hook rejects the commit:** unstage this commit's files (`git restore --staged --
-  {files}`) so a retry passes the index check, log `[BLOCKED] {task} — commit rejected: {hook
+- **A hook rejects the commit:** unstage everything (`git reset -q`; the index held only this
+  commit's files) so a retry passes the index check, log `[BLOCKED] {task} — commit rejected: {hook
   output line}`, leave the task open (it was not yet marked done), STOP and ask the user. Never
   commit with `--no-verify`.
 

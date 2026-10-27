@@ -22,11 +22,11 @@ Fix the implementation to make all tests pass. Do NOT modify test files.
 
 ## Rules
 
-- **Never** modify test files — tests define the contract
+- **Never** modify test files (specs, page objects, fixtures, test helpers, or test-runner config such as retries, timeouts and ignore lists) — tests define the contract
 - **Never** commit or stage — only the orchestrator commits
 - Make minimal changes to fix the failures
 - Do not refactor or improve code beyond what's needed to pass tests
-- If the fix requires changing a test (it asserts something the Acceptance criterion in your context does not), STOP and report **TEST-DEFECT** (test, assertion, why); the orchestrator decides the claim. A claim listed under Rejected TEST-DEFECT in your context is already decided — fix the implementation
+- If a test contradicts the Acceptance criterion or Interface contract in your context (no implementation that meets them could pass), STOP and report **TEST-DEFECT** (test, assertion, why); the orchestrator decides the claim. A test that only asserts more detail than the criterion is not a defect. A claim on a test and assertion listed under Rejected TEST-DEFECT in your context is already decided — fix the implementation
 
 ## Report Format
 

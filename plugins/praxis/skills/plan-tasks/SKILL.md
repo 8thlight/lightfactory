@@ -116,14 +116,17 @@ phase shape is in [template.md](references/template.md):
 - A journey phase states its **runner**, **build target** (e.g. production build, not a
   dev server) and **preflight** (externally managed services and ports that must be up;
   what the runner starts itself is checked by running it). If the runner does not build
-  the app itself, the spec's command builds first (`{build} && {runner} {spec}`); a runner
-  that starts the server must not reuse one already running. Every run sees the current tree.
+  the app itself, the spec's command builds first (`{build} && {runner} {spec}`). A runner
+  that starts the server must not reuse one already running: force that on the runner, not
+  the build, with retries off (e.g. `{build} && CI=1 npx playwright test --retries=0 {spec}`
+  when the config has `reuseExistingServer: !process.env.CI`). Every run sees the current tree.
 - A journey splits into **fragments** (open surface, inputs, submit, result visible). A
   fragment is a leaf RED task `P{N}-E2E-Red-{Step}` that extends the same spec by one
   stage, then the lower-tier phases that turn it green, including the phase that builds
   the UI the stage asserts.
 - **Placement:** a fragment's RED leaf gets a lower `P{N}` than its phases; fragment N+1's
-  RED follows fragment N's phases.
+  RED follows fragment N's phases. Fragments never overlap, across journeys too: a RED leaf
+  comes after the last validate of every other open fragment.
 - **Validate scope:** validates inside an open fragment run the suite minus this journey's
   spec. The fragment's last phase is a single TDD group (no same-prefix sibling, not
   no-test); its validate also carries the **Journey spec command**, the journey RED task's
@@ -147,7 +150,7 @@ Check plannotator availability: `Bash: plannotator --help`
 
 Once the plan is approved, immediately create the task graph — this is the **commitment point** where the approved plan becomes executable.
 
-See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and a quoted heredoc into `yx context` (`<<'CONTEXT'`) for agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
+See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and a quoted heredoc piped into `yx add` (`<<'CONTEXT'`) for agent context, with `--under` taking the parent's printed ID — see [tracker-yaks.md](references/tracker-yaks.md) directly.
 
 Write the epic's own context in tracker step 1: a `commit: {policy}` line and the Acceptance Criteria, so `/implement` can read both without the plan file (absent `commit:` = `none`).
 
@@ -242,7 +245,8 @@ Repo rule files may already define what a correct RED looks like per area. For e
 task, before writing its Agent Context (a manual step, not a hook):
 
 1. Collect the test files the task will write or extend.
-2. Find rule files whose `paths:` frontmatter globs match any of them —
+2. Find rule files whose `paths:` frontmatter globs match any of them (a file with no
+   `paths:` matches every file) —
    `.claude/rules/**/*.md` (recursive, as Claude Code loads them), plus rule files the
    project's CLAUDE.md references.
 3. In each matching file, take the section whose heading text starts with `RED gate`

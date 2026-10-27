@@ -23,17 +23,19 @@ Run the validate task's tests, type-check and lint, and report results. Do NOT m
    it as an environmental failure.
 3. Run all of these commands
 4. All commands must exit 0 for the VALIDATE gate to pass
-5. If a command fails, rerun it (the failing test or file is enough) before classifying
-   the failure. Passes on rerun: report **FLAKY** with the rerun count and the log path
-   (log each run with `set -o pipefail; { <command>; } 2>&1 | tee "$log"; rc=$?;
-   echo "exit status: $rc"`, so `tee` cannot mask a failure); the gate stays FAIL for the
-   orchestrator to decide. Fails again: report as a real failure. Never classify a failure as flaky
-   without a rerun.
+5. If a command fails, rerun it (the failing test or file is enough, with the same env prefix
+   and flags) before classifying the failure. Passes on rerun: report **FLAKY** with the
+   rerun count and the log paths (log each run to its own file, so `tee` cannot mask a
+   failure and the first run's log survives: `set -o pipefail; mkdir -p .light;
+   log="$(mktemp .light/validate.XXXXXX)"; { <command>; } 2>&1 | tee "$log"; rc=$?;
+   echo "log: $log exit status: $rc"`); the gate stays FAIL for the orchestrator to decide.
+   Fails again: report as a real failure. Never classify a failure as flaky without a rerun.
 6. Classify each failing test as **behavior**, **environmental**, or **FLAKY** (step 5).
    Environmental means a cause outside the code: a Preflight service down, a refused port,
    a missing tool (the wrong-reason list of your context's **RED gate profile** can help).
    A build, startup or page-load failure of the app under test is **behavior** at validate
-   time. Report type-check and lint results per command; do not classify them
+   time, unless the log shows the port was already in use, which is environmental.
+   Report type-check and lint results per command; do not classify them
 7. Report results precisely
 
 ## Rules
@@ -48,6 +50,7 @@ Run the validate task's tests, type-check and lint, and report results. Do NOT m
 
 After validation:
 - Test command: [command] — Result: [PASS/FAIL]
+- Journey spec command: [command] — Result: [PASS/FAIL, or "not run: Preflight {service} down"] (only when your context names one)
 - Type-check command: [command] — Result: [PASS/FAIL] (or "N/A" if project doesn't use type-checking)
 - Lint command: [command] — Result: [PASS/FAIL] (or "N/A" if project doesn't use linting)
 - VALIDATE gate: PASS (all exit 0) or FAIL (failures listed below)

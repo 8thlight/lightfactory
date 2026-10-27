@@ -100,7 +100,7 @@ tests:
       - type: icontains
         value: "## Web Research"
       - type: regex
-        value: "(High|Medium|Low|high|medium|low)"
+        value: "[Cc]onfidence[^\\n]{0,15}?\\b(High|Medium|Low)\\b|\\b(High|Medium|Low)[- ][Cc]onfidence"
       - type: llm-rubric
         value: |
           Evaluate whether every web finding in the Web Research section is labeled with a confidence level (High, Medium, or Low).
@@ -472,7 +472,7 @@ tests:
           Dimension 4 — Journey RED gates and preflight (1-3): Are both RED gates specific, and is preflight scoped correctly?
             1 = RED gates are generic ("tests fail") or missing
             2 = A gate names a step but not a testid/locator, only one fragment's gate is specific, or preflight health-checks the server Playwright's webServer starts
-            3 = Fragment 1's gate names the testid/locator expected to time out; fragment 2's gate predicts stage 1 passing and stage 2 failing on a named testid/locator; preflight lists no service, or states none is needed because webServer is runner-managed
+            3 = Fragment 1's gate names the testid/locator expected to time out; fragment 2's gate predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator; preflight lists no service, or states none is needed because webServer is runner-managed
 
           Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
     metadata:
@@ -600,7 +600,8 @@ tests:
     vars:
       prompt: |
         GIVEN: A yaks epic where Agent 3's VALIDATE run finds: tsc exits 0, vitest exits 0, but biome exits 1
-        (lint errors only — no type errors, no test failures).
+        (lint errors only — no type errors, no test failures): src/lib/discount.ts:12 lint/style/useConst
+        and src/lib/discount.ts:30 format, both marked fixable.
 
         TASK: execute plan for the discount codes epic
     assert:
@@ -608,7 +609,8 @@ tests:
         value: |
           You are evaluating whether the implement skill correctly handled a biome-only lint failure using the fast path.
 
-          Score each dimension 1-3. Pass threshold: 9 out of 12.
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
 
           Dimension 1 — No [REMEDIATION] entry (1-3): Does the log NOT contain a [REMEDIATION] entry for this phase?
             1 = [REMEDIATION] entry is present (fast path was not used)
@@ -648,7 +650,8 @@ tests:
         value: |
           You are evaluating whether the implement skill correctly escalated to the user after 2 failed remediation attempts.
 
-          Score each dimension 1-3. Pass threshold: 9 out of 12.
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
 
           Dimension 1 — Two remediation entries (1-3): Does the log contain [REMEDIATION] entries for attempt 1 and attempt 2?
             1 = Fewer than 2 [REMEDIATION] entries
@@ -761,8 +764,9 @@ tests:
         Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
         task created, file the orchestrator copies or diffs, claim decision with its reason,
         execution-log entry and message to the user:
-        - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-          applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+          requires rounding to the cent (17.99)
         - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
           test command: all 6 tests pass (the implementation already rounds); RED gate: N/A
         - agent-impl (02-implement): GREEN gate: PASS
@@ -774,6 +778,8 @@ tests:
         value: "cause=TEST-DEFECT:"
       - type: icontains
         value: "01r-test-repair-attempt-1"
+      - type: regex
+        value: "\\[REMEDIATION\\][^\\n]*TEST-DEFECT[^\\n]*files:[^\\n]*src/lib/discount\\.ts"
       - type: llm-rubric
         value: |
           You are evaluating whether the implement skill handled an upheld TEST-DEFECT claim correctly.
@@ -816,8 +822,9 @@ tests:
         Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
         task created, file the orchestrator copies or diffs, claim decision with its reason,
         execution-log entry and message to the user:
-        - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-          applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 = 17.991; the test should use toBeCloseTo(17.991)
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 =
+          17.991; the test should use toBeCloseTo(17.991)
         - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 expected 17.99, received 17.991 (behavior)
         - agent-remediate: Result: ALL PASS (rounds the total to the cent)
         - agent-validate (re-validation): VALIDATE gate: PASS
@@ -848,7 +855,7 @@ tests:
           Dimension 3 — Validation and remediation (1-3): Did the run continue to validation and remediation?
             1 = Stops at the rejected claim, or re-dispatches agent-impl instead of validating
             2 = Remediates, but skips 03-validate, leaves 02-implement open, or omits the Rejected TEST-DEFECT reason from the remediation context
-            3 = 02-implement is marked done; 03-validate runs; its failure logs [REMEDIATION] 03-validate — attempt 2 and creates 04-remediate-attempt-2 (context carries Rejected TEST-DEFECT: {why}) and 05-revalidate-attempt-2 (original validate context unchanged); the phase closes after re-validation passes
+            3 = 02-implement is marked done; 03-validate runs; its failure logs [REMEDIATION] 03-validate — attempt 2 and creates 04-remediate-attempt-2 (context carries Rejected TEST-DEFECT: {test, assertion} — {why}) and 05-revalidate-attempt-2 (original validate context unchanged); the phase closes after re-validation passes
 
           Dimension 4 — Attempt numbering (1-3): Did the rejected claim count as attempt 1?
             1 = The claim is not counted; the remediation is attempt 1 with another attempt implied
@@ -870,12 +877,15 @@ tests:
         Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
         task created, file the orchestrator copies or diffs, claim decision with its reason,
         execution-log entry and message to the user:
-        - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-          applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+          requires rounding to the cent (17.99)
         - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
           test command: 1 failing (discount.test.ts:31, at an assertion); RED gate: N/A
-        - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:31 asserts
-          error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:31 asserts
+          that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+          rejected with an error
 
         TASK: execute plan for the discount codes epic
     assert:
@@ -931,8 +941,10 @@ tests:
         - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 and :22 (behavior)
         - agent-remediate (first remediation): Result: STILL FAILING — discount.test.ts:22
         - agent-validate (first re-validation): VALIDATE gate: FAIL — discount.test.ts:22 (behavior)
-        - agent-remediate (second remediation): Result: TEST-DEFECT — src/lib/discount.test.ts:22 asserts
-          error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+        - agent-remediate (second remediation): Files modified: src/lib/discount.ts; Result: TEST-DEFECT —
+          src/lib/discount.test.ts:22 asserts
+          that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+          rejected with an error
 
         TASK: execute plan for the discount codes epic
     assert:
@@ -940,6 +952,8 @@ tests:
         value: "[BLOCKED]"
       - type: icontains
         value: "04-remediate-attempt-2"
+      - type: regex
+        value: "\\[BLOCKED\\][^\\n]*files:[^\\n]*src/lib/discount\\.ts"
       - type: llm-rubric
         value: |
           You are evaluating whether the implement skill stopped on a TEST-DEFECT claim that exceeds the phase group's attempt budget.

@@ -30,7 +30,7 @@ After all tests pass, review every line of implementation you added:
 
 ## Rules
 
-- **Never** modify test files — if a test seems wrong (it asserts something the Acceptance criterion in your context does not, or can only pass by bending the implementation), STOP and report **TEST-DEFECT** with the test, the assertion, and why. The orchestrator decides the claim. Do not bend the implementation to satisfy a defective test.
+- **Never** modify test files (specs, page objects, fixtures, test helpers, or test-runner config such as retries, timeouts and ignore lists) — if a test contradicts the Acceptance criterion or Interface contract in your context (no implementation that meets them could pass it), STOP and report **TEST-DEFECT** with the test, the assertion, and why. A test that only asserts more detail than the criterion is not a defect. The orchestrator decides the claim. Do not bend the implementation to satisfy a defective test.
 - **Never** commit or stage — only the orchestrator commits
 - Write the simplest code that makes tests pass
 - Respect architectural constraints from the issue description

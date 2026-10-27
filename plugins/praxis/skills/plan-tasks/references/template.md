@@ -84,7 +84,7 @@ SKILL.md, "Phase tiers".
 - **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
 - **Preflight:** {externally managed services and ports that must be up, with a check for each; "none" when the runner starts everything itself (e.g. Playwright `webServer`)}
 - **Test spec:** {user-visible journey step, using the agreed contract testids}
-- **Test command:** `{runner command for this spec — prefixed with the build command when the runner does not build the app itself}`
+- **Test command:** `{runner command for this spec — prefixed with the build command when the runner does not build the app itself; a runner-started server is never reused and retries are off (see SKILL.md, Phase tiers)}`
 - **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
 - **GREEN gate:** checked by the fragment's last validate (its Journey spec command)
 - **Architectural constraints:** user-visible behavior and contract testids only, never internals

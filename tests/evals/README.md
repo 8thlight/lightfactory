@@ -175,7 +175,7 @@ Assertions in `then[]` map to promptfoo assertion types:
 
 Assertions map to a single `llm-rubric` assertion whose value contains a structured
 scoring rubric (1-3 per dimension, pass threshold 9/12; use 12/12 — every dimension must score 3 —
-when each dimension is a hard correctness property, as in plan-tasks-09 and implement-11..14). The rubric should reference
+when each dimension is a hard correctness property, as in plan-tasks-09, implement-05, -06 and -11..14). The rubric should reference
 the specific observable behaviors from `then[]`.
 
 After adding scenarios to the YAML file, add corresponding test cases to

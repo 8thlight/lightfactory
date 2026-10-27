@@ -207,6 +207,6 @@ functional:
       - "Fragment 1's RED leaf has a lower P{N} than every fragment-1 phase; fragment 2's RED leaf has a higher P{N} than every fragment-1 phase and a lower P{N} than every fragment-2 phase"
       - "Validate tasks before a fragment's last validate use a Full test command that excludes the journey spec"
       - "Each fragment's last phase is a single TDD group whose validate also carries a Journey spec command"
-      - "Fragment 1's RED gate names the testid/locator expected to time out; fragment 2's predicts stage 1 passing and stage 2 failing on a named testid/locator"
+      - "Fragment 1's RED gate names the testid/locator expected to time out; fragment 2's predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator"
       - "Preflight does not health-check the server Playwright's webServer starts (no service to preflight)"
     notes: "Each rubric dimension is a hard correctness property, so the eval requires 12/12 to prevent offsetting. Structural validation cannot catch a misordered graph or an omitted journey gate. Approval is pre-granted and the graph printed because --print mode returns only the final message and cannot answer the review prompt; plan-tasks-08 covers the approval loop."

@@ -71,6 +71,8 @@ If resuming a previous session, this step is the same — the readiness computat
 
 This is the core execution loop. It runs until all tasks in the epic are done or an unrecoverable error occurs.
 
+**Clean start:** on a fresh run (not a resume) whose `commit:` policy commits, STOP before the loop if tracked files outside `.light/` and `.beads/` have uncommitted changes (workflow-detail.md, Commits).
+
 **File tracking:** Maintain running lists of `files_created` and `files_modified` throughout the loop. After each agent completes, parse its report for `Files created:`, `Files created/modified:`, and `Files modified:` lines and append paths to the appropriate list; add the files of the orchestrator's own `[WRITE]` entries too. These lists feed into the session manifest (step 5b).
 
 ```
@@ -106,9 +108,9 @@ Loop:
 
 | Action | YAKS | BEADS | NATIVE |
 |--------|------|-------|--------|
-| Read context | `yx context "{name}"` | `Skill: beads:show "{name}"` | `TaskGet {id}` |
-| Read epic context (`commit:`, acceptance criteria) | `yx context "{epic}"` | `Skill: beads:show "{epic-id}"` | `TaskGet {epic id}` |
-| Mark done | `yx done "{name}"` | `Skill: beads:close "{name}"` | `TaskUpdate {id} completed` |
+| Read context | `yx context --show "{id}"` | `Skill: beads:show "{id}"` | `TaskGet {id}` |
+| Read epic context (`commit:`, acceptance criteria) | `yx context --show "{epic id}"` | `Skill: beads:show "{epic-id}"` | `TaskGet {epic id}` |
+| Mark done | `yx done "{id}"` | `Skill: beads:close "{id}"` | `TaskUpdate {id} completed` |
 | List/progress | `yx list` | `Skill: beads:list` | `TaskList` |
 
 See [workflow-detail.md](references/workflow-detail.md) for agent prompt templates and dispatch details.
@@ -144,11 +146,11 @@ When readiness computation returns multiple tasks, dispatch them all in a **sing
 
 #### Remediation
 
-When Agent 3 (Validate) finds behavior failures, create `04-remediate-attempt-{N}` and `05-revalidate-attempt-{N}` under the same phase group and mark the failed validate done. Attempts are numbered per phase group, TEST-DEFECT claims included; when `N` would exceed 2, **STOP — ask the user**. See [workflow-detail.md](references/workflow-detail.md#remediation) for the procedure, context template, and per-tracker commands.
+When Agent 3 (Validate) finds behavior or type-check failures, create `04-remediate-attempt-{N}` and `05-revalidate-attempt-{N}` under the same phase group and mark the failed validate done. Attempts are numbered per phase group, TEST-DEFECT claims included; when `N` would exceed 2, **STOP — ask the user**. See [workflow-detail.md](references/workflow-detail.md#remediation) for the procedure, context template, and per-tracker commands.
 
 #### Lint Fast Path
 
-When only lint fails, the orchestrator runs the formatter itself (logged `[WRITE]`) and re-dispatches the validate task instead of dispatching agent-remediate. See [workflow-detail.md](references/workflow-detail.md#lint-fast-path).
+When only lint fails, the orchestrator runs the formatter itself (logged `[WRITE]`) and re-dispatches the validate task instead of dispatching agent-remediate. Lint still failing only in test files stops for the user, since no implementation agent may edit tests. See [workflow-detail.md](references/workflow-detail.md#lint-fast-path).
 
 ### 3. Report Progress
 
@@ -246,7 +248,7 @@ Example for a Python project: `mypy . && pytest && ruff check .`
 
 **YAKS:** Run `yx list --format json` for the epic and recompute readiness. Done tasks = completed work; ready tasks = next to dispatch; waiting tasks = predecessors not yet done. No special recovery logic needed.
 
-**All trackers:** append to the existing execution log and rebuild the file lists, and each task's files still to commit, from its `files:` and `[WRITE]` entries (workflow-detail.md, Execution Log Format). A ready task whose last log entry is `[GATE FAIL]` or `[BLOCKED]` waits for the user's decision instead of being re-dispatched.
+**All trackers:** append to the existing execution log and rebuild the file lists, and each task's files still to commit, from its `files:` and `[WRITE]` entries (workflow-detail.md, Execution Log Format). A ready task whose last log entry is `[GATE FAIL]` or `[BLOCKED]` waits for the user's decision instead of being re-dispatched. A remediation or upheld TEST-DEFECT claim the log shows stopped part-way is finished first (workflow-detail.md, TEST-DEFECT Route step 5 and Remediation).
 
 **BEADS:** Same as YAKS — use `Skill: beads:list` and `Skill: beads:ready`. Bead state persists cross-session.
 

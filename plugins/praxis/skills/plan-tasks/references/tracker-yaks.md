@@ -4,14 +4,18 @@ Use this procedure when `yx list --format json` succeeds.
 
 ## Procedure
 
+Child names (`01-write-tests`, …) repeat in every group, and `yx` resolves a repeated name to
+whichever match it finds first, without an error. So never address a yak by name after creating
+it: `yx add` prints the new yak's ID, and stdin piped into `yx add` becomes its context. Use the
+printed ID for `--under` and for anything `/implement` does later.
+
 Write every context with a quoted heredoc (`<<'CONTEXT'`), as below — never `echo "…"` or a
 `printf` format string: contexts contain backticks, `$` and `%`, which the shell would expand.
 Run the blocks without their list indentation: the closing `CONTEXT` must start at column 0.
 
-1. **Create the epic** yak and write its context (the commit policy and the acceptance criteria, which `/implement` reads instead of the plan file):
+1. **Create the epic** yak with its context (the commit policy and the acceptance criteria, which `/implement` reads instead of the plan file), and note the printed `{epic id}`:
    ```bash
-   yx add "{Feature Name}"
-   yx context "{Feature Name}" <<'CONTEXT'
+   yx add "{Feature Name}" <<'CONTEXT'
    commit: {per-task|per-group|none}
 
    Acceptance criteria:
@@ -24,9 +28,9 @@ Run the blocks without their list indentation: the closing `CONTEXT` must start 
    - **TDD phases**: parent yak under epic + 3 children (write-tests, implement, validate)
    - **Final verification**: single yak under epic with `--field "agent-type=agent-validate"`
 3. **Set custom fields** on each yak: `--field "agent-type={agent-test|agent-impl|agent-validate|no-test}"`
-4. **Pipe context** into each leaf yak (the Agent Context block from the plan):
+4. **Pipe context** into each task yak as you add it (the Agent Context block from the plan):
    ```bash
-   yx context "{yak name}" <<'CONTEXT'
+   yx add "{yak name}" --under "{parent id}" --field "agent-type={type}" <<'CONTEXT'
    {agent context markdown}
    CONTEXT
    ```
@@ -34,22 +38,17 @@ Run the blocks without their list indentation: the closing `CONTEXT` must start 
 ## Creating a TDD Phase Group (YAKS)
 
 ```bash
-# Create the phase group parent
-yx add "P2-Core-Logic" --under "{Feature Name}"
+# Create the phase group parent; it prints {group id}
+yx add "P2-Core-Logic" --under "{epic id}"
 
-# Create TDD triplet children
-yx add "01-write-tests" --under "P2-Core-Logic" --field "agent-type=agent-test"
-yx add "02-implement" --under "P2-Core-Logic" --field "agent-type=agent-impl"
-yx add "03-validate" --under "P2-Core-Logic" --field "agent-type=agent-validate"
-
-# Pipe agent context into each child
-yx context "01-write-tests" <<'CONTEXT'
+# Create TDD triplet children, each with its agent context
+yx add "01-write-tests" --under "{group id}" --field "agent-type=agent-test" <<'CONTEXT'
 {write-tests agent context}
 CONTEXT
-yx context "02-implement" <<'CONTEXT'
+yx add "02-implement" --under "{group id}" --field "agent-type=agent-impl" <<'CONTEXT'
 {implement agent context}
 CONTEXT
-yx context "03-validate" <<'CONTEXT'
+yx add "03-validate" --under "{group id}" --field "agent-type=agent-validate" <<'CONTEXT'
 {validate agent context}
 CONTEXT
 ```
@@ -57,8 +56,7 @@ CONTEXT
 ## Creating a Leaf Phase (YAKS)
 
 ```bash
-yx add "P1-Schema-Setup" --under "{Feature Name}" --field "agent-type=no-test"
-yx context "P1-Schema-Setup" <<'CONTEXT'
+yx add "P1-Schema-Setup" --under "{epic id}" --field "agent-type=no-test" <<'CONTEXT'
 {agent context}
 CONTEXT
 ```

@@ -133,7 +133,8 @@ functional:
     grading: code
     given: |
       A yaks epic where Agent 3's VALIDATE run finds: tsc exits 0, vitest exits 0, but biome exits 1
-      (lint errors only — no type errors, no test failures).
+      (lint errors only — no type errors, no test failures): src/lib/discount.ts:12 lint/style/useConst
+      and src/lib/discount.ts:30 format, both marked fixable.
     when: "execute plan for the discount codes epic"
     then:
       - "implement-execution-log.md does NOT contain a [REMEDIATION] entry for this phase"
@@ -237,8 +238,9 @@ functional:
       Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
       task created, file the orchestrator copies or diffs, claim decision with its reason,
       execution-log entry and message to the user:
-      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-        applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+      - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+        src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+        requires rounding to the cent (17.99)
       - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
         test command: all 6 tests pass (the implementation already rounds); RED gate: N/A
       - agent-impl (02-implement): GREEN gate: PASS
@@ -246,7 +248,7 @@ functional:
     when: "execute plan for the discount codes epic"
     then:
       - "The orchestrator compares the cited assertion with the test spec and acceptance criterion and upholds the claim"
-      - "The execution log contains [REMEDIATION] for 02-implement with attempt 1 and cause=TEST-DEFECT"
+      - "The execution log contains [REMEDIATION] for 02-implement with attempt 1, cause=TEST-DEFECT, and files: src/lib/discount.ts"
       - "A repair task 01r-test-repair-attempt-1 (agent-type agent-test) is created in P2-Core-Logic with the report and the criterion; the cited file is copied as a diff baseline"
       - "The repair's passing run with RED gate N/A is accepted, not treated as a RED gate FAIL"
       - "The orchestrator diffs the test against the baseline (only line 14 changed; no criterion assertion dropped or weakened) before resuming"
@@ -264,8 +266,9 @@ functional:
       Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
       task created, file the orchestrator copies or diffs, claim decision with its reason,
       execution-log entry and message to the user:
-      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-        applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 = 17.991; the test should use toBeCloseTo(17.991)
+      - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+        src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 =
+        17.991; the test should use toBeCloseTo(17.991)
       - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 expected 17.99, received 17.991 (behavior)
       - agent-remediate: Result: ALL PASS (rounds the total to the cent)
       - agent-validate (re-validation): VALIDATE gate: PASS
@@ -289,12 +292,15 @@ functional:
       Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
       task created, file the orchestrator copies or diffs, claim decision with its reason,
       execution-log entry and message to the user:
-      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
-        applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+      - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+        src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+        requires rounding to the cent (17.99)
       - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
         test command: 1 failing (discount.test.ts:31, at an assertion); RED gate: N/A
-      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:31 asserts
-        error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+      - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+        src/lib/discount.test.ts:31 asserts
+        that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+        rejected with an error
     when: "execute plan for the discount codes epic"
     then:
       - "The first claim is upheld: [REMEDIATION] attempt 1 with cause=TEST-DEFECT, repair task 01r-test-repair-attempt-1 accepted with RED gate N/A, diff reviewed, 02-implement re-dispatched"
@@ -302,7 +308,7 @@ functional:
       - "After the second claim no agent is dispatched: no second repair, no 03-validate, no 04-remediate"
       - "02-implement is left open (not marked done)"
       - "discount.test.ts:31 is not changed; no test file is edited by agent-impl, agent-remediate or the orchestrator"
-    notes: "Repeated-claim limit. The second claim is debatable on purpose: the rule is to stop and ask, not to decide it. Common failure: rejecting it and continuing as a GREEN failure, or repairing the test a second time."
+    notes: "Repeated-claim limit. The second claim looks valid on purpose: the rule is to stop and ask, not to decide it. Common failure: rejecting it and continuing as a GREEN failure, or repairing the test a second time."
 
   - id: implement-14
     description: TEST-DEFECT claim past the attempt budget — a claim from the second remediation is attempt 3, so the orchestrator stops instead of deciding it
@@ -318,12 +324,14 @@ functional:
       - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 and :22 (behavior)
       - agent-remediate (first remediation): Result: STILL FAILING — discount.test.ts:22
       - agent-validate (first re-validation): VALIDATE gate: FAIL — discount.test.ts:22 (behavior)
-      - agent-remediate (second remediation): Result: TEST-DEFECT — src/lib/discount.test.ts:22 asserts
-        error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+      - agent-remediate (second remediation): Files modified: src/lib/discount.ts; Result: TEST-DEFECT —
+        src/lib/discount.test.ts:22 asserts
+        that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+        rejected with an error
     when: "execute plan for the discount codes epic"
     then:
       - "Remediation is numbered per phase group: [REMEDIATION] attempt 1 creates 04-remediate-attempt-1 / 05-revalidate-attempt-1; the failed re-validation logs attempt 2 and creates 04-remediate-attempt-2 / 05-revalidate-attempt-2"
-      - "The TEST-DEFECT from 04-remediate-attempt-2 would be attempt 3, so the orchestrator logs [BLOCKED] and asks the user without deciding the claim"
+      - "The TEST-DEFECT from 04-remediate-attempt-2 would be attempt 3, so the orchestrator logs [BLOCKED] (with files: src/lib/discount.ts) and asks the user without deciding the claim"
       - "No [REMEDIATION] entry for attempt 3, no repair task (03r-test-repair-…), and 05-revalidate-attempt-2 is not dispatched"
       - "04-remediate-attempt-2 is left open"
       - "No test file is edited by agent-impl, agent-remediate or the orchestrator"
