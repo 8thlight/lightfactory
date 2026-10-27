@@ -146,7 +146,7 @@ a leaf group uses its own name), because child names repeat in every group.
 [GATE PASS] {task} — RED gate N/A: test repair accepted; files: {paths}
 [GATE FAIL] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate failed: {reason}; files: {paths}
 [REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {why}}
-[BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}
+[BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}[: TEST-DEFECT {test, assertion, why}]
 [CLOSED] {task}[ — user approval: "{quote}"]
 [WRITE] {command} — orchestrator wrote: {files}
 ```
@@ -166,18 +166,21 @@ dependency) is never forced without user approval; record the approval on the cl
 agent-impl or agent-remediate reports TEST-DEFECT (test, assertion, why) when a test seems
 wrong. The orchestrator decides the claim; the reporting agent never does. Tests change only
 through agent-test: no implementation agent edits them, and the orchestrator edits them only
-through the [Lint Fast Path](#lint-fast-path)'s formatter.
+through the [Lint Fast Path](#lint-fast-path)'s formatter or by restoring a `.orig` copy at the
+user's request (step 7), each logged `[WRITE]`.
 
 1. **Owner.** Find the task that wrote the cited test: the phase's `01-write-tests`, or for a
    journey spec the `P{N}-E2E-Red-*` leaf that wrote the cited stage. If no task in the graph
-   wrote it, log `[BLOCKED] {task} — pending user decision`, leave the reporting task open,
-   STOP and ask the user.
+   wrote it, log `[BLOCKED] {task} — pending user decision: TEST-DEFECT {test, assertion, why}`,
+   leave the reporting task open, STOP and ask the user.
 2. **Budget.** The claim is attempt `N` of its phase group, where `N` = 1 + the
    `[REMEDIATION]` lines already logged for the group. If this is the group's second claim,
-   or `N` > 2, log `[BLOCKED]`, leave the reporting task open, STOP and ask the user.
+   or `N` > 2, log `[BLOCKED] {task} — attempt limit: TEST-DEFECT {test, assertion, why}`, leave
+   the reporting task open, STOP and ask the user.
 3. **Decide.** Compare the cited assertion with the owner's test spec and the acceptance
    criteria in the epic context. If that does not settle it, log `[BLOCKED] {task} — pending
-   user decision`, leave the reporting task open, and ask the user.
+   user decision: TEST-DEFECT {test, assertion, why}`, leave the reporting task open, and ask
+   the user.
 4. **Rejected** (the assertion states the criterion): log
    `[REMEDIATION] {task} — attempt {N}: cause=TEST-DEFECT rejected: {why}` and mark the
    reporting task done. Its validate (`03-validate` or `05-revalidate-attempt-{M}`) runs next,
@@ -204,8 +207,8 @@ through the [Lint Fast Path](#lint-fast-path)'s formatter.
 
 **After a stop on this route,** the user's answer replaces step 3 and waives the budget:
 reject → step 4; uphold → step 5 with the next `N`. After a rejected repair diff, the user
-either accepts it (mark the repair done) or has the orchestrator restore the `.orig` copy and
-re-dispatch the repair.
+either accepts it (mark the repair done) or has the orchestrator restore the `.orig` copy
+(logged `[WRITE]`) and re-dispatch the repair.
 
 ## Remediation
 
@@ -267,11 +270,13 @@ When a validate task's only failures are lint failures, the orchestrator handles
 instead of creating remediation (`agent-validate` only reports):
 
 1. Run the project's lint auto-fix on the files the lint output names, without unsafe fixes
-   (e.g. `biome check --write`, `eslint --fix`). This formatter is the only way the
-   orchestrator may touch a test file. Log `[WRITE]` and add the files to `files_modified`.
+   (e.g. `biome check --write`, `eslint --fix`). Besides a user-requested `.orig`
+   restore on the TEST-DEFECT route, this formatter is the only way the orchestrator may touch a
+   test file. Log `[WRITE]` and add the files to `files_modified`.
 2. Re-dispatch the validate task.
-3. If it passes, the validate task is done as usual. If only lint fails again, go to
-   [Remediation](#remediation); otherwise act on the result per [Gate Outcomes](#gate-outcomes).
+3. If it passes, the validate task is done as usual. If lint still fails, go to
+   [Remediation](#remediation) (any FLAKY or environmental failures go under Not behavior);
+   otherwise act on the result per [Gate Outcomes](#gate-outcomes).
 
 ## Commits
 
@@ -282,10 +287,10 @@ The policy is the `commit:` line in the epic context: `per-task`, `per-group`, o
   files that task reported (and the orchestrator's own `[WRITE]` files for it); each commit
   holds whatever state the task left, failing tests included. With `per-group`, commit right
   before marking a group's last task done, staging the files that group's tasks reported (and
-  their `[WRITE]` files). A journey fragment is open from the close of a `P{N}-E2E-Red-*` leaf
-  until the next validate whose context has a Journey spec command is done (passed, or accepted
-  by the user); `per-group` commits nothing in between, then commits the whole fragment right
-  before marking that validate done. If hooks or CI run the test suite on every commit, prefer
+  their `[WRITE]` files). A journey fragment is open from its `P{N}-E2E-Red-*` leaf until the
+  next validate whose context has a Journey spec command is done (passed, or accepted by the
+  user); `per-group` commits nothing in that span, the leaf included, then commits the whole
+  fragment right before marking that validate done. If hooks or CI run the test suite on every commit, prefer
   `per-group` or `none`.
 - **Never stage** `.light/`. If nothing is staged, skip the commit.
 - **Draft manifest.** Before each commit, write the session manifest with progress so far,

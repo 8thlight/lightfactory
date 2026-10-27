@@ -88,15 +88,16 @@ Loop:
      its outcome per the Gate Outcomes table in workflow-detail.md. In short:
      - PASS → mark done (RED: first confirm the failure matches the task's RED gate)
      - RED or no-test gate FAIL → STOP, report to user, leave the task open
-     - GREEN FAIL, or a remediation result → mark done; validation runs next
+     - GREEN FAIL, or a remediation ALL PASS / STILL FAILING → mark done; validation runs next
      - TEST-DEFECT → TEST-DEFECT Route
      - VALIDATE failures: behavior or type-check → Remediation; else lint → Lint Fast Path;
        else only FLAKY/environmental → STOP and ask
      Before each "mark done", commit if the policy calls for it (g). Act on every agent in a
      parallel batch before stopping
   g. Commit per the `commit:` line in the epic context (workflow-detail.md, Commits):
-     `per-task` before each task is marked done, `per-group` before a group's last task is,
-     `none`/absent never. Only the orchestrator commits
+     `per-task` before each task is marked done, `per-group` before a group's last task is
+     (a journey fragment commits once, at its last validate), `none`/absent never. Only the
+     orchestrator commits
   h. Loop back to (a)
 ```
 
@@ -146,7 +147,7 @@ When Agent 3 (Validate) finds behavior failures, create `04-remediate-attempt-{N
 
 #### Lint Fast Path
 
-When only lint fails, the orchestrator runs the formatter itself (logged `[WRITE]`) and re-runs the validate task's own commands instead of dispatching agent-remediate. See [workflow-detail.md](references/workflow-detail.md#lint-fast-path).
+When only lint fails, the orchestrator runs the formatter itself (logged `[WRITE]`) and re-dispatches the validate task instead of dispatching agent-remediate. See [workflow-detail.md](references/workflow-detail.md#lint-fast-path).
 
 ### 3. Report Progress
 
@@ -227,7 +228,7 @@ What would you like to do?
 4. **Agent 2-R fixes implementation only** — never modifies test files
 5. **Each agent starts fresh** — no shared context between agents
 6. **Gate predictions stay test-side** — through task contexts, the RED gate signature reaches only agent-test; the RED gate profile reaches agent-test and agent-validate; neither reaches agent-impl or agent-remediate (Claude Code's own rule auto-loading is outside praxis's control)
-7. **Tests change only through agent-test** — a test an implementation agent believes is wrong is reported as TEST-DEFECT and decided by the orchestrator ([TEST-DEFECT Route](references/workflow-detail.md#test-defect-route)); the orchestrator itself only formats tests in the lint fast path
+7. **Tests change only through agent-test** — a test an implementation agent believes is wrong is reported as TEST-DEFECT and decided by the orchestrator ([TEST-DEFECT Route](references/workflow-detail.md#test-defect-route)); the orchestrator itself only formats tests in the lint fast path or restores a repair's `.orig` copy at the user's request
 
 ### RED and GREEN Gate Failures
 
