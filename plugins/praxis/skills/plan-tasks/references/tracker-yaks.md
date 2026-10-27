@@ -4,9 +4,14 @@ Use this procedure when `yx list --format json` succeeds.
 
 ## Procedure
 
-1. **Create the epic** yak: `yx add "{Feature Name}"`
+1. **Create the epic** yak and write its context (the commit policy and the acceptance criteria, which `/implement` reads instead of the plan file):
+   ```bash
+   yx add "{Feature Name}"
+   printf 'commit: {per-task|per-group|none}\n\nAcceptance criteria:\n{criteria}\n' | yx context "{Feature Name}"
+   ```
 2. **For each phase**, create yaks per the agent-step decomposition:
    - **Leaf phases** (schema, infrastructure): single yak under the epic with `--field "agent-type=no-test"`
+   - **Journey fragment RED** (`P{N}-E2E-Red-{Step}`): single yak under the epic with `--field "agent-type=agent-test"`
    - **TDD phases**: parent yak under epic + 3 children (write-tests, implement, validate)
    - **Final verification**: single yak under epic with `--field "agent-type=agent-validate"`
 3. **Set custom fields** on each yak: `--field "agent-type={agent-test|agent-impl|agent-validate|no-test}"`

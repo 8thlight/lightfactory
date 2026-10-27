@@ -1,6 +1,6 @@
 # Tracker: YAKS
 
-Reference for the YAKS tracker mode — agent prompt reading, readiness computation, and remediation commands.
+Reference for the YAKS tracker mode — agent prompt reading, readiness computation, remediation and TEST-DEFECT repair commands.
 
 ## Agent Prompt Reading
 
@@ -8,7 +8,7 @@ Reference for the YAKS tracker mode — agent prompt reading, readiness computat
 yx context "{task name}"
 ```
 
-Returns the self-contained agent task description stored with the task.
+Returns the self-contained agent task description stored with the task. The epic's own context (`yx context "{epic}"`) holds the `commit:` line and the acceptance criteria.
 
 ---
 
@@ -73,7 +73,7 @@ echo "{remediation context}" | yx context "04-remediate-attempt-1"
 
 ```bash
 yx add "05-revalidate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-validate"
-echo "{revalidation context}" | yx context "05-revalidate-attempt-1"
+echo "{the original validate task's context}" | yx context "05-revalidate-attempt-1"
 ```
 
 ### Mark original validate task as done
@@ -81,3 +81,14 @@ echo "{revalidation context}" | yx context "05-revalidate-attempt-1"
 ```bash
 yx done "03-validate"
 ```
+
+## TEST-DEFECT Repair Commands
+
+For an upheld claim from `02-implement` (from `04-remediate-attempt-{M}`, use `03r-…` instead):
+
+```bash
+yx add "01r-test-repair-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-test"
+echo "{repair context}" | yx context "01r-test-repair-attempt-1"
+```
+
+Name sorting puts it after `01-write-tests` and before `02-implement`, so readiness dispatches it next.

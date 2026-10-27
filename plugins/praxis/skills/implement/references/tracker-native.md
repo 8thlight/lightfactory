@@ -1,6 +1,6 @@
 # Tracker: NATIVE
 
-Reference for the NATIVE tracker mode — agent prompt reading, readiness computation, and remediation commands.
+Reference for the NATIVE tracker mode — agent prompt reading, readiness computation, remediation and TEST-DEFECT repair commands.
 
 ## Agent Prompt Reading
 
@@ -8,7 +8,7 @@ Reference for the NATIVE tracker mode — agent prompt reading, readiness comput
 TaskGet: { id: "{task-id}" }
 ```
 
-Reads agent context from the description field.
+Reads agent context from the description field. The epic task's description holds the `commit:` line and the acceptance criteria.
 
 ---
 
@@ -23,19 +23,27 @@ Use `TaskList` to fetch all tasks, then apply the same naming-convention algorit
 ### Create remediation task
 
 ```
-TaskCreate: { title: "04-remediate-attempt-1", description: "{remediation context}" }
+TaskCreate: { title: "P2-Core-Logic / 04-remediate-attempt-1 [agent-remediate]", description: "{remediation context}" }
 ```
 
-Include the full remediation context (failure output, files to fix, instructions) in the description field.
+Titles carry the `P{N}` group and `[agent-type]`, which readiness and dispatch read. Include the full remediation context in the description field.
 
 ### Create re-validation task
 
 ```
-TaskCreate: { title: "05-revalidate-attempt-1", description: "{revalidation context}" }
+TaskCreate: { title: "P2-Core-Logic / 05-revalidate-attempt-1 [agent-validate]", description: "{the original validate task's context}" }
 ```
 
 ### Mark original validate task as done
 
 ```
 TaskUpdate: { id: "{task-id}", status: "completed" }
+```
+
+## TEST-DEFECT Repair Commands
+
+For an upheld claim from `02-implement` (from `04-remediate-attempt-{M}`, use `03r-…`):
+
+```
+TaskCreate: { title: "P2-Core-Logic / 01r-test-repair-attempt-1 [agent-test]", description: "{repair context}" }
 ```

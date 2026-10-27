@@ -64,10 +64,10 @@ task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — ge
 **Tier:** e2e-journey — only for behavior that needs the browser; assert everything else at a lower tier.
 **Goal:** Add stage {K} of the {journey} spec: {user-visible step}
 
-**Placement:** before the lower-tier phases that turn it green (here Phases 1-5), so its leaf
-gets a lower `P{N}` than theirs. The last of those phases' validate task also carries the **Journey
-spec command**. With several fragments, each fragment's RED comes after the previous
-fragment's phases and before its own.
+**Placement:** before the phases that turn it green (here Phases 1-5, plus a UI phase that
+renders the contract testids, not shown), so its leaf gets a lower `P{N}` than theirs; the
+last of those phases' validate carries the **Journey spec command**. Rules: plan-tasks
+SKILL.md, "Phase tiers".
 
 **Test Spec (Journey):** Extend the existing spec by one stage. Earlier stages keep passing; the new step is the only new assertion group.
 
@@ -76,16 +76,18 @@ fragment's phases and before its own.
 2. Preflight, run, verify failure matches the prediction
 
 **Verification:**
-- [ ] Spec stages 1..K pass after the fragment's lower-tier phases; suite green
+- [ ] Spec stages 1..K pass at the fragment's last validate; the rest of the suite stays green
 
 #### Agent Context
 - **Files to create/modify:** `{spec path}`, `{page object / fixtures path}`
+- **Tier:** e2e-journey
 - **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
-- **Preflight:** {externally managed services and ports that must be up, with a check for each; name anything the runner starts itself (e.g. Playwright `webServer`), which is not preflighted}
+- **Preflight:** {externally managed services and ports that must be up, with a check for each; "none" when the runner starts everything itself (e.g. Playwright `webServer`)}
 - **Test spec:** {user-visible journey step, using the agreed contract testids}
-- **Test command:** `{runner command for this spec}`
+- **Test command:** `{runner command for this spec — prefixed with the build command when the runner does not build the app itself}`
 - **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
-- **GREEN gate:** Spec passes through stage K
+- **GREEN gate:** checked by the fragment's last validate (its Journey spec command)
+- **Architectural constraints:** user-visible behavior and contract testids only, never internals
 
 ---
 
@@ -133,6 +135,7 @@ fragment's phases and before its own.
 - **Test command:** `{project test command}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "assertion fails: split total != original total" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All tests pass with minimal implementation
+- **Acceptance criterion:** {the criterion this phase serves}
 - **Architectural constraints:** Pure functions only, no I/O, no side effects
 
 ---
@@ -182,6 +185,7 @@ fragment's phases and before its own.
 - **Test command:** `{project integration test command}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "use case returns null / 404 instead of the created entity" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All integration tests pass
+- **Acceptance criterion:** {the criterion this phase serves}
 - **Architectural constraints:** Orchestration only — delegates to core logic and repository, no direct database access
 
 ---
@@ -215,6 +219,8 @@ fragment's phases and before its own.
 - **Test command:** `{project HTTP contract test command}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — consult the project/user testing skill if one exists. E.g. "request returns 404, expected 201 with body {id}" — not just "tests fail". A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **GREEN gate:** All HTTP contract tests pass
+- **Acceptance criterion:** {the criterion this phase serves}
+- **Interface contract:** {method, path, response shapes this phase must expose}
 - **Architectural constraints:** Thin adapter — validates input, delegates to feature, maps result to HTTP response
 
 ---
@@ -223,7 +229,7 @@ fragment's phases and before its own.
 **Goal:** Verify entire feature works end-to-end
 
 **Tasks:**
-1. Run full test suite
+1. Run full test suite, and each journey through its spec command
 2. Manual smoke test via API
 3. Verify acceptance criteria
 
@@ -234,7 +240,8 @@ fragment's phases and before its own.
 - [ ] No console errors
 
 #### Agent Context
-- **Test command:** `{full test suite command}`
+- **Full test command:** `{full test suite command}`
+- **Journey spec command:** `{each journey's spec command — they build first when needed}`
 - **Acceptance gate:** All acceptance criteria from top of plan verified
 
 ## Constraints & Considerations
@@ -244,7 +251,7 @@ fragment's phases and before its own.
 - {Constraint 2}
 
 ### Testing
-- Test at architectural boundaries (L3/L4) — see project CLAUDE.md for specific tools and patterns
+- Test at architectural boundaries (L3/L4; browser journeys at the e2e-journey tier) — see project CLAUDE.md for specific tools and patterns
 - No internal mocks — test behavior at boundaries with real infrastructure where possible
 - Test HTTP contracts for route layers (status codes, response shapes)
 
@@ -265,6 +272,9 @@ Before implementing, verify:
 - [ ] All files to create/modify listed
 - [ ] Implementation phases have clear boundaries
 - [ ] Each phase has an Agent Context block with file paths, test spec, test command, and gates
+- [ ] Every test phase has a tier; each journey fragment's RED leaf precedes its phases, and its last validate carries the Journey spec command
+- [ ] Commit policy chosen
+- [ ] RED Gate Profiles recorded per test phase
 - [ ] Test specs are behavioral descriptions (not tool-specific code)
 - [ ] Acceptance criteria are testable
 - [ ] Constraints documented
@@ -274,7 +284,7 @@ Before implementing, verify:
 
 After human review and approval:
 1. Run `/implement` to execute — dispatches agents from task graph
-2. Each TDD phase: Agent 1 writes failing tests → Agent 2 implements → Agent 3 validates
+2. Each TDD phase: Agent 1 writes failing tests → Agent 2 implements → Agent 3 validates; a journey fragment starts with its RED leaf
 3. If interrupted, `/implement` picks up where it left off via readiness computation
 ```
 
@@ -282,7 +292,7 @@ After human review and approval:
 
 Each yak's context MUST be self-contained — everything an agent needs to execute without reading the plan file. Use these templates when piping context in Step 5.
 
-The RED gate signature and RED gate profile appear **only** in Write Tests and Validate contexts, never in Implement or Remediate.
+The RED gate signature appears **only** in Write Tests contexts; the RED gate profile in Write Tests and Validate contexts. Neither appears in Implement or Remediate.
 
 ### Write Tests Yak (agent-test)
 
@@ -292,13 +302,13 @@ The RED gate signature and RED gate profile appear **only** in Write Tests and V
 **Role:** Write failing tests ONLY. Do NOT write implementation code.
 
 ### Agent Context
-- **Files to create:** `{test file path(s)}`
+- **Files to create/modify:** `{test file path(s)}`
 - **Test spec:** {Behavioral description — properties, invariants, contracts to test. Be specific.}
-- **Test command:** `{shell command to run tests}`
+- **Test command:** `{shell command to run tests — for e2e-journey, prefixed with the build command when the runner does not build the app}`
 - **RED gate:** {Expected initial failure for this phase, in the framework's terms — what assertion fails and why. Consult the project/user testing skill if one exists. A compile/import/setup error or a passing test is a wrong-reason RED.}
 - **Tier:** {unit|integration|http-contract|e2e-journey}
-- **Runner / build target / preflight:** {e2e-journey only — runner, build target, services and ports to confirm up before the RED run}
-- **Architectural constraints:** {L3/L4 boundary, property-based with fast-check, no mocks, etc.}
+- **Runner / build target / preflight:** {e2e-journey only — see plan-tasks SKILL.md "Phase tiers"}
+- **Architectural constraints:** {L3/L4 boundary or e2e-journey tier, property-based with fast-check, no mocks, etc.}
 
 #### RED gate profile
 {Omit when no rule file matched. Otherwise the `RED gate` section(s) copied verbatim from the matching repo rule file(s), each preceded by `Source: {rule file path}`.}
@@ -316,6 +326,8 @@ Follow your `praxis:agent-test` definition for the procedure (output capture to 
 ### Agent Context
 - **Files to create:** `{implementation file path(s)}`
 - **Files to read (tests):** `{test file path(s)}`
+- **Acceptance criterion:** {the criterion this phase serves}
+- **Interface contract:** {testids or shapes this phase must expose — omit when none}
 - **Test command:** `{shell command to run tests}`
 - **GREEN gate:** All tests pass
 - **Architectural constraints:** {Pure functions, no side effects, adapter layer, etc.}
@@ -328,16 +340,17 @@ Follow your `praxis:agent-impl` definition for the procedure and report format. 
 ```markdown
 ## Agent Task: Validate — {Phase Name} (Phase {N})
 
-**Role:** Run the full test suite and report. Do NOT modify any files.
+**Role:** Run the validate commands and report. Do NOT modify any files.
 
 ### Agent Context
-- **Full test command:** `{full test suite command — inside an open e2e-journey fragment, the lower-tier command that excludes the journey spec}`
-- **Journey spec command:** `{runner command for the spec}` — only on a fragment's last validate task (stages 1..K must pass); omit elsewhere
+- **Full test command:** `{full test suite command — inside an open e2e-journey fragment, the suite minus the journey spec}`
+- **Journey spec command:** `{the journey RED task's test command}` — only on a fragment's last validate (stages 1..K must pass); omit elsewhere
+- **Preflight:** {the journey RED task's preflight — only with a Journey spec command}
 - **Phase test files:** `{test file path(s)}`
-- **Phase impl files:** `{implementation file path(s)}`
+- **Phase impl files:** `{implementation file path(s) — on a fragment's last validate, every implementation file in the fragment}`
 
 #### RED gate profile
-{Same verbatim section(s) as the Write Tests yak, with `Source:` lines; omit when none matched.}
+{Same verbatim section(s) as the Write Tests yak, with `Source:` lines (on a fragment's last validate, also the journey RED task's); omit when none matched.}
 
 Follow your `praxis:agent-validate` definition for the procedure and report format. The Agent Context above is your task input.
 ```
@@ -360,20 +373,4 @@ Follow your `praxis:agent-no-test` definition for the procedure and report forma
 
 ### Remediation Yak (agent-remediate)
 
-Created dynamically by `/implement` when validation fails. Not created during `/plan-tasks`.
-
-```markdown
-## Agent Task: Remediate — {Phase Name} (Phase {N}, attempt {M})
-
-**Role:** Fix the implementation to make all tests pass. Do NOT modify test files.
-
-### Agent Context
-- **Files to modify (implementation):** `{implementation file path(s)}`
-- **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
-- **Full test command:** `{the failed validate task's test command}`
-- **Journey spec command:** `{the failed validate task's journey spec command}` — only when it had one; run both
-- **Failure output from validation:**
-{paste Agent 3's failure output}
-
-Follow your `praxis:agent-remediate` definition for the procedure and report format. The Agent Context above is your task input.
-```
+Created dynamically by `/implement` when validation fails; not created during `/plan-tasks`. Its context template is in the implement skill's `references/workflow-detail.md` ("Remediation Task Context Template").

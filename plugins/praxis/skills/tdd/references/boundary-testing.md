@@ -23,14 +23,15 @@ Tests must survive refactoring. We test at architectural boundaries (L3/L4), not
 
 ## Test Writing Order (Per Feature)
 
-When implementing a vertical slice, write tests in this sequence:
+When implementing a vertical slice, write tests in this sequence (inside-out):
 
 1. **Core** - L3 property tests (run unit tests, verify failure)
 2. **Features** - L3 behavioral tests (run integration tests, verify failure)
 3. **HTTP Routes** - L4 contract tests (run the HTTP contract tests, verify failure)
-4. **Browser journeys** (only for behavior that needs the browser) - `e2e-journey` tier, not L4; see plan-tasks phase tiers
 
 After writing each test, STOP and verify failure before implementing.
+
+**Browser journeys** (only for behavior that needs the browser) run outside-in: the journey's next stage is written and seen failing *before* steps 1-3 (tier `e2e-journey`, not L4), and steps 1-3, plus the UI change the stage asserts, then turn it green. See plan-tasks SKILL.md, "Phase tiers".
 
 ## The Five Testing Rules
 

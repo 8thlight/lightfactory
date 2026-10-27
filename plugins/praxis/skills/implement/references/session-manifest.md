@@ -1,6 +1,6 @@
 # Session Manifest
 
-The session manifest is a structured JSON file written alongside the session artifact after `/implement` completes. It enables **automated commit-time verification** that the lightfactory workflow was followed.
+The session manifest is a structured JSON file written alongside the session artifact after `/implement` completes (and as a draft before each orchestrator commit; see File Location). It enables **automated commit-time verification** that the lightfactory workflow was followed.
 
 ## Purpose
 
@@ -25,7 +25,7 @@ The manifest makes step 3 possible. Without it, the session artifact (`.md`) wou
 
 Written at the same time as the session artifact (`.light/sessions/YYYY-MM-DD-{topic}.md`), using the same topic slug.
 
-When the epic's `commit:` policy is `per-task` or `per-group`, the orchestrator also writes a draft before each commit so a manifest-checking `commit-msg` hook can see the work: file lists, gates and `phases_completed` so far, and `test_suite_passed: false` (final verification has not run). The final write after the session artifact overwrites the draft.
+When the epic's `commit:` policy is `per-task` or `per-group`, the orchestrator also writes a draft before each commit so a manifest-checking `commit-msg` hook can see the work: file lists, gates and `phases_completed` so far, `"draft": true`, and `test_suite_passed: false` (final verification has not run). The final write after the session artifact overwrites the draft and omits `draft`.
 
 ## Schema
 
@@ -61,24 +61,26 @@ When the epic's `commit:` policy is `per-task` or `per-group`, the orchestrator 
 | `phases_completed` | number | Count of task phases that completed successfully. |
 | `total_phases` | number | Total task phases in the plan. |
 | `gates` | object | Count of each gate type that passed during the session. |
-| `gates.red_passed` | number | Number of RED gates (test-writing) that passed. |
+| `gates.red_passed` | number | Number of RED gates (test-writing) that passed. TEST-DEFECT repairs (RED gate N/A) are not counted. |
 | `gates.green_passed` | number | Number of GREEN gates (implementation) that passed. |
-| `gates.validate_passed` | number | Number of VALIDATE gates (full suite) that passed. |
-| `test_suite_passed` | boolean | Whether the final verification test suite passed. |
+| `gates.validate_passed` | number | Number of VALIDATE gates (validate and re-validation tasks) that passed. |
+| `test_suite_passed` | boolean | Whether the final verification test suite passed. Always `false` on a draft. |
+| `draft` | boolean (optional) | `true` on a pre-commit draft; absent on the final manifest. A consumer that needs final verification checks `draft` before reading `test_suite_passed`. |
 
 ## How File Lists Are Built
 
 Each agent already reports files in its output:
 
-- **agent-test**: `Files created: [list paths]` → all paths go to `files_created`; `Files modified: [list paths]` (extended journey specs, TEST-DEFECT fixes) → `files_modified` (unless already in `files_created`)
-- **agent-impl**: `Files created/modified: [list paths]` → paths go to `files_modified` (unless already in `files_created`)
+- **agent-test**: `Files created: [list paths]` → all paths go to `files_created`; `Files modified: [list paths]` (extended journey specs, TEST-DEFECT repairs) → `files_modified` (unless already in `files_created`)
+- **agent-impl**: `Files created/modified: [list paths]` → classified by the rule below (new files go to `files_created`)
 - **agent-no-test**: `Files created/modified: [list paths]` → paths that did not exist before the session go to `files_created`; paths that already existed go to `files_modified`
 - **agent-remediate**: `Files modified: [list paths]` → all paths go to `files_modified` (unless already in `files_created`)
 - **agent-validate**: no files reported (read-only agent, never modifies files)
+- **orchestrator**: files in its own `[WRITE]` log entries (lint fast-path formatting) → `files_modified` (unless already in `files_created`)
 
 The implement skill's orchestration loop collects these from each agent's report as tasks complete. At session end, it deduplicates and splits into `files_created` vs `files_modified`.
 
-**Classification rule:** A file appears in `files_created` if it did not exist before the session started. A file appears in `files_modified` if it existed before the session and was changed. If a file was created by one agent and later modified by another (e.g., by agent-impl after agent-test), it stays in `files_created`. For `agent-no-test` which reports a combined `Files created/modified:` list, the orchestrator must check whether each path existed before the session to classify correctly.
+**Classification rule:** A file appears in `files_created` if it did not exist before the session started. A file appears in `files_modified` if it existed before the session and was changed. If a file was created by one agent and later modified by another (e.g., by agent-impl after agent-test), it stays in `files_created`. For `agent-impl` and `agent-no-test`, which report a combined `Files created/modified:` list, the orchestrator must check whether each path existed before the session to classify correctly.
 
 ## Workflow Steps Detection
 

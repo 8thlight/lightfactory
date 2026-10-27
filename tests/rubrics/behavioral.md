@@ -8,7 +8,8 @@ Grading rubric for Category B skills. Use when code-grading cannot assess qualit
 |-------|---------------|--------------|
 | `reflect` | Proposal relevance, actionability, anti-pattern adherence | reflect-02, reflect-03 |
 | `research` (partial) | Parallel dispatch behavior, AskUserQuestion usage | research-02, research-04, research-05 |
-| `implement` (partial) | RED gate hard stop, remediation limit enforcement | implement-03, implement-06 |
+| `implement` (partial) | RED gate hard stop, remediation limit enforcement, TEST-DEFECT decisions | implement-03, implement-06, implement-11, implement-12, implement-13, implement-14 |
+| `plan-tasks` (partial) | Journey graph ordering, validate scope | plan-tasks-09 |
 
 ---
 
@@ -42,7 +43,7 @@ Do not give partial credit — choose the closest whole number.
 | 3 | **Actionability** — specific enough to act on without clarification | Vague ("improve the skill") | Most actionable; one underspecified | Every item has a clear target and concrete change |
 | 4 | **Specificity** — narrow and targeted, no bundled concerns | Multiple broad or rewrite-scope items | One item broader than necessary | All items small, targeted, concern-separated |
 
-**Default pass threshold: 9/12** (75%). Use 10/12 for high-stakes evaluations (proposals that will be committed).
+**Default pass threshold: 9/12** (75%). Use 10/12 for high-stakes evaluations (proposals that will be committed). Use 12/12 (every dimension 3) when each dimension is a hard correctness property, where a 2 describes a broken result.
 
 ---
 

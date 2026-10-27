@@ -79,7 +79,7 @@ Ask the user to clarify if needed:
 Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output — the user reviews and approves it before task graph creation.
 
 **Required sections:**
-- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used, and `commit: per-task|per-group|none`. The orchestrator (`/implement`) commits per this policy; agents never commit
+- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used, and `commit: per-task|per-group|none`. The orchestrator (`/implement`) commits per this policy; agents never commit. `per-task` commits failing tests by design; choose `per-group` or `none` when hooks or CI run the suite on every commit
 - **Context** — Why this change is being made, summarizing research findings
 - **Goal** — 1-2 sentence description of what we're building and why
 - **Acceptance Criteria** — Testable outcomes as checklist
@@ -91,35 +91,47 @@ Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output
   - Tasks list
   - Verification checklist
   - **Agent Context block** (file paths, test command, gates, constraints)
+- **RED Gate Profiles** — per test phase, the rule file whose `RED gate` section was copied (see RED gate profile lookup), or "none — generic"
 - **Constraints & Considerations** — Architectural, testing, performance, security
 - **Out of Scope** — Explicitly deferred features
 
 See [template.md](references/template.md) for the complete template with Agent Context block reference.
 
 **Phase ordering (application code projects):**
+0. Journey fragment RED (optional, tier `e2e-journey`) — before the phases that turn it green; see Phase tiers
 1. Database Schema (if needed)
 2. Core Logic (L3 boundary — property/invariant tests) — tier `unit`
 3. Repository Layer (if needed)
 4. Feature Use Cases (L3 boundary — behavioral assertions) — tier `integration`
-5. HTTP Routes (L4 boundary — contract tests) — tier `http-contract`
+5. HTTP Routes (L4 boundary — contract tests) — tier `http-contract`; then the UI change a journey stage asserts, if any
 6. Full Integration (verification)
 
 **Phase tiers.** Tag every test phase `unit | integration | http-contract | e2e-journey`
-(`no-test` phases have no tier). Details and the e2e-journey phase shape are in
-[template.md](references/template.md):
+(`no-test` phases have no tier). This list is the source for the journey rules; the
+phase shape is in [template.md](references/template.md):
 - `e2e-journey` is a browser-driven user journey, used only for behavior that needs the
   browser; it is distinct from `http-contract` (API-level tests, even if the project
-  keeps them under an `e2e/` directory).
-- An `e2e-journey` phase states its **runner**, **build target** (e.g. production build,
-  not a dev server) and **preflight** (externally managed services and ports that must be up).
-- One journey may split into **fragments** (open surface, inputs, submit, result
-  visible). A fragment is its RED step plus the lower-tier phases that turn it green;
-  each is independently verifiable and leaves the suite green. Validates inside an open
-  fragment run the lower tiers only; the fragment's last validate also runs the spec.
-- A fragment's RED sits at the **lowest tier that can assert the behavior**; only
-  browser-needing behavior gets an `e2e-journey` RED.
-- A growing spec is **stages**: fragment N extends the same spec, and its RED shows
-  earlier steps passing and step N failing on the predicted locator/testid.
+  keeps them under an `e2e/` directory). Everything else is asserted at the lowest tier
+  that can assert it.
+- A journey phase states its **runner**, **build target** (e.g. production build, not a
+  dev server) and **preflight** (externally managed services and ports that must be up;
+  what the runner starts itself is checked by running it). If the runner does not build
+  the app itself, the spec's command builds first (`{build} && {runner} {spec}`); a runner
+  that starts the server must not reuse one already running. Every run sees the current tree.
+- A journey splits into **fragments** (open surface, inputs, submit, result visible). A
+  fragment is a leaf RED task `P{N}-E2E-Red-{Step}` that extends the same spec by one
+  stage, then the lower-tier phases that turn it green, including the phase that builds
+  the UI the stage asserts.
+- **Placement:** a fragment's RED leaf gets a lower `P{N}` than its phases; fragment N+1's
+  RED follows fragment N's phases.
+- **Validate scope:** validates inside an open fragment run the suite minus this journey's
+  spec. The fragment's last phase is a single TDD group (no same-prefix sibling, not
+  no-test); its validate also carries the **Journey spec command**, the journey RED task's
+  Preflight and RED gate profile, and every implementation file in the fragment; stages
+  1..K must pass.
+- A stage's RED shows earlier stages passing and stage K failing on the predicted
+  testid. The agreed contract testids go into the Implement context (Interface contract)
+  of the phase that builds them.
 
 For content or configuration projects with no application code, use flat `[no-test]` phases ordered by dependency. The TDD phase ordering above applies to application code projects.
 
@@ -137,12 +149,12 @@ Once the plan is approved, immediately create the task graph — this is the **c
 
 See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and `echo "..." | yx context` for piping agent context — see [tracker-yaks.md](references/tracker-yaks.md) directly.
 
-Also record `commit: {policy}` in the epic's context so `/implement` can read it without the plan file (absent = `none`).
+Write the epic's own context in tracker step 1: a `commit: {policy}` line and the Acceptance Criteria, so `/implement` can read both without the plan file (absent `commit:` = `none`).
 
 Report the result:
 ```
 Task graph created ({tracker} mode): {epic/graph name}
-Tasks: {N} ({M} TDD triplets, {K} no-test phases)
+Tasks: {N} ({M} TDD triplets, {J} journey RED leaves, {K} no-test phases)
 Ready to execute with /implement.
 ```
 
@@ -205,6 +217,8 @@ Every implementation phase with tests MUST include an `#### Agent Context` subse
 - **Test command** — shell command to run
 - **RED gate / GREEN gate** — observable success criteria
 - **Architectural constraints** — boundaries the agent must respect
+- **Tier** — on each test phase and in its Write Tests context; for `e2e-journey` also runner, build target and preflight
+- **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and testids or shapes it must expose
 
 **Authoring the RED gate signature:** The RED gate field tells `agent-test` what a
 *correct* initial failure looks like for this phase — so it can distinguish the
@@ -219,15 +233,15 @@ before-assertion check. Write the signature from the acceptance criterion and th
 interface contract (e.g. testids), naming user-visible behavior or contract testids,
 never internals. For `e2e-journey` phases it names the locator/step expected to fail
 (e.g. "earlier steps pass; waiting for `{testid}` times out") — a timeout elsewhere is a
-wrong-reason RED. The signature goes only into the test task (and validate) context,
-never `agent-impl`'s.
+wrong-reason RED. The signature goes only into the write-tests context, never
+`agent-impl`'s or `agent-remediate`'s.
 
 ### RED gate profile lookup
 
 Repo rule files may already define what a correct RED looks like per area. For each test
 task, before writing its Agent Context (a manual step, not a hook):
 
-1. Collect the files the task will touch (test and implementation paths).
+1. Collect the test files the task will write or extend.
 2. Find rule files whose `paths:` frontmatter globs match any of them —
    `.claude/rules/**/*.md` (recursive, as Claude Code loads them), plus rule files the
    project's CLAUDE.md references.
@@ -242,8 +256,10 @@ task, before writing its Agent Context (a manual step, not a hook):
    Profiles** section so reviewers can see what the gate was judged against.
 
 `agent-test` judges RED against the profile and `agent-validate` uses its wrong-reason
-list. The profile is placed ONLY in test-side and validate-side contexts, never
-`agent-impl`'s or `agent-remediate`'s, which keeps test/implementation segregation.
+list. The profile is placed ONLY in write-tests and validate contexts (for a journey
+fragment's last validate, also the journey RED task's profile), never `agent-impl`'s or
+`agent-remediate`'s. Claude Code may still auto-load a path-scoped rule file for any
+agent that reads matching files, so treat the profile as guidance, not a secret.
 No new config: it reuses existing rule files and headings.
 
 See [template.md](references/template.md) for the Agent Context block reference and task context templates.
@@ -252,8 +268,8 @@ See [template.md](references/template.md) for the Agent Context block reference 
 
 Each phase should:
 1. **Have a clear goal** — What capability is being added?
-2. **Be independently verifiable** — Can you confirm it works, with the suite green afterwards?
-3. **Be in logical order** — Database → Core → Features → Routes
+2. **Be independently verifiable** — Can you confirm it works, with the suite green afterwards (inside an open journey fragment, the suite minus that journey's spec)?
+3. **Be in logical order** — Database → Core → Features → Routes; a journey fragment's RED leaf comes first
 4. **Have a self-contained Agent Context** — An isolated agent can execute it
 
 Good boundaries: Database schema, Core functions, Repository, Feature use cases, HTTP routes

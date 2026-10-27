@@ -32,7 +32,7 @@ MODE (user specifies, default: auto)
    - Second: Make it compile but fail the assertion (return wrong value)
 5. Minimal code to pass - Just enough to make the test green. If no test requires it, don't write it.
 6. No comments in production code - Keep it clean unless specifically asked
-7. Run all tests every time - Not just the one you're working on
+7. Run all tests every time - Not just the one you're working on (in `/implement`, a journey spec stays excluded until its fragment's last validate)
 8. Refactor at the first opportunity when the tests are green
 9. Test behavior, not implementation - check responses or state, not method calls
 10. Push back when something seems wrong or unclear

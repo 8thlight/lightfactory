@@ -137,8 +137,8 @@ functional:
     when: "execute plan for the discount codes epic"
     then:
       - "implement-execution-log.md does NOT contain a [REMEDIATION] entry for this phase"
-      - "Claude runs biome check --write --unsafe to auto-fix lint issues"
-      - "Claude re-runs the full VALIDATE gate after auto-fix"
+      - "Claude runs biome check --write (no --unsafe) on the files the lint output names, logged [WRITE]"
+      - "Claude re-dispatches the validate task after the auto-fix"
       - "If re-run passes, [GATE PASS] for VALIDATE appears in the log"
       - "No new remediation or re-validation yaks tasks are created for a biome-only failure"
     notes: "Fast path is a correctness test — heavyweight remediation for trivial lint errors is an anti-pattern."
@@ -226,3 +226,105 @@ functional:
       - "The dispatch message does NOT dispatch P3 tasks (blocked by P2)"
       - "Each dispatched agent receives its own self-contained task context"
     notes: "Tests parallel dispatch across independent phase groups. Common failure: sequential dispatch one at a time."
+
+  - id: implement-11
+    description: TEST-DEFECT upheld — orchestrator creates a repair task for agent-test (RED gate N/A), reviews the test diff, then readiness resumes agent-impl
+    grading: llm-judge
+    given: |
+      A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+      context reads "commit: none" and acceptance criterion: "Discounted totals are rounded to the nearest
+      cent." The write-tests test spec says the same.
+      Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+      task created, file the orchestrator copies or diffs, claim decision with its reason,
+      execution-log entry and message to the user:
+      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
+        applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+      - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
+        test command: all 6 tests pass (the implementation already rounds); RED gate: N/A
+      - agent-impl (02-implement): GREEN gate: PASS
+      - agent-validate (03-validate): VALIDATE gate: PASS
+    when: "execute plan for the discount codes epic"
+    then:
+      - "The orchestrator compares the cited assertion with the test spec and acceptance criterion and upholds the claim"
+      - "The execution log contains [REMEDIATION] for 02-implement with attempt 1 and cause=TEST-DEFECT"
+      - "A repair task 01r-test-repair-attempt-1 (agent-type agent-test) is created in P2-Core-Logic with the report and the criterion; the cited file is copied as a diff baseline"
+      - "The repair's passing run with RED gate N/A is accepted, not treated as a RED gate FAIL"
+      - "The orchestrator diffs the test against the baseline (only line 14 changed; no criterion assertion dropped or weakened) before resuming"
+      - "02-implement is re-dispatched after the review; 03-validate runs and the phase closes; no 04-remediate task is created"
+      - "No test file is edited by agent-impl, agent-remediate or the orchestrator, and none of them is told to"
+    notes: "Upheld path of the TEST-DEFECT route. Trap: the repaired test passes against existing code; treating that as a tautological RED (hard stop) is wrong. Promptfoo sees only the orchestrator's narration, so 'never edits tests' is judged from dispatches and instructions, not real file writes."
+
+  - id: implement-12
+    description: TEST-DEFECT rejected — logged as attempt 1, test left intact, validation and remediation (attempt 2) proceed
+    grading: llm-judge
+    given: |
+      A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+      context reads "commit: none" and acceptance criterion: "Discounted totals are rounded to the nearest
+      cent." The write-tests test spec says the same.
+      Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+      task created, file the orchestrator copies or diffs, claim decision with its reason,
+      execution-log entry and message to the user:
+      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
+        applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 = 17.991; the test should use toBeCloseTo(17.991)
+      - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 expected 17.99, received 17.991 (behavior)
+      - agent-remediate: Result: ALL PASS (rounds the total to the cent)
+      - agent-validate (re-validation): VALIDATE gate: PASS
+    when: "execute plan for the discount codes epic"
+    then:
+      - "The orchestrator compares the claim with the acceptance criterion and rejects it (the assertion states the criterion)"
+      - "The execution log contains [REMEDIATION] for 02-implement: attempt 1, cause=TEST-DEFECT rejected, with the reason"
+      - "agent-test is NOT dispatched and src/lib/discount.test.ts is not changed"
+      - "02-implement is marked done and 03-validate runs; its failure logs [REMEDIATION] 03-validate attempt 2 and creates 04-remediate-attempt-2 and 05-revalidate-attempt-2"
+      - "The remediation context carries the Rejected TEST-DEFECT reason; the re-validation keeps the original validate context"
+      - "The phase closes after re-validation passes"
+    notes: "Rejected path of the TEST-DEFECT route. Common failures: upholding a claim that contradicts the criterion, stopping at the rejected claim instead of validating, or numbering the remediation attempt 1."
+
+  - id: implement-13
+    description: Second TEST-DEFECT claim in the same phase group — orchestrator stops and asks the user instead of deciding or repairing again
+    grading: llm-judge
+    given: |
+      A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+      context reads "commit: none" and acceptance criteria: "Discounted totals are rounded to the nearest
+      cent." and "Expired codes are rejected with an error." The write-tests test spec says the same.
+      Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+      task created, file the orchestrator copies or diffs, claim decision with its reason,
+      execution-log entry and message to the user:
+      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:14 asserts
+        applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion requires rounding to the cent (17.99)
+      - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
+        test command: 1 failing (discount.test.ts:31, at an assertion); RED gate: N/A
+      - agent-impl (02-implement): GREEN gate: TEST-DEFECT — src/lib/discount.test.ts:31 asserts
+        error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+    when: "execute plan for the discount codes epic"
+    then:
+      - "The first claim is upheld: [REMEDIATION] attempt 1 with cause=TEST-DEFECT, repair task 01r-test-repair-attempt-1 accepted with RED gate N/A, diff reviewed, 02-implement re-dispatched"
+      - "The second TEST-DEFECT in P2-Core-Logic stops the run: a [BLOCKED] entry is logged and the user is asked how to proceed"
+      - "After the second claim no agent is dispatched: no second repair, no 03-validate, no 04-remediate"
+      - "02-implement is left open (not marked done)"
+      - "discount.test.ts:31 is not changed; no test file is edited by agent-impl, agent-remediate or the orchestrator"
+    notes: "Repeated-claim limit. The second claim is debatable on purpose: the rule is to stop and ask, not to decide it. Common failure: rejecting it and continuing as a GREEN failure, or repairing the test a second time."
+
+  - id: implement-14
+    description: TEST-DEFECT claim past the attempt budget — a claim from the second remediation is attempt 3, so the orchestrator stops instead of deciding it
+    grading: llm-judge
+    given: |
+      A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+      context reads "commit: none" and acceptance criteria: "Discounted totals are rounded to the nearest
+      cent." and "Expired codes are rejected with an error."
+      Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+      task created, file the orchestrator copies or diffs, claim decision with its reason,
+      execution-log entry and message to the user:
+      - agent-impl (02-implement): GREEN gate: FAIL — 2 tests failing in src/lib/discount.test.ts
+      - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 and :22 (behavior)
+      - agent-remediate (first remediation): Result: STILL FAILING — discount.test.ts:22
+      - agent-validate (first re-validation): VALIDATE gate: FAIL — discount.test.ts:22 (behavior)
+      - agent-remediate (second remediation): Result: TEST-DEFECT — src/lib/discount.test.ts:22 asserts
+        error code "EXPIRED"; the criterion only says expired codes are rejected with an error
+    when: "execute plan for the discount codes epic"
+    then:
+      - "Remediation is numbered per phase group: [REMEDIATION] attempt 1 creates 04-remediate-attempt-1 / 05-revalidate-attempt-1; the failed re-validation logs attempt 2 and creates 04-remediate-attempt-2 / 05-revalidate-attempt-2"
+      - "The TEST-DEFECT from 04-remediate-attempt-2 would be attempt 3, so the orchestrator logs [BLOCKED] and asks the user without deciding the claim"
+      - "No [REMEDIATION] entry for attempt 3, no repair task (03r-test-repair-…), and 05-revalidate-attempt-2 is not dispatched"
+      - "04-remediate-attempt-2 is left open"
+      - "No test file is edited by agent-impl, agent-remediate or the orchestrator"
+    notes: "Attempt-budget stop on the TEST-DEFECT route (workflow-detail.md, TEST-DEFECT Route step 2). Common failures: deciding the claim anyway, repairing the test, or running a third remediation."

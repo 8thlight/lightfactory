@@ -55,7 +55,7 @@ The praxis plugin's core workflow for non-trivial features follows three phases:
 #### Key Concepts
 
 - **Plan Mode Native** — The workflow aligns with Claude Code's native plan mode. Research happens outside plan mode; planning activates draft behavior inside plan mode; implementation executes the approved plan.
-- **Three-Agent TDD Isolation** — During implementation, each TDD phase dispatches isolated agents: `agent-test` (writes failing tests), `agent-impl` (writes minimal code to pass), and `agent-validate` (runs full test suite). Agents never modify each other's artifacts.
+- **Three-Agent TDD Isolation** — During implementation, each TDD phase dispatches isolated agents: `agent-test` (writes failing tests), `agent-impl` (writes minimal code to pass), and `agent-validate` (runs the tests, type-check and lint). Agents never modify each other's artifacts.
 - **Context Compaction** — Research produces a ~200-line artifact that carries forward into planning, replacing unbounded codebase exploration with a focused summary. Plan mode entry is the compaction boundary.
 - **Tracker Detection Chain** — The implement and plan-tasks skills auto-detect available task trackers: yaks (preferred) → beads (fallback) → native tasks (last resort).
 
