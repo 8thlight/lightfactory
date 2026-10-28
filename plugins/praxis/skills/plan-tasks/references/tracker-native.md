@@ -4,9 +4,10 @@ Use this procedure when neither yaks nor beads is available. Uses Claude Code's 
 
 ## Procedure
 
-1. **Create the epic task**: `TaskCreate: { title: "{Feature Name} [epic]", description: "Epic for {feature}" }`
+1. **Create the epic task**: `TaskCreate: { title: "{Feature Name} [epic]", description: "commit: {per-task|per-group|none}\n\nAcceptance criteria:\n{criteria}" }` (`/implement` reads both instead of the plan file)
 2. **For each phase**, create tasks per the agent-step decomposition:
    - **Leaf phases**: `TaskCreate: { title: "P1-Schema-Setup [no-test]", description: "{full agent context}" }`
+   - **Journey fragment RED**: `TaskCreate: { title: "P{N}-E2E-Red-{Step} [agent-test]", description: "{full agent context}" }`
    - **TDD phases**: three tasks per phase group with agent-type encoded in the title
    - **Final verification**: `TaskCreate: { title: "P6-Full-Integration [agent-validate]", description: "{full agent context}" }`
 3. **Agent-type and ordering** are encoded in task titles using the same `P{N}` and `[agent-type]` naming convention — no custom fields needed

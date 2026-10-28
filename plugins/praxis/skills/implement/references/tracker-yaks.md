@@ -1,14 +1,19 @@
 # Tracker: YAKS
 
-Reference for the YAKS tracker mode — agent prompt reading, readiness computation, and remediation commands.
+Reference for the YAKS tracker mode — agent prompt reading, readiness computation, remediation and TEST-DEFECT repair commands.
+
+Address every yak by its `id` from `yx list --format json`, never by name: child names
+(`03-validate`, `04-remediate-attempt-1`, …) repeat in every group, and `yx` resolves a repeated
+name to whichever match it finds first, without an error. `yx add` prints the new yak's ID, and
+stdin piped into it becomes the yak's context.
 
 ## Agent Prompt Reading
 
 ```bash
-yx context "{task name}"
+yx context --show "{task id}"
 ```
 
-Returns the self-contained agent task description stored with the task.
+Returns the self-contained agent task description stored with the task. Always pass `--show`: without it, `yx context` run with an empty, non-terminal stdin (as in a tool call) reads stdin as a write and prints nothing. The epic's own context (`yx context --show "{epic id}"`) holds the `commit:` line and the acceptance criteria.
 
 ---
 
@@ -62,22 +67,39 @@ def compute_ready(epic_json):
 
 ## Remediation Commands
 
+Write contexts with a quoted heredoc (`<<'CONTEXT'`), never `echo "…"`: they contain backticks and `$`.
+`{group id}` and `{validate id}` come from `yx list --format json`.
+
 ### Create remediation task
 
 ```bash
-yx add "04-remediate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-remediate"
-echo "{remediation context}" | yx context "04-remediate-attempt-1"
+yx add "04-remediate-attempt-1" --under "{group id}" --field "agent-type=agent-remediate" <<'CONTEXT'
+{remediation context}
+CONTEXT
 ```
 
 ### Create re-validation task
 
 ```bash
-yx add "05-revalidate-attempt-1" --under "P2-Core-Logic" --field "agent-type=agent-validate"
-echo "{revalidation context}" | yx context "05-revalidate-attempt-1"
+yx add "05-revalidate-attempt-1" --under "{group id}" --field "agent-type=agent-validate" <<'CONTEXT'
+{the original validate task's context}
+CONTEXT
 ```
 
 ### Mark original validate task as done
 
 ```bash
-yx done "03-validate"
+yx done "{validate id}"
 ```
+
+## TEST-DEFECT Repair Commands
+
+For an upheld claim from `02-implement` (from `04-remediate-attempt-{M}`, use `03r-…` instead):
+
+```bash
+yx add "01r-test-repair-attempt-1" --under "{group id}" --field "agent-type=agent-test" <<'CONTEXT'
+{repair context}
+CONTEXT
+```
+
+Name sorting puts it after `01-write-tests` and before `02-implement`, so readiness dispatches it next.

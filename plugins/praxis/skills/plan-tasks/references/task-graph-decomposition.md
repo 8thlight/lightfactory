@@ -33,6 +33,17 @@ Use `NN-{role}` format within each phase group:
 
 Children execute sequentially by their numeric prefix within the parent.
 
+### E2E journey fragments
+
+An `e2e-journey` fragment's RED step is a leaf `P{N}-E2E-Red-{Step}` (`agent-type=agent-test`) whose context carries the runner, build target and preflight. It gets a lower `P{N}` than the TDD phase groups that turn it green. Every validate task between the leaf and the fragment's last validate excludes the journey spec; the fragment's last phase group must be a single TDD group at its `P{N}`, and its `03-validate` context adds the **Journey spec command**, the journey's **Preflight**, and the journey RED task's RED gate profile. The rules themselves (placement, validate scope, build, testids) are in plan-tasks SKILL.md, "Phase tiers".
+
+```
+P0-E2E-Red-Field-Visible     (leaf, agent-type=agent-test)   ← stage 1
+P1-Core-Logic … P3-Checkout-UI (TDD groups; P3/03-validate carries the Journey spec command)
+P4-E2E-Red-Total-Shown       (leaf, agent-type=agent-test)   ← stage 2
+P5-… P6-…                    (TDD groups; P6/03-validate carries the Journey spec command)
+```
+
 ## Tracker Procedures
 
 See the appropriate reference file for the full procedure for each tracker mode:

@@ -61,18 +61,18 @@ promptfoo eval --output json > results.json
 ## Cost Expectations
 
 Each test case makes one call to the Claude API via the `claude` CLI. The config
-contains **26 test cases** total (see breakdown below). LLM-judge assertions make an
+contains **36 test cases** total (see breakdown below). LLM-judge assertions make an
 additional API call per assertion (the judge model evaluates the output).
 
 | Scenario type | Test cases | LLM-judge assertions | Total API calls (approx.) |
 |---------------|-----------|---------------------|--------------------------|
-| research      | 5          | 3 (research-02, -04, -05) | 8 |
-| plan-tasks    | 7          | 4 (plan-tasks-03, -04, -05, -06) | 11 |
-| implement     | 6          | 3 (implement-03, -05, -06) | 9 |
+| research      | 5          | 4 (research-02, -03, -04, -05) | 9 |
+| plan-tasks    | 8          | 5 (plan-tasks-03, -04, -05, -06, -09) | 13 |
+| implement     | 12         | 8 (implement-03, -05, -06, -08, -11, -12, -13, -14) | 20 |
 | tdd           | 5          | 2 (tdd-04, -05)     | 7 |
-| harness       | 3          | 2 (harness-02, -03) | 5 |
+| harness       | 3          | 3 (harness-01, -02, -03) | 6 |
 | reflect       | 3          | 1 (reflect-03)      | 4 |
-| **Total**     | **29**     | **15**              | **~42** |
+| **Total**     | **36**     | **23**              | **~59** |
 
 At typical Sonnet pricing (~$0.003 per 1K output tokens), a full eval run is
 estimated at **$0.50–$2.00** depending on response length. LLM-judge calls add
@@ -112,12 +112,19 @@ Run frequency recommendations:
 | plan-tasks-05 | plan-tasks | Tracker fallback chain when yaks unavailable | llm-judge |
 | plan-tasks-06 | plan-tasks | Falls back to beads when yaks unavailable | llm-judge |
 | plan-tasks-07 | plan-tasks | Falls back to native TaskCreate | code |
+| plan-tasks-09 | plan-tasks | Two-fragment journey ordering and validate scope | llm-judge |
 | implement-01 | implement | implement-execution-log.md created with structured entries | code |
 | implement-02 | implement | Full gate pass path (RED, GREEN, VALIDATE) | code |
 | implement-03 | implement | RED gate fail hard stop | llm-judge |
 | implement-04 | implement | GREEN gate fail enters remediation | code |
 | implement-05 | implement | Lint fast path — biome-only failure auto-fixed | llm-judge |
 | implement-06 | implement | Escalates to user after 2 failed remediations | llm-judge |
+| implement-07 | implement | Session manifest with file lists and gate counts | code |
+| implement-08 | implement | Manifest classifies agent-no-test files by pre-existence | llm-judge |
+| implement-11 | implement | TEST-DEFECT upheld — repair task, diff reviewed, implementation resumes | llm-judge |
+| implement-12 | implement | TEST-DEFECT rejected — counted as attempt 1, remediation is attempt 2 | llm-judge |
+| implement-13 | implement | Second TEST-DEFECT in a phase group stops and asks the user | llm-judge |
+| implement-14 | implement | TEST-DEFECT claim past the attempt budget stops without deciding | llm-judge |
 | tdd-01 | tdd | tdd-session-log.md created before any code | code |
 | tdd-02 | tdd | [TEST] comments before production code with ZOMBIES | code |
 | tdd-03 | tdd | All 7 ZOMBIES letters present | code |
@@ -130,7 +137,7 @@ Run frequency recommendations:
 | reflect-02 | reflect | Proposals capped at 5, priority-ordered, complete fields | code |
 | reflect-03 | reflect | Proposals actionable and session-relevant | llm-judge |
 
-**Total: 29 test cases — 14 code-graded, 15 llm-judge**
+**Total: 36 test cases — 15 code-graded, 21 llm-judge** (by `metadata.grading`; research-03 and harness-01 are code-graded but also make one judge call each)
 
 ---
 
@@ -167,7 +174,8 @@ Assertions in `then[]` map to promptfoo assertion types:
 ### For `grading: llm-judge` scenarios
 
 Assertions map to a single `llm-rubric` assertion whose value contains a structured
-scoring rubric (1-3 per dimension, pass threshold 9/12). The rubric should reference
+scoring rubric (1-3 per dimension, pass threshold 9/12; use 12/12 — every dimension must score 3 —
+when each dimension is a hard correctness property, as in plan-tasks-09, implement-05, -06 and -11..14). The rubric should reference
 the specific observable behaviors from `then[]`.
 
 After adding scenarios to the YAML file, add corresponding test cases to

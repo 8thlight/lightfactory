@@ -100,7 +100,7 @@ tests:
       - type: icontains
         value: "## Web Research"
       - type: regex
-        value: "(?i)(High|Medium|Low)"
+        value: "[Cc]onfidence[^\\n]{0,15}?\\b(High|Medium|Low)\\b|\\b(High|Medium|Low)[- ][Cc]onfidence"
       - type: llm-rubric
         value: |
           Evaluate whether every web finding in the Web Research section is labeled with a confidence level (High, Medium, or Low).
@@ -424,6 +424,61 @@ tests:
       skill: plan-tasks
       grading: code
 
+  # plan-tasks-09: Two-fragment browser journey ordering and validate scope
+  - description: "[plan-tasks-09] Two-fragment journey: RED leaves precede supporting phases, journey spec only in each fragment's last validate"
+    vars:
+      prompt: |
+        GIVEN: A web app project where yaks is available. A Playwright journey spec for the checkout flow
+        exists at e2e/checkout.spec.ts; Playwright's webServer builds and starts the production app, and no
+        other services are needed. The research artifact describes two browser-visible steps:
+        (1) a discount code field appears on the checkout page, (2) applying a valid code shows the
+        discounted total. Each step needs core logic, an HTTP route and a checkout UI change beneath it.
+        The user has already approved the plan as written: skip the review step and create the task graph.
+        In your final response, list every task in execution order with its name, agent-type and test
+        command; for each validate task its Full test command and any Journey spec command; and for each
+        journey RED task its RED gate and Preflight.
+        Commit policy: none. The acceptance criteria are the two steps above. Do not ask clarifying questions.
+
+        TASK: plan the implementation of discount codes in checkout, outside-in from the browser journey
+    assert:
+      - type: icontains
+        value: "e2e-journey"
+      - type: regex
+        value: "P\\d+-E2E-Red"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the plan-tasks skill planned a two-fragment browser journey correctly.
+          Fragment 1 = "discount code field appears"; fragment 2 = "applying a valid code shows the discounted total".
+
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total. If the output does not list the
+          task graph (task names, agent-types, validate commands), score Dimensions 2 and 3 as 1.
+
+          Dimension 1 — Tiers and fragment leaves (1-3): Are phases tiered, with one leaf E2E RED task per fragment?
+            1 = No tiers, or the journey is one monolithic e2e phase
+            2 = Tiers present, but a fragment lacks its own leaf RED task, a RED is a full Write/Implement/Validate triplet, non-browser behavior is tiered e2e-journey, or a fragment has no phase for the UI change its step asserts
+            3 = Every TDD phase and journey RED has a tier (no-test and final-integration leaves need none); only the two journey RED tasks are e2e-journey; each fragment has one leaf agent-test RED that extends e2e/checkout.spec.ts by one stage, followed by lower-tier phases covering its core logic, HTTP route and UI change
+
+          Dimension 2 — Ordering (1-3): Does each fragment's RED leaf precede the phases that turn it green?
+            1 = Journey RED tasks come after their supporting phases, or the order cannot be read from the output
+            2 = One fragment's RED is placed correctly and the other is not (including both REDs placed before all supporting phases)
+            3 = Fragment 1's RED has a lower P{N} than every fragment-1 phase; fragment 2's RED has a higher P{N} than every fragment-1 phase and a lower P{N} than every fragment-2 phase
+
+          Dimension 3 — Validate scope (1-3): Do validates exclude the journey spec until each fragment's last validate?
+            1 = Every validate runs the full suite including the still-red journey spec, or no validate runs the journey spec
+            2 = Exclusion is stated, but a fragment's last validate lacks a Journey spec command, a mid-fragment validate runs the spec, or a fragment ends in parallel same-prefix groups
+            3 = Every validate before a fragment's last one uses a Full test command that excludes the spec; each fragment ends in a single TDD group whose validate carries a Journey spec command
+
+          Dimension 4 — Journey RED gates and preflight (1-3): Are both RED gates specific, and is preflight scoped correctly?
+            1 = RED gates are generic ("tests fail") or missing
+            2 = A gate names a step but not a testid/locator, only one fragment's gate is specific, or preflight health-checks the server Playwright's webServer starts
+            3 = Fragment 1's gate names the testid/locator expected to time out; fragment 2's gate predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator; preflight lists no service, or states none is needed because webServer is runner-managed
+
+          Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
 # ---------------------------------------------------------------------------
 # IMPLEMENT skill scenarios
 # ---------------------------------------------------------------------------
@@ -545,7 +600,8 @@ tests:
     vars:
       prompt: |
         GIVEN: A yaks epic where Agent 3's VALIDATE run finds: tsc exits 0, vitest exits 0, but biome exits 1
-        (lint errors only — no type errors, no test failures).
+        (lint errors only — no type errors, no test failures): src/lib/discount.ts:12 lint/style/useConst
+        and src/lib/discount.ts:30 format, both marked fixable.
 
         TASK: execute plan for the discount codes epic
     assert:
@@ -553,22 +609,23 @@ tests:
         value: |
           You are evaluating whether the implement skill correctly handled a biome-only lint failure using the fast path.
 
-          Score each dimension 1-3. Pass threshold: 9 out of 12.
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
 
           Dimension 1 — No [REMEDIATION] entry (1-3): Does the log NOT contain a [REMEDIATION] entry for this phase?
             1 = [REMEDIATION] entry is present (fast path was not used)
             2 = Remediation was mentioned informally but no formal [REMEDIATION] log entry
             3 = No [REMEDIATION] entry; fast path was correctly applied
 
-          Dimension 2 — biome auto-fix invoked (1-3): Did Claude run biome check --write --unsafe?
+          Dimension 2 — biome auto-fix invoked (1-3): Did Claude run biome check --write, without unsafe fixes, logged as [WRITE]?
             1 = No biome auto-fix command was run
-            2 = A biome fix was run but without --write --unsafe flags
-            3 = biome check --write --unsafe was invoked to auto-fix lint issues
+            2 = A biome fix was run with --unsafe, on files the lint output did not name, or without a [WRITE] entry
+            3 = biome check --write (no --unsafe) was run on the files the lint output named, and logged [WRITE]
 
-          Dimension 3 — Re-run after fix (1-3): Was the full VALIDATE gate re-run after auto-fix?
+          Dimension 3 — Re-validation after fix (1-3): Was the validate task re-run after the auto-fix?
             1 = No re-run after auto-fix
             2 = Re-run mentioned but it is unclear if all checks (tsc, vitest, biome) were included
-            3 = Full VALIDATE gate (tsc + vitest + biome) was re-run after auto-fix
+            3 = The validate task was re-dispatched (tsc + vitest + biome) after the auto-fix
 
           Dimension 4 — No remediation tasks created (1-3): Were no new remediation yaks tasks created?
             1 = Remediation and re-validation tasks were created unnecessarily
@@ -593,7 +650,8 @@ tests:
         value: |
           You are evaluating whether the implement skill correctly escalated to the user after 2 failed remediation attempts.
 
-          Score each dimension 1-3. Pass threshold: 9 out of 12.
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
 
           Dimension 1 — Two remediation entries (1-3): Does the log contain [REMEDIATION] entries for attempt 1 and attempt 2?
             1 = Fewer than 2 [REMEDIATION] entries
@@ -610,10 +668,10 @@ tests:
             2 = Claude stopped but did not ask for guidance
             3 = Claude stopped and explicitly asked the user for guidance
 
-          Dimension 4 — Yaks task updated (1-3): Was the blocked task updated to blocked status in yaks?
-            1 = No yaks status update was performed
-            2 = A status update was mentioned but not confirmed
-            3 = The blocked task was explicitly updated to blocked status in yaks
+          Dimension 4 — Task left open (1-3): Was the failed re-validation left open for the user?
+            1 = The failed re-validation is marked done and the run moves on
+            2 = The task state is not mentioned
+            3 = The failed re-validation is left open (not marked done) with the [BLOCKED] entry
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
     metadata:
@@ -692,6 +750,238 @@ tests:
             3 = Explicitly checked or stated that file existence determines classification for agent-no-test reports
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: implement
+      grading: llm-judge
+
+  # implement-11: TEST-DEFECT upheld — repair task with RED gate N/A, diff reviewed, implementation resumes
+  - description: "[implement-11] TEST-DEFECT upheld — repair task with RED gate N/A, diff reviewed, implementation resumes"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+        context reads "commit: none" and acceptance criterion: "Discounted totals are rounded to the nearest
+        cent." The write-tests test spec says the same.
+        Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+        task created, file the orchestrator copies or diffs, claim decision with its reason,
+        execution-log entry and message to the user:
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+          requires rounding to the cent (17.99)
+        - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
+          test command: all 6 tests pass (the implementation already rounds); RED gate: N/A
+        - agent-impl (02-implement): GREEN gate: PASS
+        - agent-validate (03-validate): VALIDATE gate: PASS
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: "cause=TEST-DEFECT:"
+      - type: icontains
+        value: "01r-test-repair-attempt-1"
+      - type: regex
+        value: "\\[REMEDIATION\\][^\\n]*TEST-DEFECT[^\\n]*files:[^\\n]*src/lib/discount\\.ts"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill handled an upheld TEST-DEFECT claim correctly.
+
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
+
+          Dimension 1 — Decision and log (1-3): Did the orchestrator decide the claim against the spec and criterion, and log it?
+            1 = Accepts the claim on agent-impl's word, rejects it, or lets the reporting agent decide
+            2 = Upholds the claim without citing the criterion or test spec, or the log entry lacks attempt 1 or cause=TEST-DEFECT
+            3 = Compares the cited assertion (17.991) with the test spec and criterion (round to the cent), upholds it, and logs [REMEDIATION] for 02-implement with attempt 1 and cause=TEST-DEFECT
+
+          Dimension 2 — Repair task (1-3): Was the fix routed through a repair task for agent-test, with RED gate N/A accepted?
+            1 = The test is changed by the orchestrator, agent-impl or agent-remediate, or the run stops without a repair
+            2 = agent-test is dispatched directly with no repair task in the group, or its passing run is treated as a RED gate FAIL
+            3 = A repair task 01r-test-repair-attempt-1 (agent-test) is created in P2-Core-Logic with the report and the criterion; its passing run with RED gate N/A is accepted
+
+          Dimension 3 — Test diff review (1-3): Did the orchestrator review the repair against a baseline before resuming?
+            1 = No review; implementation resumes directly
+            2 = Says the change was reviewed without a baseline copy or without stating what was checked
+            3 = Copies the cited file before the repair and diffs against it: only the cited assertion changed and no criterion assertion was dropped or weakened
+
+          Dimension 4 — Resume with tests untouched (1-3): Did implementation resume without any implementation agent touching tests?
+            1 = Does not resume, or agent-impl, agent-remediate or the orchestrator edits a test or is told to
+            2 = Resumes, but skips 03-validate, does not close the phase, or creates an unnecessary 04-remediate task
+            3 = 02-implement is re-dispatched after the review, 03-validate runs, the phase closes, and no 04-remediate task is created
+
+          Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
+    metadata:
+      skill: implement
+      grading: llm-judge
+
+  # implement-12: TEST-DEFECT rejected — counted as attempt 1, test intact, remediation is attempt 2
+  - description: "[implement-12] TEST-DEFECT rejected — counted as attempt 1, test intact, remediation is attempt 2"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+        context reads "commit: none" and acceptance criterion: "Discounted totals are rounded to the nearest
+        cent." The write-tests test spec says the same.
+        Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+        task created, file the orchestrator copies or diffs, claim decision with its reason,
+        execution-log entry and message to the user:
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.99, but 19.99 x 0.9 =
+          17.991; the test should use toBeCloseTo(17.991)
+        - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 expected 17.99, received 17.991 (behavior)
+        - agent-remediate: Result: ALL PASS (rounds the total to the cent)
+        - agent-validate (re-validation): VALIDATE gate: PASS
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: "TEST-DEFECT rejected"
+      - type: icontains
+        value: "04-remediate-attempt-2"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill handled a rejected TEST-DEFECT claim correctly.
+
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
+
+          Dimension 1 — Decision and log (1-3): Did the orchestrator reject the claim against the criterion, and log it?
+            1 = Upholds the claim, or lets agent-impl decide
+            2 = Rejects the claim without citing the criterion, or the log lacks a [REMEDIATION] entry with attempt 1 and "TEST-DEFECT rejected" with a reason
+            3 = Rejects because the assertion (17.99) states the criterion (round to the cent) and logs [REMEDIATION] for 02-implement: attempt 1, cause=TEST-DEFECT rejected, with the reason
+
+          Dimension 2 — Test left intact (1-3): Was the test kept as written?
+            1 = agent-test is dispatched, or any agent or the orchestrator edits discount.test.ts
+            2 = The test is unchanged, but the run proposes changing it or tells agent-remediate it may
+            3 = No repair task is created, discount.test.ts is unchanged, and no agent or the orchestrator is told to change it
+
+          Dimension 3 — Validation and remediation (1-3): Did the run continue to validation and remediation?
+            1 = Stops at the rejected claim, or re-dispatches agent-impl instead of validating
+            2 = Remediates, but skips 03-validate, leaves 02-implement open, or omits the Rejected TEST-DEFECT reason from the remediation context
+            3 = 02-implement is marked done; 03-validate runs; its failure logs [REMEDIATION] 03-validate — attempt 2 and creates 04-remediate-attempt-2 (context carries Rejected TEST-DEFECT: {test, assertion} — {why}) and 05-revalidate-attempt-2 (original validate context unchanged); the phase closes after re-validation passes
+
+          Dimension 4 — Attempt numbering (1-3): Did the rejected claim count as attempt 1?
+            1 = The claim is not counted; the remediation is attempt 1 with another attempt implied
+            2 = The budget is mentioned, but the task names contradict it
+            3 = The remediation tasks are 04-remediate-attempt-2 and 05-revalidate-attempt-2, the last attempt before escalation
+
+          Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
+    metadata:
+      skill: implement
+      grading: llm-judge
+
+  # implement-13: Second TEST-DEFECT in the same phase group stops the run and asks the user
+  - description: "[implement-13] Second TEST-DEFECT in the same phase group stops the run and asks the user"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+        context reads "commit: none" and acceptance criteria: "Discounted totals are rounded to the nearest
+        cent." and "Expired codes are rejected with an error." The write-tests test spec says the same.
+        Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+        task created, file the orchestrator copies or diffs, claim decision with its reason,
+        execution-log entry and message to the user:
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:14 asserts applyDiscount(19.99, "SAVE10") toBe 17.991; the criterion
+          requires rounding to the cent (17.99)
+        - agent-test (test repair): Files modified: src/lib/discount.test.ts (line 14 only, toBe 17.99);
+          test command: 1 failing (discount.test.ts:31, at an assertion); RED gate: N/A
+        - agent-impl (02-implement): Files created/modified: src/lib/discount.ts; GREEN gate: TEST-DEFECT —
+          src/lib/discount.test.ts:31 asserts
+          that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+          rejected with an error
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: "[BLOCKED]"
+      - type: icontains
+        value: "cause=TEST-DEFECT:"
+      - type: icontains
+        value: "01r-test-repair-attempt-1"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill stopped on a second TEST-DEFECT claim in the same phase group.
+
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
+
+          Dimension 1 — First claim (1-3): Was the first claim handled as upheld?
+            1 = The orchestrator or agent-impl edits the test, or the repair is treated as a RED gate FAIL
+            2 = Upheld and repaired, but no repair task is created, the [REMEDIATION] entry lacks attempt 1 / cause=TEST-DEFECT, or the diff is not reviewed
+            3 = Upheld against the criterion; [REMEDIATION] attempt 1 with cause=TEST-DEFECT; repair task 01r-test-repair-attempt-1 accepted with RED gate N/A (it fails at an assertion); diff reviewed; 02-implement re-dispatched
+
+          Dimension 2 — Second claim stops the run (1-3): Did the second claim stop the run?
+            1 = The run continues (decides the second claim and acts on it, validates, or remediates)
+            2 = Stops, but logs no [BLOCKED] entry, does not ask the user, or logs a [REMEDIATION] entry for the second claim
+            3 = Identifies the group's second TEST-DEFECT, logs [BLOCKED] for 02-implement, and asks the user how to proceed, citing the second claim
+
+          Dimension 3 — No further dispatch (1-3): Was anything dispatched or closed after the second claim?
+            1 = A second repair, a remediation, or a third attempt is dispatched
+            2 = No repair or remediation, but 03-validate is dispatched or 02-implement is marked done
+            3 = No agent is dispatched after the second claim and 02-implement is left open
+
+          Dimension 4 — Tests untouched by implementation (1-3): Did test files change only through the first repair?
+            1 = agent-impl, agent-remediate or the orchestrator edits a test, or is told to
+            2 = No test is edited, but the orchestrator offers to change discount.test.ts:31 itself
+            3 = discount.test.ts:31 is unchanged pending the user; the only test change is the line-14 repair
+
+          Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
+    metadata:
+      skill: implement
+      grading: llm-judge
+
+  # implement-14: TEST-DEFECT claim past the attempt budget stops the run
+  - description: "[implement-14] TEST-DEFECT claim past the attempt budget stops the run without deciding it"
+    vars:
+      prompt: |
+        GIVEN: A yaks epic with P2-Core-Logic: 01-write-tests (done), 02-implement, 03-validate. The epic
+        context reads "commit: none" and acceptance criteria: "Discounted totals are rounded to the nearest
+        cent." and "Expired codes are rejected with an error."
+        Agent outcomes are given below; simulate each dispatch from them and print every dispatch,
+        task created, file the orchestrator copies or diffs, claim decision with its reason,
+        execution-log entry and message to the user:
+        - agent-impl (02-implement): GREEN gate: FAIL — 2 tests failing in src/lib/discount.test.ts
+        - agent-validate (03-validate): VALIDATE gate: FAIL — discount.test.ts:14 and :22 (behavior)
+        - agent-remediate (first remediation): Result: STILL FAILING — discount.test.ts:22
+        - agent-validate (first re-validation): VALIDATE gate: FAIL — discount.test.ts:22 (behavior)
+        - agent-remediate (second remediation): Files modified: src/lib/discount.ts; Result: TEST-DEFECT —
+          src/lib/discount.test.ts:22 asserts
+          that the expired code "OLD5" returns a discounted total; the criterion says expired codes are
+          rejected with an error
+
+        TASK: execute plan for the discount codes epic
+    assert:
+      - type: icontains
+        value: "[BLOCKED]"
+      - type: icontains
+        value: "04-remediate-attempt-2"
+      - type: regex
+        value: "\\[BLOCKED\\][^\\n]*files:[^\\n]*src/lib/discount\\.ts"
+      - type: llm-rubric
+        value: |
+          You are evaluating whether the implement skill stopped on a TEST-DEFECT claim that exceeds the phase group's attempt budget.
+
+          Score each dimension 1-3. Pass threshold: 12 out of 12 — every dimension must score 3.
+          Any dimension scoring 1 or 2 is FAIL regardless of the total.
+
+          Dimension 1 — Remediation numbering (1-3): Were the two remediations numbered per phase group?
+            1 = No remediation tasks, or the run stops after the first failed re-validation
+            2 = Remediation runs, but the attempt numbers or task names (04-remediate-attempt-N / 05-revalidate-attempt-N) are wrong or missing
+            3 = [REMEDIATION] attempt 1 creates 04-remediate-attempt-1 and 05-revalidate-attempt-1; the failed re-validation logs attempt 2 and creates 04-remediate-attempt-2 and 05-revalidate-attempt-2
+
+          Dimension 2 — Budget stop (1-3): Did the claim from the second remediation stop the run?
+            1 = The claim is decided (upheld or rejected) and the run continues
+            2 = Stops, but only after deciding the claim, logs a [REMEDIATION] entry for attempt 3, logs no [BLOCKED], or does not ask the user
+            3 = Recognizes the claim would be attempt 3 (over the budget of 2), logs [BLOCKED] for 04-remediate-attempt-2, and asks the user without deciding the claim
+
+          Dimension 3 — No further dispatch (1-3): Was anything dispatched or closed after the claim?
+            1 = A repair task, a third remediation, or another agent is dispatched
+            2 = Nothing is dispatched, but 04-remediate-attempt-2 is marked done or 05-revalidate-attempt-2 is dispatched
+            3 = No agent is dispatched after the claim; 04-remediate-attempt-2 is left open and 05-revalidate-attempt-2 does not run
+
+          Dimension 4 — Tests untouched (1-3): Were tests left alone?
+            1 = agent-impl, agent-remediate or the orchestrator edits a test, or is told to
+            2 = No test is edited, but the orchestrator offers to change discount.test.ts:22 itself
+            3 = discount.test.ts is unchanged pending the user
+
+          Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
     metadata:
       skill: implement
       grading: llm-judge

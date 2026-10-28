@@ -184,3 +184,29 @@ functional:
       - "Skill does NOT create the task graph until the plan is approved"
       - "When finally approved, the task graph reflects the revised phase ordering"
     notes: "Tests the plan revision loop. Common failure: skill creates task graph before getting approval."
+
+  - id: plan-tasks-09
+    description: Two-fragment browser journey — each fragment's RED leaf precedes its supporting phases, and only each fragment's last validate runs the journey spec
+    grading: llm-judge
+    given: |
+      A web app project where yaks is available. A Playwright journey spec for the checkout flow
+      exists at e2e/checkout.spec.ts; Playwright's webServer builds and starts the production app, and no
+      other services are needed. The research artifact describes two browser-visible steps:
+      (1) a discount code field appears on the checkout page, (2) applying a valid code shows the
+      discounted total. Each step needs core logic, an HTTP route and a checkout UI change beneath it.
+      The user has already approved the plan as written: skip the review step and create the task graph.
+      In your final response, list every task in execution order with its name, agent-type and test
+      command; for each validate task its Full test command and any Journey spec command; and for each
+      journey RED task its RED gate and Preflight.
+      Commit policy: none. The acceptance criteria are the two steps above. Do not ask clarifying questions.
+    when: "plan the implementation of discount codes in checkout, outside-in from the browser journey"
+    then:
+      - "Every TDD phase and journey RED has a tier; only the two journey RED tasks are e2e-journey"
+      - "Each fragment has one leaf E2E RED task (agent-test, P{N}-E2E-Red-{Step}) that extends e2e/checkout.spec.ts by one stage"
+      - "Each fragment's lower-tier phases cover its core logic, HTTP route and UI change"
+      - "Fragment 1's RED leaf has a lower P{N} than every fragment-1 phase; fragment 2's RED leaf has a higher P{N} than every fragment-1 phase and a lower P{N} than every fragment-2 phase"
+      - "Validate tasks before a fragment's last validate use a Full test command that excludes the journey spec"
+      - "Each fragment's last phase is a single TDD group whose validate also carries a Journey spec command"
+      - "Fragment 1's RED gate names the testid/locator expected to time out; fragment 2's predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator"
+      - "Preflight does not health-check the server Playwright's webServer starts (no service to preflight)"
+    notes: "Each rubric dimension is a hard correctness property, so the eval requires 12/12 to prevent offsetting. Structural validation cannot catch a misordered graph or an omitted journey gate. Approval is pre-granted and the graph printed because --print mode returns only the final message and cannot answer the review prompt; plan-tasks-08 covers the approval loop."

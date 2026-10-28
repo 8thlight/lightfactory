@@ -38,7 +38,7 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Check | Type | Assertion |
 |-------|------|-----------|
 | Execution log | `file-exists` | `implement-execution-log.md` in project root |
-| Log entries | `string-match` | `\[DISPATCHED\]`, `\[GATE PASS\]` or `\[GATE FAIL\]`, `\[CLOSED\]` (success), `\[REMEDIATION\]` (remediation path), `\[BLOCKED\]` (after 2 failures) |
+| Log entries | `string-match` | `\[DISPATCHED\]`, `\[GATE PASS\]` or `\[GATE FAIL\]`, `\[CLOSED\]` (success), `\[REMEDIATION\]` (remediation and TEST-DEFECT decisions), `\[BLOCKED\]` (attempt limit, second TEST-DEFECT claim, user decision) |
 | Lint fast path | `string-absent` | `\[REMEDIATION\]` absent when only biome failed |
 | Agent types | `string-match` | At least one of: `agent-test`, `agent-impl`, `agent-validate` |
 

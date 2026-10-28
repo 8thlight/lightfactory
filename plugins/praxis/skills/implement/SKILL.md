@@ -6,7 +6,7 @@ triggers:
   - "execute plan"
   - "build from plan"
   - "implement from plan"
-allowed-tools: Read Glob Write Bash Task TaskOutput Skill
+allowed-tools: Read Glob Write Bash Task TaskOutput Skill AskUserQuestion
 ---
 
 # Implement Skill
@@ -26,9 +26,9 @@ Use this skill to execute an implementation plan using task-graph-driven orchest
 The Implement phase executes a task graph created by `/plan-tasks`. Each task's context contains everything needed for agent dispatch. The naming convention enforces ordering. Readiness is computed from the task graph state.
 
 Three registered agents per TDD phase (see `plugins/praxis/agents/`):
-- **agent-test** (RED): Creates failing tests from the task's test spec — knows nothing about the implementation
+- **agent-test** (RED): Creates failing tests from the task's test spec — knows nothing about the implementation (also repairs a test after an upheld TEST-DEFECT)
 - **agent-impl** (GREEN): Writes minimal code to make tests pass + YAGNI simplification — guided only by the tests
-- **agent-validate** (VALIDATE): Runs the full test suite — confirms nothing is broken
+- **agent-validate** (VALIDATE): Runs the validate task's tests, type-check and lint — confirms nothing is broken
 
 Plus **agent-remediate** for fixing failures and **agent-no-test** for non-TDD phases.
 
@@ -47,17 +47,9 @@ Use this skill when:
 
 ## Execution Log
 
-**REQUIRED:** Create `.light/sessions/YYYY-MM-DD-{topic}-execution.md` in the project root at the start of every RPI session. Append entries throughout orchestration. This provides an observable audit trail of agent dispatch and gate results.
+**REQUIRED:** Create `.light/sessions/YYYY-MM-DD-{topic}-execution.md` in the project root at the start of every RPI session (when resuming, append to the existing log). Append entries throughout orchestration. This provides an observable audit trail of agent dispatch and gate results.
 
-Entry format (one per line, append-only):
-```
-[DISPATCHED] {task name} — agent type: {agent-test|agent-impl|agent-validate}, mode: {sync|parallel}
-[GATE PASS] {task name} — {RED|GREEN|VALIDATE} gate passed
-[GATE FAIL] {task name} — {RED|GREEN|VALIDATE} gate failed: {reason}
-[CLOSED] {task name}
-[REMEDIATION] {task name} — attempt {N}: {description}
-[BLOCKED] {task name} — escalating to user: {reason}
-```
+Entry types: `[DISPATCHED]`, `[GATE PASS]`, `[GATE FAIL]`, `[REMEDIATION]`, `[BLOCKED]`, `[CLOSED]`, `[WRITE]`. Formats, and the rule that a refused close is never forced without recorded user approval, are in [workflow-detail.md](references/workflow-detail.md#execution-log-format).
 
 ## Workflow
 
@@ -79,7 +71,9 @@ If resuming a previous session, this step is the same — the readiness computat
 
 This is the core execution loop. It runs until all tasks in the epic are done or an unrecoverable error occurs.
 
-**File tracking:** Maintain running lists of `files_created` and `files_modified` throughout the loop. After each agent completes, parse its report for `Files created:`, `Files created/modified:`, and `Files modified:` lines and append paths to the appropriate list. These lists feed into the session manifest (step 5b).
+**Clean start:** on a fresh run (not a resume) whose `commit:` policy commits, STOP before the loop if tracked files outside `.light/` and `.beads/` have uncommitted changes (workflow-detail.md, Commits).
+
+**File tracking:** Maintain running lists of `files_created` and `files_modified` throughout the loop. After each agent completes, parse its report for `Files created:`, `Files created/modified:`, and `Files modified:` lines and append paths to the appropriate list; add the files of the orchestrator's own `[WRITE]` entries too. These lists feed into the session manifest (step 5b).
 
 ```
 Loop:
@@ -92,21 +86,31 @@ Loop:
      - Dispatch Task with agent prompt built from task context
      - If multiple ready tasks: dispatch in parallel (single message, multiple Task calls)
   e. Wait for agent(s) to complete
-  f. For each completed agent:
-     - Parse agent report for file paths → update files_created / files_modified lists
-     - If gate PASSED → mark done (tracker-specific command below)
-     - If RED gate FAILED (tests pass immediately) → STOP, report to user
-     - If GREEN gate FAILED → proceed to validation anyway
-     - If VALIDATE found failures → create remediation tasks (see Remediation)
-  g. Loop back to (a)
+  f. For each completed agent, update files_created / files_modified from its report, then act on
+     its outcome per the Gate Outcomes table in workflow-detail.md. In short:
+     - PASS → mark done (RED: first confirm the failure matches the task's RED gate)
+     - RED or no-test gate FAIL → STOP, report to user, leave the task open
+     - GREEN FAIL, or a remediation ALL PASS / STILL FAILING → mark done; validation runs next
+     - TEST-DEFECT → TEST-DEFECT Route
+     - VALIDATE failures: behavior or type-check → Remediation; else lint → Lint Fast Path;
+       else only FLAKY/environmental → STOP and ask
+     Before each "mark done", commit if the policy calls for it (g). Act on every agent in a
+     parallel batch before stopping
+  g. Commit per the `commit:` line in the epic context (workflow-detail.md, Commits):
+     `per-task` before each task is marked done, `per-group` before a group's last task is
+     (a journey fragment commits once, at its last validate), `none`/absent never. Only the
+     orchestrator commits, staging only that commit's files; it stops if the index already
+     holds staged files
+  h. Loop back to (a)
 ```
 
 **Tracker commands for step (d) read context and step (f) mark done:**
 
 | Action | YAKS | BEADS | NATIVE |
 |--------|------|-------|--------|
-| Read context | `yx context "{name}"` | `Skill: beads:show "{name}"` | `TaskGet {id}` |
-| Mark done | `yx done "{name}"` | `Skill: beads:close "{name}"` | `TaskUpdate {id} completed` |
+| Read context | `yx context --show "{id}"` | `Skill: beads:show "{id}"` | `TaskGet {id}` |
+| Read epic context (`commit:`, acceptance criteria) | `yx context --show "{epic id}"` | `Skill: beads:show "{epic-id}"` | `TaskGet {epic id}` |
+| Mark done | `yx done "{id}"` | `Skill: beads:close "{id}"` | `TaskUpdate {id} completed` |
 | List/progress | `yx list` | `Skill: beads:list` | `TaskList` |
 
 See [workflow-detail.md](references/workflow-detail.md) for agent prompt templates and dispatch details.
@@ -142,20 +146,11 @@ When readiness computation returns multiple tasks, dispatch them all in a **sing
 
 #### Remediation
 
-When Agent 3 (Validate) finds failures, create remediation and re-validation tasks under the same phase group parent using the tracker's task-creation command. See [workflow-detail.md](references/workflow-detail.md) for the full procedure, context template, and per-tracker commands.
-
-In all modes: name remediation `04-remediate-attempt-{M}` and re-validation `05-revalidate-attempt-{M}`. Mark the original validate task done (it completed its job — reporting failures). If attempt count reaches 2 and re-validation still fails, **STOP — ask the user**.
+When Agent 3 (Validate) finds behavior or type-check failures, create `04-remediate-attempt-{N}` and `05-revalidate-attempt-{N}` under the same phase group and mark the failed validate done. Attempts are numbered per phase group, TEST-DEFECT claims included; when `N` would exceed 2, **STOP — ask the user**. See [workflow-detail.md](references/workflow-detail.md#remediation) for the procedure, context template, and per-tracker commands.
 
 #### Lint Fast Path
 
-When Agent 3 (Validate) reports that tests and type-checks pass but only the linter fails (e.g., biome exits non-zero while tsc and test runner exit 0):
-
-1. Run the project's lint auto-fix command (e.g., `biome check --write --unsafe` for biome, `eslint --fix` for ESLint)
-2. Re-run the full VALIDATE gate
-3. If the re-run passes, log `[GATE PASS]` and proceed — no remediation tasks needed
-4. If the re-run still fails, fall through to the normal remediation flow
-
-This avoids heavyweight agent-remediate dispatch for trivial formatting issues.
+When only lint fails, the orchestrator runs the formatter itself (logged `[WRITE]`) and re-dispatches the validate task instead of dispatching agent-remediate. Lint still failing only in test files stops for the user, since no implementation agent may edit tests. See [workflow-detail.md](references/workflow-detail.md#lint-fast-path).
 
 ### 3. Report Progress
 
@@ -172,15 +167,15 @@ After each task completes, report status using the tracker list command:
 ### 4. Final Verification
 
 After all tasks in the epic are done:
-1. Run the full test suite one final time
-2. Verify all acceptance criteria from the epic are met
+1. Run the project's full test suite one final time, and each journey through its spec command (which builds first when needed)
+2. Verify all acceptance criteria in the epic context are met
 3. Report the agent execution summary (tasks closed, remediations)
 
 Check plannotator availability: `Bash: plannotator --help`
 
 **If available:** Run `plannotator review` via Bash to open the full git diff in the browser code review UI. Wait for the result:
 - **"LGTM" returned:** Proceed to the next-steps prompt.
-- **Feedback returned:** Address each item — fix code, NOT tests. Re-run the full test suite after fixes. Then re-run `plannotator review`. Repeat until LGTM.
+- **Feedback returned:** Address each item — fix code, NOT tests (log `[WRITE]` and add the files to the file lists). Re-run the full test suite after fixes. Then re-run `plannotator review`. Repeat until LGTM.
 
 **If unavailable:** Skip browser review; proceed to next-steps prompt.
 
@@ -193,17 +188,18 @@ After final verification passes, write a single session artifact to `.light/sess
 - **Plan Summary** — Phases, acceptance criteria, architectural decisions
 - **Execution Log** — Agent dispatches, gate results, remediations (from `.light/sessions/YYYY-MM-DD-{topic}-execution.md`)
 - **Outcome** — Final test suite result, acceptance criteria status
+- **RED evidence** (last) — one line per RED gate PASS (not repair N/A lines): `{task} | {decisive error line} | {test/spec file:line}`, ready to paste into the PR description. Plans, task graphs and execution logs stay out of the code repo (they live in `.light/` and the tracker); only this distilled block goes into the PR
 
 Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).
 
 ### 5b. Write Session Manifest
 
-After writing the session artifact, write a JSON manifest to `.light/sessions/YYYY-MM-DD-{topic}.manifest.json` using the same topic slug. This enables automated commit-time verification that the lightfactory workflow was followed. See [session-manifest.md](references/session-manifest.md) for the full schema and field reference.
+After writing the session artifact, write (or overwrite the pre-commit draft of) a JSON manifest to `.light/sessions/YYYY-MM-DD-{topic}.manifest.json` using the same topic slug. This enables automated commit-time verification that the lightfactory workflow was followed. See [session-manifest.md](references/session-manifest.md) for the full schema and field reference.
 
 Build the manifest from data collected during orchestration:
 - **`files_created` / `files_modified`** — from the running file lists maintained in step 2
 - **`workflow_steps`** — check if `.light/sessions/{bare-topic}-research.md` exists (note: research artifacts use the bare topic without the `YYYY-MM-DD-` date prefix) → include `"research"`; always include `"plan"` and `"implement"`
-- **`gates`** — count RED/GREEN/VALIDATE passes from the execution log
+- **`gates`** — count RED/GREEN/VALIDATE passes from the execution log (RED gate N/A lines excluded)
 - **`phases_completed` / `total_phases`** — from the task graph state
 - **`test_suite_passed`** — from final verification (step 4)
 
@@ -220,7 +216,7 @@ What would you like to do?
 1. Code review — review the diff for quality issues
 2. Simplify — refine recently modified code for clarity and maintainability
 3. Reflect — extract learnings to improve skills, hooks, CLAUDE.md
-4. Commit and push — run /commit
+4. Commit (anything the `commit:` policy left uncommitted) and push — run /commit
 ```
 
 ## Agent Isolation Discipline
@@ -231,36 +227,28 @@ What would you like to do?
 
 1. **Agent 1 writes tests only** — never implementation code
 2. **Agent 2 writes implementation only** — never modifies test files
-3. **Agent 3 modifies nothing** — only runs tests and reports
+3. **Agent 3 modifies nothing** — only runs tests and reports (run logs under `.light/` only)
 4. **Agent 2-R fixes implementation only** — never modifies test files
 5. **Each agent starts fresh** — no shared context between agents
+6. **Gate predictions stay test-side** — through task contexts, the RED gate signature reaches only agent-test; the RED gate profile reaches agent-test and agent-validate; neither reaches agent-impl or agent-remediate (Claude Code's own rule auto-loading is outside praxis's control)
+7. **Tests change only through agent-test** — a test an implementation agent believes is wrong is reported as TEST-DEFECT and decided by the orchestrator ([TEST-DEFECT Route](references/workflow-detail.md#test-defect-route)); the orchestrator itself only formats tests in the lint fast path or restores a repair's `.orig` copy at the user's request
 
-### If RED Gate Fails
+### RED and GREEN Gate Failures
 
-If Agent 1's tests pass immediately (before implementation):
-1. STOP — the test is tautological or the feature already exists
-2. Report to user — explain what happened
-3. Do NOT mark the task as done — leave it for user decision
+A RED gate FAIL (tests passed, wrong-reason failure, or failed preflight) stops the run with the task left open for the user; it is never re-dispatched automatically. A GREEN FAIL goes to validation and then remediation, and a TEST-DEFECT goes through the TEST-DEFECT Route. Full handling: [Gate Outcomes](references/workflow-detail.md#gate-outcomes).
 
 ### VALIDATE Gate Definition
 
-The VALIDATE gate is the project's full test and lint suite. Agent 3 determines the gate command by reading the project's `CLAUDE.md` (or `package.json` / equivalent build file) for the configured test, type-check, and lint commands. All commands must exit 0.
+The VALIDATE gate is the validate task's test command plus the project's type-check and lint; all must exit 0. The test command is the task context's Full test command when it names one (inside an open e2e-journey fragment it excludes the journey spec; the fragment's last validate also runs its Journey spec command), otherwise the project's full suite. Type-check and lint always come from the project's `CLAUDE.md` (or `package.json` / equivalent build file).
 
 Example for a TypeScript/Bun project: `tsc --noEmit && vitest run && biome check .`
 Example for a Python project: `mypy . && pytest && ruff check .`
 
-Agent 3 always derives the actual commands from the project rather than using hardcoded defaults.
-
-### If GREEN Gate Fails
-
-If Agent 2 cannot make tests pass:
-1. Proceed to Agent 3 anyway (to get full failure report)
-2. Enter remediation via dynamic task creation
-3. After 2 failed remediations, STOP and ask user
-
 ## Session Recovery
 
 **YAKS:** Run `yx list --format json` for the epic and recompute readiness. Done tasks = completed work; ready tasks = next to dispatch; waiting tasks = predecessors not yet done. No special recovery logic needed.
+
+**All trackers:** append to the existing execution log and rebuild the file lists, and each task's files still to commit, from its `files:` and `[WRITE]` entries (workflow-detail.md, Execution Log Format). A ready task whose last log entry is `[GATE FAIL]` or `[BLOCKED]` waits for the user's decision instead of being re-dispatched. A remediation or upheld TEST-DEFECT claim the log shows stopped part-way is finished first (workflow-detail.md, TEST-DEFECT Route step 5 and Remediation).
 
 **BEADS:** Same as YAKS — use `Skill: beads:list` and `Skill: beads:ready`. Bead state persists cross-session.
 
