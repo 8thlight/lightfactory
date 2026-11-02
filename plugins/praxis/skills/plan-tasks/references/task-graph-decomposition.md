@@ -23,6 +23,7 @@ Use `P{N}-{Name}` format:
 - **Same prefix number** = independent, can run in parallel (e.g., `P2-Feature-A` and `P2-Feature-B`)
 - **Leaf phase groups** (no children): the phase group itself is the task (e.g., `P1-Schema-Setup`)
 - **Parent phase groups** (with children): contain the TDD triplet as numbered children
+- **Names match the plan's tags**: use the names in the plan's `## Risks & Mitigations` "Delivered in" column; `/implement` matches mitigations to phases by them
 
 ### Children (individual agent tasks)
 

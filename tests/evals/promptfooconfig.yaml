@@ -41,6 +41,8 @@ tests:
       - type: icontains
         value: "## Existing Patterns"
       - type: icontains
+        value: "### Reuse candidates"
+      - type: icontains
         value: "## Web Research"
       - type: icontains
         value: "## Open Questions"
@@ -213,6 +215,10 @@ tests:
         value: "## Files to Modify"
       - type: icontains
         value: "## Implementation Phases"
+      - type: icontains
+        value: "## Rollout Phases"
+      - type: icontains
+        value: "## Risks & Mitigations"
       - type: icontains
         value: "## Constraints"
       - type: icontains

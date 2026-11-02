@@ -71,6 +71,7 @@ functional:
       - "File contains section: ## Summary"
       - "File contains section: ## Relevant Files"
       - "File contains section: ## Existing Patterns"
+      - "File contains section: ### Reuse candidates"
       - "File contains section: ## Web Research"
       - "File contains section: ## Open Questions"
       - "File contains section: ## Next Steps"

@@ -2,7 +2,7 @@
 
 ## Plan File Role
 
-The plan lives in the Claude Code session plan file during planning. It is NOT read by `/implement` during execution — yak contexts are self-contained. The persistent session artifact (combining research, plan, and execution log) is written by `/implement` to `.light/sessions/` at the end of execution.
+The plan lives in the Claude Code session plan file during planning. Execution agents do NOT read it — yak contexts are self-contained. `/implement`'s slice checkpoint reads only its `## Risks & Mitigations` rows tagged with the finished phase group, and its final verification checks the whole plan. The persistent session artifact (combining research, plan, and execution log) is written by `/implement` to `.light/sessions/` at the end of execution.
 
 ## Template Structure
 
@@ -14,6 +14,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 **Tracker:** yaks|beads|native
 **Commit:** per-task|per-group|none  (orchestrator commits; agents never do)
 **Yaks Epic:** {epic name}
+**Research:** `.light/sessions/{topic}-research.md` | none
 
 ## Goal
 
@@ -24,6 +25,7 @@ The plan lives in the Claude Code session plan file during planning. It is NOT r
 - [ ] Criterion 1 (testable outcome)
 - [ ] Criterion 2 (testable outcome)
 - [ ] Criterion 3 (testable outcome)
+- [ ] {Each Risks & Mitigations row with in-repo evidence, as a testable outcome}
 
 ## Files to Create
 
@@ -118,6 +120,7 @@ SKILL.md, "Phase tiers".
 - Test invariant properties of the pure function (e.g., "splitting preserves total", "discount never exceeds price")
 - Test edge cases: zero input, boundary values, invalid input
 - Use the project's preferred property-based testing approach (see project CLAUDE.md for tools)
+- {Each Risks & Mitigations row tagged P2-Core-Logic with in-repo evidence, as a behavior to test}
 
 **Tasks:**
 1. Write tests according to spec (RED)
@@ -244,6 +247,23 @@ SKILL.md, "Phase tiers".
 - **Journey spec command:** `{each journey's spec command — they build first when needed}`
 - **Acceptance gate:** All acceptance criteria from top of plan verified
 
+## Rollout Phases
+
+From `praxis:technical-project-manager` (`mode: plan`). `Rollout N` names a slice of users or cases; `P{N}-{Name}` names the phase group an implementation phase above becomes (`### Phase 2: Core Logic` becomes `P2-Core-Logic`).
+
+| Rollout | Cohort / slice | Ships | Gate holding back the rest |
+|---------|----------------|-------|----------------------------|
+| Rollout 1 | {who or what goes first} | {behavior that ships} | {flag, allowlist, refusal, runbook rule — or "none"} |
+| Rollout 2 | {next cohort} | {behavior} | {gate} |
+
+## Risks & Mitigations
+
+From `praxis:technical-project-manager` (`mode: plan`). Every row names the phase group that delivers it. A row with in-repo evidence is also an acceptance criterion and part of that phase's test spec or Acceptance gate. `/implement` checks each phase's rows after its VALIDATE gate, and all of them in final verification.
+
+| Risk | Mitigation | Evidence | Delivered in |
+|------|------------|----------|--------------|
+| {what could go wrong, for whom, which Rollout N} | {what prevents or contains it} | {test, gate, runbook step, or metric to watch} | P{N}-{Name} |
+
 ## Constraints & Considerations
 
 ### Architectural
@@ -261,6 +281,10 @@ SKILL.md, "Phase tiers".
 ### Security
 - {Consideration if applicable}
 
+### Reuse
+- `{reuse candidate entry point}` — not called by P{N}-{Name} because {reason}
+- {or "All reuse candidates are called or refactored" / "No reuse candidates"}
+
 ## Out of Scope
 
 - {Feature explicitly not included}
@@ -277,6 +301,8 @@ Before implementing, verify:
 - [ ] RED Gate Profiles recorded per test phase
 - [ ] Test specs are behavioral descriptions (not tool-specific code)
 - [ ] Acceptance criteria are testable
+- [ ] Rollout Phases and Risks & Mitigations present; every mitigation tagged with its phase group (`P{N}-{Name}`); each with in-repo evidence is an acceptance criterion and in that phase's test spec or Acceptance gate
+- [ ] Phases that mirror a reuse candidate call or refactor it, or Constraints → Reuse says why not
 - [ ] Constraints documented
 - [ ] Out of scope items noted
 
@@ -331,6 +357,7 @@ Follow your `praxis:agent-test` definition for the procedure (output capture to 
 - **Test command:** `{shell command to run tests}`
 - **GREEN gate:** All tests pass
 - **Architectural constraints:** {Pure functions, no side effects, adapter layer, etc.}
+- **Reuse:** {Existing entry point to call instead of re-deriving its rule — omit if none}
 
 Follow your `praxis:agent-impl` definition for the procedure and report format. The Agent Context above is your task input.
 ```

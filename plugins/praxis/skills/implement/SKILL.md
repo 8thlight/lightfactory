@@ -19,7 +19,7 @@ Use this skill to execute an implementation plan using task-graph-driven orchest
 
 **Receives:** Task graph (epic + per-agent-step child tasks) created by `/plan-tasks` — or delegates to `/plan-tasks` to create it
 **Produces:** Working feature with passing tests + execution audit trail + session artifact at `.light/sessions/`
-**Does NOT read:** The plan file during execution — task contexts are self-contained
+**Does NOT read:** The plan file during execution — task contexts are self-contained. Two exceptions: the slice review checks the plan's `## Risks & Mitigations` rows for the phase that just finished, and final verification checks the whole plan. Execution agents never read the plan.
 
 ## Purpose
 
@@ -30,7 +30,7 @@ Three registered agents per TDD phase (see `plugins/praxis/agents/`):
 - **agent-impl** (GREEN): Writes minimal code to make tests pass + YAGNI simplification — guided only by the tests
 - **agent-validate** (VALIDATE): Runs the validate task's tests, type-check and lint — confirms nothing is broken
 
-Plus **agent-remediate** for fixing failures and **agent-no-test** for non-TDD phases.
+Plus **agent-remediate** for fixing failures and **agent-no-test** for non-TDD phases. Once VALIDATE passes, a **slice review** checks each phase's diff for reuse and for the mitigations the plan assigned to it: the REFACTOR step of RED → GREEN → REFACTOR.
 
 ## When to Use
 
@@ -49,7 +49,9 @@ Use this skill when:
 
 **REQUIRED:** Create `.light/sessions/YYYY-MM-DD-{topic}-execution.md` in the project root at the start of every RPI session (when resuming, append to the existing log). Append entries throughout orchestration. This provides an observable audit trail of agent dispatch and gate results.
 
-Entry types: `[DISPATCHED]`, `[GATE PASS]`, `[GATE FAIL]`, `[REMEDIATION]`, `[BLOCKED]`, `[CLOSED]`, `[WRITE]`. Formats, and the rule that a refused close is never forced without recorded user approval, are in [workflow-detail.md](references/workflow-detail.md#execution-log-format).
+Entry types: `[DISPATCHED]`, `[GATE PASS]`, `[GATE FAIL]`, `[REMEDIATION]`, `[CARRIED]`, `[BLOCKED]`, `[CLOSED]`, `[WRITE]`. Formats, and the rule that a refused close is never forced without recorded user approval, are in [workflow-detail.md](references/workflow-detail.md#execution-log-format).
+
+**Known issues.** Log every item the run defers as `[CARRIED]`: slice review items that don't block (LOW reuse findings, changed mitigations that still cover their risk), items that live outside the repo, items the user defers at a STOP, and final verification's follow-ups. Together these entries are the session's known issues. Pass them to every later slice review, so the reviewers don't report them again, and to final verification. List them wherever the session reports what it left open: the session artifact's Outcome and the post-execution prompt.
 
 ## Workflow
 
@@ -62,6 +64,8 @@ Detect the active tracker and find the target epic:
 3. Otherwise → **NATIVE mode** (use `TaskList`)
 
 The tracker is an infrastructure detail — agent isolation, TDD gates, and execution log are identical across all three modes.
+
+The slice review needs the plan and research artifact paths that `/plan-tasks` recorded in the epic's context. In yaks, run `yx context` on the epic; in beads and native, read the epic's description. If they are missing, use `.light/sessions/{topic}-plan.md` and `.light/sessions/{topic}-research.md`.
 
 **If no task graph exists** (no epic or tasks found in the detected tracker), invoke `Skill: plan-tasks` to create one. STOP after plan-tasks completes — the user will re-run `/implement`.
 
@@ -89,9 +93,11 @@ Loop:
   f. For each completed agent, update files_created / files_modified from its report, then act on
      its outcome per the Gate Outcomes table in workflow-detail.md. In short:
      - PASS → mark done (RED: first confirm the failure matches the task's RED gate)
+     - VALIDATE PASS → first add the phase's slice review task (see Slice Review)
      - RED or no-test gate FAIL → STOP, report to user, leave the task open
      - GREEN FAIL, or a remediation ALL PASS / STILL FAILING → mark done; validation runs next
      - TEST-DEFECT → TEST-DEFECT Route
+     - SLICE FAIL → route its items (see Slice Review)
      - VALIDATE failures: behavior or type-check → Remediation; else lint → Lint Fast Path;
        else only FLAKY/environmental → STOP and ask
      Before each "mark done", commit if the policy calls for it (g). Act on every agent in a
@@ -144,6 +150,15 @@ For each ready task, build the agent prompt from its context:
 
 When readiness computation returns multiple tasks, dispatch them all in a **single message with multiple `Task` tool calls**. TDD phases can't parallelize internally (Implement needs Write Test's output on disk), but independent phases parallelize across each other automatically via the naming convention.
 
+#### Slice Review
+
+When a validate task passes VALIDATE (`03-validate` or a re-validation), add `06-slice-review` (agent-type `slice-review`) to its phase group before marking the validate task done, unless the group already has one. It is then the group's only open task, so it runs next. Its context records the phase group, the phase diff, the plan and research paths, and the known issues so far. When it is ready, dispatch both reviewers in one message:
+
+1. `praxis:reuse-simplify-reviewer` — the phase diff, the research artifact's `### Reuse candidates` if a research artifact exists, and the known issues
+2. `praxis:technical-project-manager` with `mode: slice-check` and the phase group name — it reports nothing to check when the plan tags no mitigation to the group
+
+The SLICE gate passes when neither reports a remediation item: a HIGH or MEDIUM reuse finding, or an entry under the TPM's Remediation. Route each item by what fixing it touches. If it is implementation only, it goes to `07-slice-remediate-attempt-{M}` (`agent-remediate`); `08-slice-revalidate-attempt-{M}` then runs the full suite and `09-slice-verify-attempt-{M}` re-checks the items, with the same 2-attempt cap as Remediation. If it touches a test, STOP and ask the user, because remediation never edits tests. If it lives outside the repo (a runbook step, a metric), log it `[CARRIED]`. See [workflow-detail.md](references/workflow-detail.md#slice-review) for the procedure, contexts and tracker commands.
+
 #### Remediation
 
 When Agent 3 (Validate) finds behavior or type-check failures, create `04-remediate-attempt-{N}` and `05-revalidate-attempt-{N}` under the same phase group and mark the failed validate done. Attempts are numbered per phase group, TEST-DEFECT claims included; when `N` would exceed 2, **STOP — ask the user**. See [workflow-detail.md](references/workflow-detail.md#remediation) for the procedure, context template, and per-tracker commands.
@@ -160,7 +175,8 @@ After each task completes, report status using the tracker list command:
 - [done] P1-Schema-Setup
 - [done] P2-Core-Logic / 01-write-tests
 - [done] P2-Core-Logic / 02-implement
-- [wip]  P2-Core-Logic / 03-validate (dispatched)
+- [done] P2-Core-Logic / 03-validate
+- [wip]  P2-Core-Logic / 06-slice-review (dispatched)
 - [todo] P3-Repository-Layer (waiting for P2)
 ```
 
@@ -168,8 +184,8 @@ After each task completes, report status using the tracker list command:
 
 After all tasks in the epic are done:
 1. Run the project's full test suite one final time, and each journey through its spec command (which builds first when needed)
-2. Verify all acceptance criteria in the epic context are met
-3. Report the agent execution summary (tasks closed, remediations)
+2. **Plan check.** Dispatch `praxis:technical-project-manager` with `mode: review`, passing the plan path, the epic's acceptance criteria, the run's diff (`git diff {run base} -- {files_modified}`, plus `{files_created}` read in full; run base as in workflow-detail.md, Slice Review) and the known issues. It checks every phase's mitigations and every acceptance criterion, including `no-test` phases, which get no slice review. If its merge path is Block or an acceptance criterion is not met, **STOP**: show the user its `## Decision` and ask how to proceed. Otherwise, log each follow-up that isn't already a known issue as `[CARRIED]`.
+3. Report the agent execution summary (tasks closed, remediations, known issues)
 
 Check plannotator availability: `Bash: plannotator --help`
 
@@ -187,7 +203,7 @@ After final verification passes, write a single session artifact to `.light/sess
 - **Research Summary** — Key findings from the plan's inline research section (or "No research phase" if skipped)
 - **Plan Summary** — Phases, acceptance criteria, architectural decisions
 - **Execution Log** — Agent dispatches, gate results, remediations (from `.light/sessions/YYYY-MM-DD-{topic}-execution.md`)
-- **Outcome** — Final test suite result, acceptance criteria status
+- **Outcome** — Final test suite result, acceptance criteria status, the plan check's merge path, and the known issues (`[CARRIED]` entries)
 - **RED evidence** (last) — one line per RED gate PASS (not repair N/A lines): `{task} | {decisive error line} | {test/spec file:line}`, ready to paste into the PR description. Plans, task graphs and execution logs stay out of the code repo (they live in `.light/` and the tracker); only this distilled block goes into the PR
 
 Use kebab-case for the topic slug (e.g., `2026-03-07-add-discount-codes.md`).
@@ -213,7 +229,7 @@ Session artifact: .light/sessions/YYYY-MM-DD-{topic}.md
 
 What would you like to do?
 
-1. Code review — review the diff for quality issues
+1. Code review — final pass over the whole diff, starting with the {K} known issues
 2. Simplify — refine recently modified code for clarity and maintainability
 3. Reflect — extract learnings to improve skills, hooks, CLAUDE.md
 4. Commit (anything the `commit:` policy left uncommitted) and push — run /commit
@@ -227,7 +243,7 @@ What would you like to do?
 
 1. **Agent 1 writes tests only** — never implementation code
 2. **Agent 2 writes implementation only** — never modifies test files
-3. **Agent 3 modifies nothing** — only runs tests and reports (run logs under `.light/` only)
+3. **Agent 3 and the slice reviewers modify nothing** — they only check and report (validate's run logs under `.light/` only)
 4. **Agent 2-R fixes implementation only** — never modifies test files
 5. **Each agent starts fresh** — no shared context between agents
 6. **Gate predictions stay test-side** — through task contexts, the RED gate signature reaches only agent-test; the RED gate profile reaches agent-test and agent-validate; neither reaches agent-impl or agent-remediate (Claude Code's own rule auto-loading is outside praxis's control)
@@ -259,7 +275,7 @@ Example for a Python project: `mypy . && pytest && ruff check .`
 - **Don't let agents share context** — each agent starts from the task context and files on disk
 - **Don't skip Agent 3** — validation catches regressions in other tests
 - **Don't modify tests during implementation** — tests define the contract
-- **Don't read the plan file during execution** — task contexts are self-contained
+- **Don't read the plan file during execution** — task contexts are self-contained. The slice review reads only the `## Risks & Mitigations` rows for the phase that just finished; final verification's plan check reads the whole plan.
 - **Don't improvise beyond the plan** — stick to the tasks or update them explicitly
 - **Don't run agents in background** — synchronous dispatch ensures ordering
 - **Don't treat a lint-only VALIDATE failure as a full remediation event** — use the lint fast path
