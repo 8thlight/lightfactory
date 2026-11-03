@@ -27,6 +27,7 @@ After reading the context:
 | `agent-test` | `praxis:agent-test` | Write failing tests (RED gate) |
 | `agent-impl` | `praxis:agent-impl` | Minimal implementation + YAGNI check (GREEN gate) |
 | `agent-validate` | `praxis:agent-validate` | Run the validate task's tests, type-check and lint; report only (VALIDATE gate) |
+| `slice-review` | `praxis:reuse-simplify-reviewer` + `praxis:technical-project-manager` (`mode: slice-check`) | Review the validated phase diff for reuse and planned mitigations (SLICE gate, the REFACTOR step) — see [Slice Review](#slice-review) |
 | `no-test` | `praxis:agent-no-test` | Non-TDD tasks (schema, infrastructure) |
 | `agent-remediate` | `praxis:agent-remediate` | Fix implementation after validation failures |
 
@@ -50,6 +51,8 @@ See `plugins/praxis/agents/` for the full agent definitions:
 - `agent-validate.md` — VALIDATE gate: runs the validate commands, reports only, never fixes
 - `agent-no-test.md` — Non-TDD tasks (schema, config, infrastructure). After completing the task, the agent should verify that any markdown links in modified files point to existing files.
 - `agent-remediate.md` — Fixes implementation after validation failures (uses opus)
+- `reuse-simplify-reviewer.md` — Slice review: logic the diff duplicates and code it doesn't need, reports only
+- `technical-project-manager.md` — Slice review (`mode: slice-check`): mitigations tagged to the phase, reports only
 
 ---
 
@@ -94,7 +97,7 @@ When readiness computation returns multiple tasks, dispatch them all in a **sing
 
 ### When NOT to Parallelize
 
-- Within a TDD triplet: Write Tests → Implement → Validate MUST be sequential
+- Within a TDD triplet: Write Tests → Implement → Validate → Slice Review MUST be sequential
 - Agent 2 needs Agent 1's test files on disk before it can run
 - Agent 3 needs Agent 2's implementation on disk before it can run
 
@@ -106,6 +109,125 @@ If readiness returns `P1-Schema-Setup` (leaf, no-test) and `P1-Config-Setup` (le
 # Single message with two Task calls:
 Task(description="P1: Schema Setup", subagent_type="praxis:agent-no-test", prompt="...")
 Task(description="P1: Config Setup", subagent_type="praxis:agent-no-test", prompt="...")
+```
+
+---
+
+## Slice Review
+
+A slice review checks each TDD phase's diff once its VALIDATE gate passes, on `03-validate` or a `05-revalidate-attempt-{M}`. It is the REFACTOR step of RED → GREEN → REFACTOR: it reviews code that already passes the full suite, and since the next phase waits for the whole group, it runs before later phases build on the slice. Leaf `no-test` phases get no slice review; final verification's plan check covers their mitigations.
+
+### Procedure
+
+1. **When a validate task reports VALIDATE PASS**, create `06-slice-review` under the phase group before marking the validate task done (skip this if the group already has one):
+   - **Phase diff.** The working tree against the run's base commit, limited to the paths the phase's `01-write-tests`, `02-implement` and `04-remediate-attempt-{N}` reports listed: `git diff {run base} -- {paths}`. The run base is the parent of the first commit the execution log records (`[WRITE] … git commit {sha}`), or `HEAD` when it records none, so the diff includes whatever the [commit policy](#commits) already committed. Untracked new files don't appear in `git diff`, so list them for the reviewers to read in full.
+   - **Known issues.** List the `[CARRIED]` entries logged so far. The phase diff also shows earlier phases' changes to files they share, so without this list the reuse reviewer reports those again.
+2. **Mark the validate task done.** `06-slice-review` is then the group's only open task, so it runs next.
+3. **Dispatch** both reviewers in one message once it is ready. The TPM matches the plan's "Delivered in" column against the phase group name (`P2-Core-Logic`), and reports nothing to check when no row names it:
+   ```
+   Task(description="P{N}: {Phase} — reuse/simplify", subagent_type="praxis:reuse-simplify-reviewer", prompt="{slice review context}")
+   Task(description="P{N}: {Phase} — slice check", subagent_type="praxis:technical-project-manager", prompt="mode: slice-check\nplan: {plan path}\nphase group: {phase group}\ndiff: {phase diff}")
+   ```
+4. **SLICE gate.** The remediation items are reuse findings rated HIGH or MEDIUM, plus each entry under the TPM's `### Remediation`. Log LOW findings, and TPM `changed` rows that still cover their risk, as `[CARRIED]`. Then:
+   - **No items:** log `[GATE PASS]` and mark `06-slice-review` done.
+   - **Items:** log `[GATE FAIL]` and route each one (below) while `06-slice-review` is still open. Mark it done only once every item has somewhere to go: a slice remediation task, a `[CARRIED]` entry, or tasks the user added at a STOP. Until then, log `[BLOCKED]` and leave it open. Closed, it would let a resumed run move past an unrouted item, because recovery only waits on open tasks.
+
+### Routing Items
+
+Route each item by what fixing it touches. For a TPM entry, go by the Evidence column of its plan row.
+
+| Item | Fixing it touches | Route |
+|------|-------------------|-------|
+| Reuse finding with **Test impact:** none | implementation only | Slice remediation |
+| Reuse finding that names tests to change | tests | STOP — ask the user |
+| TPM entry whose evidence is code, a gate or config | implementation only | Slice remediation |
+| TPM entry whose evidence is a test | tests | STOP — ask the user |
+| TPM entry whose evidence is a runbook step or metric | outside the repo | `[CARRIED]` |
+
+The STOP is there because `agent-remediate` never edits tests, and changed behavior needs a RED step first. Show the user the item and the tests it touches. They can update the task graph explicitly, for example by adding a write-tests/implement pair for the phase. Or they can defer the item, which you then log as `[CARRIED]`.
+
+"Call the existing X instead" is usually implementation-only. Phase tests assert behavior at L3/L4 boundaries, so replacing a re-derived rule with a call to the existing implementation leaves them passing, as long as the two agree. If they disagree (the copy diverged), tests fail during remediation and `agent-remediate` reports that the fix needs a test change. STOP then too, because deciding which behavior is right is the user's call.
+
+### Slice Remediation
+
+1. Create, in this order under the phase group: `07-slice-remediate-attempt-{M}` (agent-type `agent-remediate`), `08-slice-revalidate-attempt-{M}` (agent-type `agent-validate`, with the phase's validate context) and `09-slice-verify-attempt-{M}` (agent-type `slice-review`).
+2. Re-validation runs the validate task's checks on the remediated code, as `05-revalidate-attempt-{N}` does. Behavior or type-check failures don't start [Remediation](#remediation): log `[GATE FAIL]`, mark it done, and pass its failure output to the next slice attempt. Other failures follow [Gate Outcomes](#gate-outcomes).
+3. The verify task's diff covers the phase's paths plus every file the remediation report lists as modified, since an item may restructure an existing implementation outside the phase. It re-dispatches only the reviewers that still have open items:
+   - the reuse reviewer, with **Findings to verify** set to its open items;
+   - the TPM, with the same slice-check on the wider diff.
+
+   If tests fail or items are still open, route them again and start the next attempt with the implementation-only items and any failure output. Log each attempt as `[REMEDIATION] {group} / 06-slice-review — attempt {M}: {items}`; `M` = 1 + the slice attempts already logged for the group. If `M` would exceed 2, log `[BLOCKED]`, leave the verify task open and **STOP — ask the user**.
+
+Mark `07-` and `08-` tasks done once they have reported, as with `03-validate`. Close a verify task by the same rule as `06-slice-review` (Procedure step 4): only once every open item has a next attempt, a `[CARRIED]` entry or tasks the user added, and never while it is `[BLOCKED]`.
+
+### Per-Tracker Commands
+
+| Tracker | Create `{name}` with agent-type `{type}` |
+|---------|------------------------------------------|
+| YAKS | `yx add "{name}" --under "{group id}" --field "agent-type={type}"`, with the context in a quoted heredoc (below); `{group id}` comes from `yx list --format json` |
+| BEADS | `Skill: beads:create --title "{phase group} / {name}" --epic "{epic-id}" --label "{type}"`, with the context as its description. Then `Skill: beads:dep --from "{new task id}" --to "{previous task id}"`, where the previous task is the validate task that passed or the slice task before it. Then add the next-phase dependency (below) |
+| NATIVE | `TaskCreate: { title: "{phase group} / {name} [{type}]", description: "{context}" }` |
+
+In beads, the next P{N} groups depend on the validate task that passed, so closing it would make them ready alongside `06-slice-review`. Before closing the task a new slice task follows, make each next group's first task (a leaf group's only task) depend on the group's newest terminal slice task: `06-slice-review`, then each `09-slice-verify-attempt-{M}`. Re-validation does the same ([tracker-beads.md](tracker-beads.md#create-re-validation-task)):
+
+```
+Skill: beads:dep --from "{next group's first task id}" --to "{06-slice-review or 09-slice-verify id}"
+```
+
+Slice contexts are full of backticked paths and `git diff` commands. Inside `echo "{context}"` the shell would run them, so quote the heredoc delimiter instead:
+
+```bash
+yx add "{name}" --under "{group id}" --field "agent-type={type}" <<'CONTEXT'
+{context}
+CONTEXT
+```
+
+### Slice Review Context
+
+Use this for `06-slice-review` and `09-slice-verify-attempt-{M}`:
+
+```markdown
+## Agent Task: Slice Review — {Phase Name} (Phase {N})
+
+**Role:** Review this phase's diff and report. Do NOT modify any files.
+
+### Agent Context
+- **Phase group:** `{phase group}`
+- **Diff:** `git diff {run base} -- {paths}`; new files (read in full): `{paths}`
+- **Reuse candidates:** `{research artifact path}` (`### Reuse candidates`), or "none"
+- **Plan:** `{plan path}`
+- **Repo root:** `{path}`
+- **Known issues:** {the `[CARRIED]` entries so far, or "none"}
+- **Findings to verify:** {verify tasks only: the open items from the previous attempt}
+```
+
+### Slice Remediation Context
+
+```markdown
+## Agent Task: Remediate Slice Review — {Phase Name} (Phase {N}, attempt {M})
+
+**Role:** Apply the slice review items below to the implementation. Do NOT modify test files. Each item's suggested change is the fix, and every test must still pass.
+
+### Agent Context
+- **Files to modify (implementation):** `{implementation file path(s)}`, plus the existing implementations the items name
+- **Files to read (tests, DO NOT MODIFY):** `{test file path(s)}`
+- **Full test command:** `{full test suite command}`
+- **Failure output:** {attempt 2 only: the previous attempt's re-validation failures, or omit}
+- **Items:**
+
+{for each item: location, the existing implementation it duplicates (file:symbol) or the missing mitigation, and the suggested change}
+
+### Instructions
+1. Read each item's existing implementation before changing anything
+2. Call or restructure the existing implementation as the item suggests. Never add a parallel path
+3. Run the full test suite. ALL tests must pass
+4. If an item can't be fixed without changing a test, leave it and say why
+
+### Report
+- Files modified: [list paths]
+- Items: [for each item: fixed, or not fixed and why]
+- Test command output: [paste]
+- Result: ALL PASS or STILL FAILING
 ```
 
 ---
@@ -124,9 +246,11 @@ calls for it (see [Commits](#commits)), close the task in the tracker, then log 
 | agent-impl: GREEN gate PASS | Log `[GATE PASS]`, mark done |
 | agent-impl: GREEN gate FAIL | Log `[GATE FAIL]`, mark done; its validate runs next and reports the failures |
 | agent-impl or agent-remediate: TEST-DEFECT | [TEST-DEFECT Route](#test-defect-route) |
-| agent-validate: PASS | Log `[GATE PASS]`, mark done. When the context has a Journey spec command, it is a PASS only if the report's Journey spec line says PASS; a "not run" line is an environmental failure (next row). A missing line: re-dispatch the task once; missing again, log `[BLOCKED]`, leave it open, STOP and ask |
-| agent-validate: failures | Take the first match: (1) a behavior test failure or a type-check failure → [Remediation](#remediation), with any FLAKY or environmental failures listed in the remediation context as not to fix; (2) otherwise a lint failure → [Lint Fast Path](#lint-fast-path); (3) otherwise only FLAKY or environmental test failures → log `[GATE FAIL] {task} — VALIDATE gate failed: {FLAKY: command, reruns, log path / environmental: line}` and `[BLOCKED]`, leave the task open, STOP and ask. The user accepts (mark done, logging `[CLOSED] {task} — user approval: "{quote}"`), asks for a rerun (re-dispatch the task), or fixes the environment or test and then asks for a rerun |
+| agent-validate: PASS | Log `[GATE PASS]`. In a TDD phase group with no slice review yet, create `06-slice-review` first ([Slice Review](#slice-review)). Mark done. When the context has a Journey spec command, it is a PASS only if the report's Journey spec line says PASS; a "not run" line is an environmental failure (next row). A missing line: re-dispatch the task once; missing again, log `[BLOCKED]`, leave it open, STOP and ask |
+| agent-validate: failures | On an `08-slice-revalidate-attempt-{M}`, behavior or type-check failures go to the next slice attempt ([Slice Remediation](#slice-remediation)). Otherwise take the first match: (1) a behavior test failure or a type-check failure → [Remediation](#remediation), with any FLAKY or environmental failures listed in the remediation context as not to fix; (2) otherwise a lint failure → [Lint Fast Path](#lint-fast-path); (3) otherwise only FLAKY or environmental test failures → log `[GATE FAIL] {task} — VALIDATE gate failed: {FLAKY: command, reruns, log path / environmental: line}` and `[BLOCKED]`, leave the task open, STOP and ask. The user accepts (mark done, logging `[CLOSED] {task} — user approval: "{quote}"`), asks for a rerun (re-dispatch the task), or fixes the environment or test and then asks for a rerun |
 | agent-remediate: ALL PASS or STILL FAILING | Log `[GATE PASS]` or `[GATE FAIL] {task} — GREEN gate …`, mark done; its re-validation runs next |
+| slice-review: SLICE gate PASS | Log `[GATE PASS]` and each non-blocking item as `[CARRIED]`, mark done |
+| slice-review: SLICE gate FAIL | Log `[GATE FAIL]` and each non-blocking item as `[CARRIED]`, then route the items ([Routing Items](#routing-items)). Mark done once every item has a slice remediation task, a `[CARRIED]` entry or tasks the user added. An item that needs a STOP, or a third slice attempt: log `[BLOCKED]`, leave the task open, STOP and ask |
 | agent-no-test: acceptance gate PASS | Log `[GATE PASS]`, mark done |
 | agent-no-test: acceptance gate FAIL | Log `[GATE FAIL]` and `[BLOCKED]`, leave the task open, STOP and ask |
 
@@ -141,12 +265,13 @@ One entry per line, append-only, in `.light/sessions/YYYY-MM-DD-{topic}-executio
 a leaf group uses its own name), because child names repeat in every group.
 
 ```
-[DISPATCHED] {task} — agent type: {agent-test|agent-impl|agent-validate|agent-remediate|no-test}, mode: {sync|parallel}
-[GATE PASS] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate passed (RED: {decisive line} @ {file:line}); files: {paths}
+[DISPATCHED] {task} — agent type: {agent-test|agent-impl|agent-validate|agent-remediate|slice-review|no-test}, mode: {sync|parallel}
+[GATE PASS] {task} — {RED|GREEN|VALIDATE|SLICE|ACCEPTANCE} gate passed (RED: {decisive line} @ {file:line}; GREEN: YAGNI removals: {from the agent's report, or none}); files: {paths}
 [GATE PASS] {task} — RED gate N/A: test repair accepted; files: {paths}
-[GATE FAIL] {task} — {RED|GREEN|VALIDATE|ACCEPTANCE} gate failed: {reason}; files: {paths}
+[GATE FAIL] {task} — {RED|GREEN|VALIDATE|SLICE|ACCEPTANCE} gate failed: {reason}; files: {paths}
 [REMEDIATION] {task} — attempt {N}: {failures | cause=TEST-DEFECT: {test, why} | cause=TEST-DEFECT rejected: {test, assertion}: {why}}[; files: {paths}]
 [BLOCKED] {task} — {reason: escalation, attempt limit, refused close by {id}, commit rejected, repair diff rejected, pending user decision}[: TEST-DEFECT {test, assertion, why}][; files: {paths}]
+[CARRIED] {task} — {deferred item: what, where, and why it was deferred}
 [CLOSED] {task}[ — user approval: "{quote}"]
 [WRITE] {task} — {command}; orchestrator wrote: {files}
 ```

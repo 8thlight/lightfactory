@@ -39,6 +39,15 @@
 ### Pattern 2: {Name}
 ...
 
+### Reuse candidates
+
+Code that already computes what the feature needs, including read-only previews, monitors or dry-runs of a job, and planners. `/plan-tasks` must call or refactor each one the feature would otherwise mirror, or say why not. Write "None found" if there are none.
+
+#### {Name}
+**Already computes:** {the rule or result, and who calls it today}
+**Entry point:** `{path}:{function}`
+**Call it, or why not:** {call directly | refactor so both callers share it | why not}
+
 ## Web & Pattern Research
 
 ### Finding 1: {Name}
@@ -131,6 +140,7 @@ Your research artifact should synthesize findings from both sources, noting wher
 ### Completeness
 - [ ] All relevant files identified and documented
 - [ ] Existing patterns analyzed for applicability
+- [ ] Reuse candidates listed with entry points (or "None found")
 - [ ] Architectural boundaries clearly mapped
 - [ ] Database schema impact understood
 - [ ] Integration points identified

@@ -78,9 +78,11 @@ functional:
       - "File contains section: ## Files to Create"
       - "File contains section: ## Files to Modify"
       - "File contains section: ## Implementation Phases"
+      - "File contains section: ## Rollout Phases"
+      - "File contains section: ## Risks & Mitigations"
       - "File contains section: ## Constraints"
       - "File contains section: ## Out of Scope"
-      - "File is approximately 150–250 lines (target ~200)"
+      - "File is approximately 150–300 lines (target ~225)"
 
   - id: plan-tasks-02
     description: Every TDD implementation phase includes an Agent Context block with required fields

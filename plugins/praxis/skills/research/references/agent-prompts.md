@@ -16,6 +16,7 @@ Instructions:
 - Examine up to 10 relevant files using Read, Glob, and Grep
 - Focus on: file paths, function signatures, data flow, and patterns — not full file contents
 - Note any architectural boundaries (core vs features vs shell layers)
+- **Reuse candidates:** search for code that already computes what the feature needs, including read-only previews, monitors or dry-runs of a job, planners, and the job itself. Report each with its entry point and callers, and say whether the feature can call it directly. If the feature would have to mirror a rule that lives elsewhere, say where that rule lives.
 
 Report format:
 
@@ -32,6 +33,10 @@ Report format:
 
 **Relevance to Feature:**
 - {how this area connects to the planned feature}
+
+**Reuse Candidates:**
+- `{entry point}` — already computes: {what}; callers: {who}; call it directly: {yes / no — why}
+- {or "none found"}
 
 **Gaps:**
 - {anything you expected to find but didn't}
@@ -100,3 +105,4 @@ When combining codebase and web findings during Step 4 (Synthesize):
 - **Discard:** Web findings that don't apply to the tech stack, architecture, or feature context should be omitted entirely
 - **Promote/Demote:** Low-confidence web findings corroborated by codebase evidence become Medium or High. High-confidence web findings contradicted by codebase constraints get flagged as contested.
 - **Open Questions:** Low-confidence findings with no codebase corroboration become Open Questions for the user to resolve
+- **Reuse:** Merge every explorer's reuse candidates into the template's `### Reuse candidates`, one entry per entry point. `/plan-tasks` requires each phase that mirrors one to call it or say why not, so don't drop a candidate because it looks awkward to call — say why in **Call it, or why not**

@@ -10,7 +10,7 @@ triggers:
   - "plan tasks"
   - "plan task graph"
   - "build a plan"
-allowed-tools: Read Glob Write Bash AskUserQuestion Skill
+allowed-tools: Read Glob Write Bash Task AskUserQuestion Skill
 ---
 
 # Plan Tasks Skill
@@ -59,7 +59,7 @@ Check for research artifact:
 Glob: .light/sessions/*-research.md
 ```
 
-If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact.
+If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving).
 
 If no research artifact, create an inline summary (condensed):
 - Identify relevant files
@@ -79,7 +79,7 @@ Ask the user to clarify if needed:
 Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output — the user reviews and approves it before task graph creation.
 
 **Required sections:**
-- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used, and `commit: per-task|per-group|none`. The orchestrator (`/implement`) commits per this policy; agents never commit. `per-task` commits failing tests by design; choose `per-group` or `none` when hooks or CI run the suite on every commit
+- **Metadata** — Include `tracker: yaks|beads|native` to record which task tracker will be used, `research:` with the research artifact path (or `none`), and `commit: per-task|per-group|none`. The orchestrator (`/implement`) commits per this policy; agents never commit. `per-task` commits failing tests by design; choose `per-group` or `none` when hooks or CI run the suite on every commit
 - **Context** — Why this change is being made, summarizing research findings
 - **Goal** — 1-2 sentence description of what we're building and why
 - **Acceptance Criteria** — Testable outcomes as checklist
@@ -92,7 +92,8 @@ Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output
   - Verification checklist
   - **Agent Context block** (file paths, test command, gates, constraints)
 - **RED Gate Profiles** — per test phase, the rule file whose `RED gate` section was copied (see RED gate profile lookup), or "none — generic"
-- **Constraints & Considerations** — Architectural, testing, performance, security
+- **Rollout Phases** and **Risks & Mitigations** — written last, by `praxis:technical-project-manager` (`mode: plan`; required for new features and epics); each mitigation names the phase group (`P{N}-{Name}`) that delivers it, and each in-repo one becomes an acceptance criterion — see [rollout-and-reuse.md](references/rollout-and-reuse.md)
+- **Constraints & Considerations** — Architectural, testing, performance, security, reuse
 - **Out of Scope** — Explicitly deferred features
 
 See [template.md](references/template.md) for the complete template with Agent Context block reference.
@@ -152,7 +153,7 @@ Once the plan is approved, immediately create the task graph — this is the **c
 
 See [task-graph-decomposition.md](references/task-graph-decomposition.md) for the full procedure including three-tier tracker detection (yaks, beads, or native tasks), epic and phase group creation, naming conventions, agent context piping, and an example decomposition for a 6-phase feature. For the most common path (yaks), the key commands are `yx add` for tasks and a quoted heredoc piped into `yx add` (`<<'CONTEXT'`) for agent context, with `--under` taking the parent's printed ID — see [tracker-yaks.md](references/tracker-yaks.md) directly.
 
-Write the epic's own context in tracker step 1: a `commit: {policy}` line and the Acceptance Criteria, so `/implement` can read both without the plan file (absent `commit:` = `none`).
+Write the epic's own context in tracker step 1: a `commit: {policy}` line, the Acceptance Criteria, and the plan and research artifact paths, so `/implement` can read them without the plan file (absent `commit:` = `none`). Its slice review finds the research's `### Reuse candidates` and each phase group's mitigations through the two paths.
 
 Report the result:
 ```
@@ -219,7 +220,7 @@ Every implementation phase with tests MUST include an `#### Agent Context` subse
 - **Test spec** — behavioral description (what to test)
 - **Test command** — shell command to run
 - **RED gate / GREEN gate** — observable success criteria
-- **Architectural constraints** — boundaries the agent must respect
+- **Architectural constraints** — boundaries the agent must respect, plus **Reuse** when the phase must call an existing implementation ([Reuse Before Re-deriving](references/rollout-and-reuse.md#reuse-before-re-deriving))
 - **Tier** — on each test phase and in its Write Tests context; for `e2e-journey` also runner, build target and preflight
 - **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and testids or shapes it must expose
 
