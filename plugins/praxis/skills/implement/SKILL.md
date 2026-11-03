@@ -65,7 +65,7 @@ Detect the active tracker and find the target epic:
 
 The tracker is an infrastructure detail — agent isolation, TDD gates, and execution log are identical across all three modes.
 
-The slice review needs the plan and research artifact paths that `/plan-tasks` recorded in the epic's context. In yaks, run `yx context` on the epic; in beads and native, read the epic's description. If they are missing, use `.light/sessions/{topic}-plan.md` and `.light/sessions/{topic}-research.md`.
+The slice review needs the plan and research artifact paths that `/plan-tasks` recorded in the epic's context. In yaks, run `yx context --show "{epic id}"`; in beads and native, read the epic's description. If they are missing, use `.light/sessions/{topic}-plan.md` and `.light/sessions/{topic}-research.md`.
 
 **If no task graph exists** (no epic or tasks found in the detected tracker), invoke `Skill: plan-tasks` to create one. STOP after plan-tasks completes — the user will re-run `/implement`.
 
@@ -157,7 +157,7 @@ When a validate task passes VALIDATE (`03-validate` or a re-validation), add `06
 1. `praxis:reuse-simplify-reviewer` — the phase diff, the research artifact's `### Reuse candidates` if a research artifact exists, and the known issues
 2. `praxis:technical-project-manager` with `mode: slice-check` and the phase group name — it reports nothing to check when the plan tags no mitigation to the group
 
-The SLICE gate passes when neither reports a remediation item: a HIGH or MEDIUM reuse finding, or an entry under the TPM's Remediation. Route each item by what fixing it touches. If it is implementation only, it goes to `07-slice-remediate-attempt-{M}` (`agent-remediate`); `08-slice-revalidate-attempt-{M}` then runs the full suite and `09-slice-verify-attempt-{M}` re-checks the items, with the same 2-attempt cap as Remediation. If it touches a test, STOP and ask the user, because remediation never edits tests. If it lives outside the repo (a runbook step, a metric), log it `[CARRIED]`. See [workflow-detail.md](references/workflow-detail.md#slice-review) for the procedure, contexts and tracker commands.
+The SLICE gate passes when neither reports a remediation item: a HIGH or MEDIUM reuse finding, or an entry under the TPM's Remediation. Route each item by what fixing it touches. If it is implementation only, it goes to `07-slice-remediate-attempt-{M}` (`agent-remediate`); `08-slice-revalidate-attempt-{M}` then runs the full suite and `09-slice-verify-attempt-{M}` re-checks the items, with the same 2-attempt cap as Remediation. If it touches a test, STOP and ask the user, because remediation never edits tests. If it lives outside the repo (a runbook step, a metric), log it `[CARRIED]`. A failed review or verify task stays open until every item has one of these routes. In beads, make the next phase depend on each new terminal slice task before closing the task it follows. See [workflow-detail.md](references/workflow-detail.md#slice-review) for the procedure, contexts and tracker commands.
 
 #### Remediation
 

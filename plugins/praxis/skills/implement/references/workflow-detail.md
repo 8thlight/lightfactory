@@ -128,9 +128,9 @@ A slice review checks each TDD phase's diff once its VALIDATE gate passes, on `0
    Task(description="P{N}: {Phase} — reuse/simplify", subagent_type="praxis:reuse-simplify-reviewer", prompt="{slice review context}")
    Task(description="P{N}: {Phase} — slice check", subagent_type="praxis:technical-project-manager", prompt="mode: slice-check\nplan: {plan path}\nphase group: {phase group}\ndiff: {phase diff}")
    ```
-4. **SLICE gate.** The remediation items are reuse findings rated HIGH or MEDIUM, plus each entry under the TPM's `### Remediation`. With none, log `[GATE PASS]`. Otherwise, log `[GATE FAIL]` and route the items (below). Either way:
-   - log LOW findings, and TPM `changed` rows that still cover their risk, as `[CARRIED]`;
-   - mark `06-slice-review` done, since it has done its job.
+4. **SLICE gate.** The remediation items are reuse findings rated HIGH or MEDIUM, plus each entry under the TPM's `### Remediation`. Log LOW findings, and TPM `changed` rows that still cover their risk, as `[CARRIED]`. Then:
+   - **No items:** log `[GATE PASS]` and mark `06-slice-review` done.
+   - **Items:** log `[GATE FAIL]` and route each one (below) while `06-slice-review` is still open. Mark it done only once every item has somewhere to go: a slice remediation task, a `[CARRIED]` entry, or tasks the user added at a STOP. Until then, log `[BLOCKED]` and leave it open. Closed, it would let a resumed run move past an unrouted item, because recovery only waits on open tasks.
 
 ### Routing Items
 
@@ -156,17 +156,23 @@ The STOP is there because `agent-remediate` never edits tests, and changed behav
    - the reuse reviewer, with **Findings to verify** set to its open items;
    - the TPM, with the same slice-check on the wider diff.
 
-   If tests fail or items are still open, start the next attempt with the open items and any failure output. Log each attempt as `[REMEDIATION] {group} / 06-slice-review — attempt {M}: {items}`; `M` = 1 + the slice attempts already logged for the group. If `M` would exceed 2, log `[BLOCKED]` and **STOP — ask the user**.
+   If tests fail or items are still open, route them again and start the next attempt with the implementation-only items and any failure output. Log each attempt as `[REMEDIATION] {group} / 06-slice-review — attempt {M}: {items}`; `M` = 1 + the slice attempts already logged for the group. If `M` would exceed 2, log `[BLOCKED]`, leave the verify task open and **STOP — ask the user**.
 
-Mark each slice task done once it has reported, as with `03-validate`.
+Mark `07-` and `08-` tasks done once they have reported, as with `03-validate`. Close a verify task by the same rule as `06-slice-review` (Procedure step 4): only once every open item has a next attempt, a `[CARRIED]` entry or tasks the user added, and never while it is `[BLOCKED]`.
 
 ### Per-Tracker Commands
 
 | Tracker | Create `{name}` with agent-type `{type}` |
 |---------|------------------------------------------|
 | YAKS | `yx add "{name}" --under "{group id}" --field "agent-type={type}"`, with the context in a quoted heredoc (below); `{group id}` comes from `yx list --format json` |
-| BEADS | `Skill: beads:create --title "{phase group} / {name}" --epic "{epic-id}" --label "{type}"`, with the context as its description. Then `Skill: beads:dep --from "{new task id}" --to "{previous task id}"`, where the previous task is the validate task that passed or the slice task before it |
+| BEADS | `Skill: beads:create --title "{phase group} / {name}" --epic "{epic-id}" --label "{type}"`, with the context as its description. Then `Skill: beads:dep --from "{new task id}" --to "{previous task id}"`, where the previous task is the validate task that passed or the slice task before it. Then add the next-phase dependency (below) |
 | NATIVE | `TaskCreate: { title: "{phase group} / {name} [{type}]", description: "{context}" }` |
+
+In beads, the next P{N} groups depend on the validate task that passed, so closing it would make them ready alongside `06-slice-review`. Before closing the task a new slice task follows, make each next group's first task (a leaf group's only task) depend on the group's newest terminal slice task: `06-slice-review`, then each `09-slice-verify-attempt-{M}`. Re-validation does the same ([tracker-beads.md](tracker-beads.md#create-re-validation-task)):
+
+```
+Skill: beads:dep --from "{next group's first task id}" --to "{06-slice-review or 09-slice-verify id}"
+```
 
 Slice contexts are full of backticked paths and `git diff` commands. Inside `echo "{context}"` the shell would run them, so quote the heredoc delimiter instead:
 
@@ -244,7 +250,7 @@ calls for it (see [Commits](#commits)), close the task in the tracker, then log 
 | agent-validate: failures | On an `08-slice-revalidate-attempt-{M}`, behavior or type-check failures go to the next slice attempt ([Slice Remediation](#slice-remediation)). Otherwise take the first match: (1) a behavior test failure or a type-check failure → [Remediation](#remediation), with any FLAKY or environmental failures listed in the remediation context as not to fix; (2) otherwise a lint failure → [Lint Fast Path](#lint-fast-path); (3) otherwise only FLAKY or environmental test failures → log `[GATE FAIL] {task} — VALIDATE gate failed: {FLAKY: command, reruns, log path / environmental: line}` and `[BLOCKED]`, leave the task open, STOP and ask. The user accepts (mark done, logging `[CLOSED] {task} — user approval: "{quote}"`), asks for a rerun (re-dispatch the task), or fixes the environment or test and then asks for a rerun |
 | agent-remediate: ALL PASS or STILL FAILING | Log `[GATE PASS]` or `[GATE FAIL] {task} — GREEN gate …`, mark done; its re-validation runs next |
 | slice-review: SLICE gate PASS | Log `[GATE PASS]` and each non-blocking item as `[CARRIED]`, mark done |
-| slice-review: SLICE gate FAIL | Log `[GATE FAIL]` and each non-blocking item as `[CARRIED]`, mark done, then route the items ([Routing Items](#routing-items)) |
+| slice-review: SLICE gate FAIL | Log `[GATE FAIL]` and each non-blocking item as `[CARRIED]`, then route the items ([Routing Items](#routing-items)). Mark done once every item has a slice remediation task, a `[CARRIED]` entry or tasks the user added. An item that needs a STOP, or a third slice attempt: log `[BLOCKED]`, leave the task open, STOP and ask |
 | agent-no-test: acceptance gate PASS | Log `[GATE PASS]`, mark done |
 | agent-no-test: acceptance gate FAIL | Log `[GATE FAIL]` and `[BLOCKED]`, leave the task open, STOP and ask |
 
