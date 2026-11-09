@@ -212,3 +212,71 @@ functional:
       - "Fragment 1's RED gate names the testid/locator expected to time out; fragment 2's predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator"
       - "Preflight does not health-check the server Playwright's webServer starts (no service to preflight)"
     notes: "Each rubric dimension is a hard correctness property, so the eval requires 12/12 to prevent offsetting. Structural validation cannot catch a misordered graph or an omitted journey gate. Approval is pre-granted and the graph printed because --print mode returns only the final message and cannot answer the review prompt; plan-tasks-08 covers the approval loop."
+
+  - id: plan-tasks-10
+    description: UI plan routes accessibility criteria to a tier, lists manual checks as optional, and does not duplicate criteria
+    grading: llm-judge
+    given: |
+      A research artifact whose ### Accessibility section says: Verdict Applies; target default WCAG 2.2 AA;
+      tooling Testing Library in component tests and Playwright journeys; requirements: error message
+      associated with its field [auto], submit button operable by keyboard [auto], error announced
+      clearly by a screen reader [manual]. The feature has a validation phase and a login form UI phase.
+    when: "draft .light/2026-11-09-add-login-form-research.md"
+    then:
+      - "Each [auto] requirement is an acceptance criterion in the test spec of the UI phase, at a named tier"
+      - "The keyboard criterion is routed to the e2e-journey fragment or another browser tier"
+      - "The [manual] check appears under Constraints in ### Accessibility as an optional check"
+      - "The [manual] check is not an acceptance criterion and not a Risks & Mitigations row"
+      - "No requirement appears twice in Acceptance Criteria"
+    notes: "Covers Review Focus 3, 4, and 6"
+
+  - id: plan-tasks-11
+    description: No stated target means the plan states WCAG 2.2 AA and marks it as the default
+    grading: code
+    given: |
+      A research artifact whose ### Accessibility section records the target as "default: WCAG 2.2 AA (none stated)".
+    when: "draft .light/2026-11-09-add-login-form-research.md"
+    then:
+      - "Plan contains ### Accessibility"
+      - "Plan states WCAG 2.2 AA"
+      - "Plan marks it as the default"
+    notes: "Covers Review Focus 7"
+
+  - id: plan-tasks-12
+    description: Non-UI plan omits the Accessibility heading and adds no accessibility criteria
+    grading: llm-judge
+    given: |
+      A research artifact whose ### Accessibility section says: Not applicable: backend batch job with no UI.
+    when: "draft .light/2026-11-09-add-csv-export-research.md"
+    then:
+      - "Plan does not contain a ### Accessibility heading"
+      - "No accessibility acceptance criteria, risk rows, test specs, or RED gate signatures"
+    notes: "Covers Review Focus 1, plan side. Research writes a one-line verdict. The plan omits the heading"
+
+  - id: plan-tasks-13
+    description: Research skipped, so plan-tasks runs the UI check inline
+    grading: llm-judge
+    given: |
+      A web app with a React frontend and Testing Library component tests. No research artifact exists.
+      No accessibility target is stated anywhere.
+    when: "plan the implementation of a login form with email, password, and an error message"
+    then:
+      - "Plan contains ### Accessibility"
+      - "Plan treats the login form as UI work without a research artifact"
+      - "Plan states WCAG 2.2 AA, marked as the default"
+      - "At least one accessibility requirement is an acceptance criterion in a UI phase's test spec"
+    notes: "Covers Review Focus 2. Path resolution of the inline INDEX.md link is checked in Phase 7"
+
+  - id: plan-tasks-14
+    description: With Testing Library and no browser runner, name and role criteria stay [auto] in the component phase
+    grading: llm-judge
+    given: |
+      A research artifact whose ### Accessibility section says: Verdict Applies; target WCAG 2.2 AA stated in
+      CLAUDE.md; tooling Testing Library in component tests, no browser runner; requirements: submit button has
+      role button and accessible name "Place order" [auto], quantity field has a programmatic label [auto].
+    when: "draft .light/2026-11-09-add-checkout-button-research.md"
+    then:
+      - "Both requirements are acceptance criteria in the component-test phase's test spec"
+      - "Neither is tagged [manual] and no e2e-journey tier is introduced"
+      - "The phase's RED gate signature names the missing role and accessible name (or label)"
+    notes: "Covers the tooling-aware routing rule"
