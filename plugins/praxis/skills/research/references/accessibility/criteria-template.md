@@ -2,7 +2,7 @@
 
 > Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
-Read this once per UI feature, after the pattern files. It sets the baseline that applies to any UI, and how criteria are split so each lands in a test or in recorded evidence.
+Read this once per UI feature, after the pattern files. It sets the baseline that applies to any UI, and how criteria are split so each lands in a test or in a list of optional manual checks.
 
 ## Baseline for any UI work
 
@@ -48,15 +48,15 @@ Tag every criterion. A clean automated scan is a floor, not a pass. Most WCAG 2.
 | Keyboard and focus order, when scripted | Reading order, announcement correctness |
 
 - `[auto]` criteria go into the test spec of the phase that delivers the feature, written as role-based, keyboard, or axe assertions.
-- `[manual]` criteria become out-of-repo evidence: name what a person must check, with which tool, and who owns it.
+- `[manual]` criteria are optional checks a person can run for increased accessibility. List them in the plan's `### Accessibility` section. They are not acceptance criteria, they do not block, and they are not carried as known issues.
 
-## Manual evidence format
+## Optional manual check format
 
-When a criterion is `[manual]`, record:
+When a criterion is `[manual]`, list:
 
 - **What to check:** the observable result ("the error is announced once after submit").
 - **How:** keyboard only, screen reader and browser pair, or a zoom level.
-- **Minimum screen reader coverage:** NVDA with Firefox and Chrome, JAWS with Chrome, and VoiceOver with Safari on macOS and iOS. TalkBack with Chrome on Android is advisory.
+- **Suggested screen reader coverage:** NVDA with Firefox and Chrome, JAWS with Chrome, and VoiceOver with Safari on macOS and iOS. TalkBack with Chrome on Android is advisory.
 
 ## What to test when
 
@@ -76,4 +76,4 @@ Existing component changed:
 
 - Which target WCAG level does the project state? Do not assume one. If none is stated, say so.
 - Which of axe, Playwright, or Testing Library does the project already run, and in which tier?
-- Which criteria in this feature are `[manual]`, and who owns the evidence?
+- Which criteria in this feature are `[manual]`?

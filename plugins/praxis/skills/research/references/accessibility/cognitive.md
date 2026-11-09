@@ -2,7 +2,7 @@
 
 > Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
-Read this when the feature has login or sign-up, multi-step input, a session timeout, or user-facing messages. Most of these checks are manual or have no axe rule, so the plan must carry them as out-of-repo evidence unless a test is written.
+Read this when the feature has login or sign-up, multi-step input, a session timeout, or user-facing messages. Most of these checks are manual or have no axe rule, so the plan lists them as optional manual checks unless a test is written.
 
 ## What to look for in the codebase
 
