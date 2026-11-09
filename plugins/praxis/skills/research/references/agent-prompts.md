@@ -1,6 +1,6 @@
 # Agent Prompt Templates
 
-Prompt templates for the two agent types dispatched during research. Use these as the basis for Task tool prompts, filling in the bracketed placeholders.
+Prompt templates for the three agent types dispatched during research (the Accessibility Researcher only for UI work). Use these as the basis for Task tool prompts, filling in the bracketed placeholders.
 
 ## Codebase Explorer
 
@@ -86,6 +86,45 @@ Report format:
 - {based on findings, what approach fits best for this codebase and feature}
 ```
 
+## Accessibility Researcher
+
+UI work only. Fill `{a11y_refs_dir}` with the absolute path of `references/accessibility/` under the research skill's base directory.
+
+**Agent type:** `Explore` (subagent_type)
+**Model:** `haiku`
+
+```
+Research accessibility for the feature: [{feature_description}].
+
+Context about the codebase: [{brief_codebase_context}]
+
+Reference folder: [{a11y_refs_dir}]
+
+Instructions:
+- Identify the interaction patterns in scope from the feature and the UI files it touches
+- Read [{a11y_refs_dir}]/INDEX.md first. Then read every file whose row matches a pattern in scope, not only the closest one, plus criteria-template.md and citing-wcag.md. Open wcag-criteria-list.md only to check an SC number
+- If the folder is missing or no row matches a pattern, use your own knowledge, cite W3C APG or WCAG, and say in the report that no reference file existed
+- For a native or cross-platform mobile app, mobile.md holds only platform-neutral principles. Read that platform's accessibility documentation for property and role names, and say so in the report
+- Check existing UI code for current accessibility patterns (semantic elements, roles, names, focus handling) and for UI test tooling and the tier it runs in
+- Target: use the WCAG version and level the project states (CLAUDE.md, linked docs, the ticket), and say where it came from. If none is stated, the target is WCAG 2.2 AA, marked as the default
+- Cite the file and the requirement behind each finding. Follow citing-wcag.md: no source, no claim, and cite the WCAG version the project is held to
+- Run no audits or scanners. Nothing is built at research time
+- Return exactly this format and nothing longer
+
+Report format:
+
+### Accessibility
+
+**Verdict:** Applies | Not applicable: {reason}
+**Target:** {WCAG version and level with its source, or "default: WCAG 2.2 AA (none stated)"}
+**UI test tooling:** {tools and the tier each runs in, or "none found"}
+**Patterns in scope:** {patterns, noting any with no reference file}
+
+**Requirements:**
+- {pattern}: {requirement} `[auto]` | `[manual]` ({reference file})
+- Baseline: {items from criteria-template.md that apply}
+```
+
 ## Confidence Levels
 
 Use these definitions consistently across all web research findings:
@@ -106,3 +145,4 @@ When combining codebase and web findings during Step 4 (Synthesize):
 - **Promote/Demote:** Low-confidence web findings corroborated by codebase evidence become Medium or High. High-confidence web findings contradicted by codebase constraints get flagged as contested.
 - **Open Questions:** Low-confidence findings with no codebase corroboration become Open Questions for the user to resolve
 - **Reuse:** Merge every explorer's reuse candidates into the template's `### Reuse candidates`, one entry per entry point. `/plan-tasks` requires each phase that mirrors one to call it or say why not, so don't drop a candidate because it looks awkward to call — say why in **Call it, or why not**
+- **Accessibility:** copy the accessibility agent's output into the template's `### Accessibility` as returned. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.

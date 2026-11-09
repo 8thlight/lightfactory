@@ -107,6 +107,17 @@ Each constraint should note its source:
 - {Performance consideration} *(web research, confidence: Medium)*
 - {Security consideration} *(codebase + web research)*
 
+### Accessibility
+
+**Verdict:** Applies | Not applicable: {reason} {omit the rest when not applicable}
+**Target:** {WCAG version and level with its source, or "default: WCAG 2.2 AA (none stated)"}
+**UI test tooling:** {tools and the tier each runs in, e.g. Testing Library in component tests, Playwright journeys, axe, or "none found"}
+**Patterns in scope:** {patterns, noting any with no reference file}
+
+**Requirements:**
+- {pattern}: {requirement} `[auto]` | `[manual]` *({reference file})*
+- Baseline: {items from `criteria-template.md` that apply}
+
 ## Open Questions
 
 - {Question 1 for user clarification}
@@ -145,6 +156,7 @@ Your research artifact should synthesize findings from both sources, noting wher
 - [ ] Database schema impact understood
 - [ ] Integration points identified
 - [ ] Constraints and considerations listed
+- [ ] UI work: Accessibility verdict, target, tooling, and tagged requirements recorded (or 'not applicable' with a reason)
 - [ ] Web research conducted for relevant external patterns
 - [ ] All web findings include confidence levels (High/Medium/Low)
 
