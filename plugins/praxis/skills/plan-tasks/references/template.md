@@ -285,6 +285,12 @@ From `praxis:technical-project-manager` (`mode: plan`). Every row names the phas
 - `{reuse candidate entry point}` — not called by P{N}-{Name} because {reason}
 - {or "All reuse candidates are called or refactored" / "No reuse candidates"}
 
+### Accessibility
+{UI work only. Omit this heading for non-UI plans.}
+- **Target:** {WCAG version and level with its source, or "default: WCAG 2.2 AA (none stated)"}
+- **Patterns in scope:** {patterns, and the phase and tier each criterion landed in}
+- **Optional manual checks:** {what to check and how, or "none"}
+
 ## Out of Scope
 
 - {Feature explicitly not included}
@@ -303,6 +309,7 @@ Before implementing, verify:
 - [ ] Acceptance criteria are testable
 - [ ] Rollout Phases and Risks & Mitigations present; every mitigation tagged with its phase group (`P{N}-{Name}`); each with in-repo evidence is an acceptance criterion and in that phase's test spec or Acceptance gate
 - [ ] Phases that mirror a reuse candidate call or refactor it, or Constraints → Reuse says why not
+- [ ] UI work: accessibility criteria are in the delivering phases' test specs, the target is stated, and manual checks are listed only under Constraints → Accessibility
 - [ ] Constraints documented
 - [ ] Out of scope items noted
 

@@ -59,7 +59,7 @@ Check for research artifact:
 Glob: .light/sessions/*-research.md
 ```
 
-If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving).
+If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section (see [accessibility.md](references/accessibility.md)).
 
 If no research artifact, create an inline summary (condensed):
 - Identify relevant files
@@ -93,7 +93,7 @@ Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output
   - **Agent Context block** (file paths, test command, gates, constraints)
 - **RED Gate Profiles** — per test phase, the rule file whose `RED gate` section was copied (see RED gate profile lookup), or "none — generic"
 - **Rollout Phases** and **Risks & Mitigations** — written last, by `praxis:technical-project-manager` (`mode: plan`; required for new features and epics); each mitigation names the phase group (`P{N}-{Name}`) that delivers it, and each in-repo one becomes an acceptance criterion — see [rollout-and-reuse.md](references/rollout-and-reuse.md)
-- **Constraints & Considerations** — Architectural, testing, performance, security, reuse
+- **Constraints & Considerations** — Architectural, testing, performance, security, reuse, accessibility (UI work, see [accessibility.md](references/accessibility.md))
 - **Out of Scope** — Explicitly deferred features
 
 See [template.md](references/template.md) for the complete template with Agent Context block reference.
