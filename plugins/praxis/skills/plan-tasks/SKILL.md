@@ -134,7 +134,7 @@ phase shape is in [template.md](references/template.md):
   Preflight and RED gate profile, and every implementation file in the fragment; stages
   1..K must pass.
 - A stage's RED shows earlier stages passing and stage K failing on the predicted
-  testid. The agreed contract testids go into the Implement context (Interface contract)
+  locator. The agreed contract locators go into the Implement context (Interface contract)
   of the phase that builds them.
 
 For content or configuration projects with no application code, use flat `[no-test]` phases ordered by dependency. The TDD phase ordering above applies to application code projects.
@@ -222,7 +222,7 @@ Every implementation phase with tests MUST include an `#### Agent Context` subse
 - **RED gate / GREEN gate** — observable success criteria
 - **Architectural constraints** — boundaries the agent must respect, plus **Reuse** when the phase must call an existing implementation ([Reuse Before Re-deriving](references/rollout-and-reuse.md#reuse-before-re-deriving))
 - **Tier** — on each test phase and in its Write Tests context; for `e2e-journey` also runner, build target and preflight
-- **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and testids or shapes it must expose
+- **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and the locators (role and accessible name, testid only for an element with no role) or shapes it must expose
 
 **Authoring the RED gate signature:** The RED gate field tells `agent-test` what a
 *correct* initial failure looks like for this phase — so it can distinguish the
@@ -234,9 +234,9 @@ CLAUDE.md), consult it to describe the expected failure in that framework's term
 no such guidance exists, describe the expected failure behaviorally (which assertion
 fails and why) and `agent-test` falls back to a generic at-assertion vs.
 before-assertion check. Write the signature from the acceptance criterion and the agreed
-interface contract (e.g. testids), naming user-visible behavior or contract testids,
+interface contract (e.g. role and accessible name), naming user-visible behavior or contract locators,
 never internals. For `e2e-journey` phases it names the locator/step expected to fail
-(e.g. "earlier steps pass; waiting for `{testid}` times out") — a timeout elsewhere is a
+(e.g. "earlier steps pass; waiting for `{role and name}` times out") — a timeout elsewhere is a
 wrong-reason RED. The signature goes only into the write-tests context, never
 `agent-impl`'s or `agent-remediate`'s.
 

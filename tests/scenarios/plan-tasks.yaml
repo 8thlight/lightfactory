@@ -280,3 +280,16 @@ functional:
       - "Neither is tagged [manual] and no e2e-journey tier is introduced"
       - "The phase's RED gate signature names the missing role and accessible name (or label)"
     notes: "Covers the tooling-aware routing rule"
+
+  - id: plan-tasks-15
+    description: UI phase interface contract and RED gate use role and accessible name, not testids
+    grading: llm-judge
+    given: |
+      A project with Testing Library component tests and a research artifact describing a checkout page
+      with a "Place order" submit button and a quantity field.
+    when: "draft .light/2026-11-09-add-checkout-button-research.md"
+    then:
+      - "The Interface contract names the button by role and accessible name and the field by its label"
+      - "The RED gate signature expects the missing role and name as the failure"
+      - "No testid is named for an element that has a role"
+    notes: "Pins the role-and-name contract decided at the Phase 5 gate"

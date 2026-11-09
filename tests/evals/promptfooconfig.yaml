@@ -29,6 +29,10 @@ tests:
         GIVEN: A project with a .light/ directory. No prior research artifacts exist.
 
         TASK: research how authentication is implemented in this codebase before I add OAuth support
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: ".light/"
@@ -100,6 +104,10 @@ tests:
         GIVEN: A project where the feature involves an external library or pattern not present in the codebase.
 
         TASK: research best practices for implementing rate limiting before I add it to the API
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: "## Web Research"
@@ -200,6 +208,10 @@ tests:
         target is stated in CLAUDE.md or any linked doc.
 
         TASK: research adding a login form with email, password, and an error message on failed sign-in
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -230,6 +242,10 @@ tests:
         GIVEN: A web app with a React frontend. No accessibility target is stated.
 
         TASK: research adding a rich text editor to the comment box
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -250,6 +266,10 @@ tests:
         GIVEN: A backend service with no UI files. A nightly job writes order data to storage.
 
         TASK: research adding a CSV export job for order data
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -676,6 +696,26 @@ tests:
           names the missing role and accessible name (or label) as the expected failure.
           FAIL if either criterion is [manual], is routed to a browser tier, or the RED gate signature
           does not name a role or accessible name.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-15: Interface contract is role and accessible name, not a testid
+  - description: "[plan-tasks-15] UI phase interface contract and RED gate use role and accessible name, not testids"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory and Testing Library component tests. A research
+        artifact exists at .light/2026-11-09-add-checkout-button-research.md describing a checkout page
+        with a "Place order" submit button and a quantity field.
+
+        TASK: draft .light/2026-11-09-add-checkout-button-research.md
+    assert:
+      - type: llm-rubric
+        value: |
+          PASS if the UI phase's Interface contract names the submit button by role and accessible name
+          (for example button "Place order") and the quantity field by its label, and its RED gate
+          signature expects the missing role and name as the failure.
+          FAIL if the contract or RED gate names a testid for an element that has a role, or names no locator.
     metadata:
       skill: plan-tasks
       grading: llm-judge

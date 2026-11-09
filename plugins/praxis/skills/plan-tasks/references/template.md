@@ -67,7 +67,7 @@ task's Agent Context (see plan-tasks "RED gate profile lookup"), or "none — ge
 **Goal:** Add stage {K} of the {journey} spec: {user-visible step}
 
 **Placement:** before the phases that turn it green (here Phases 1-5, plus a UI phase that
-renders the contract testids, not shown), so its leaf gets a lower `P{N}` than theirs; the
+renders the contract locators, not shown), so its leaf gets a lower `P{N}` than theirs; the
 last of those phases' validate carries the **Journey spec command**. Rules: plan-tasks
 SKILL.md, "Phase tiers".
 
@@ -85,11 +85,11 @@ SKILL.md, "Phase tiers".
 - **Tier:** e2e-journey
 - **Runner:** `{browser/e2e runner}` — **Build target:** `{e.g. production build of the app under test}`
 - **Preflight:** {externally managed services and ports that must be up, with a check for each; "none" when the runner starts everything itself (e.g. Playwright `webServer`)}
-- **Test spec:** {user-visible journey step, using the agreed contract testids}
+- **Test spec:** {user-visible journey step, using the agreed contract locators}
 - **Test command:** `{runner command for this spec — prefixed with the build command when the runner does not build the app itself; a runner-started server is never reused and retries are off (see SKILL.md, Phase tiers)}`
-- **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract testid}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
+- **RED gate:** {Stages 1..K-1 pass; step K times out waiting for `{contract locator: role and accessible name}` — the element the task has not built. Connection refused, login/page-load timeout, or a missing build is a wrong-reason RED.}
 - **GREEN gate:** checked by the fragment's last validate (its Journey spec command)
-- **Architectural constraints:** user-visible behavior and contract testids only, never internals
+- **Architectural constraints:** user-visible behavior and contract locators only, never internals
 
 ---
 
@@ -360,7 +360,7 @@ Follow your `praxis:agent-test` definition for the procedure (output capture to 
 - **Files to create:** `{implementation file path(s)}`
 - **Files to read (tests):** `{test file path(s)}`
 - **Acceptance criterion:** {the criterion this phase serves}
-- **Interface contract:** {testids or shapes this phase must expose — omit when none}
+- **Interface contract:** {locators (role and accessible name, testid only for an element with no role) or shapes this phase must expose — omit when none}
 - **Test command:** `{shell command to run tests}`
 - **GREEN gate:** All tests pass
 - **Architectural constraints:** {Pure functions, no side effects, adapter layer, etc.}

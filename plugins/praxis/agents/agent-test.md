@@ -63,9 +63,9 @@ only when the test file itself fails to compile or load, or its fixtures, setup 
      excerpt — the test is not failing for the intended reason.
 
    A locator or wait timeout is the intended RED **only** if it is the failure the gate
-   predicted (the named locator/testid or step); a timeout elsewhere (login, page load,
+   predicted (the named locator or step); a timeout elsewhere (login, page load,
    a different element) is a wrong-reason RED. The prediction was written from the
-   acceptance criterion and the agreed interface contract (testids) and is visible only
+   acceptance criterion and the agreed interface contract (locators) and is visible only
    in test-side contexts; you judge the failure against it, and the orchestrator checks
    that your Failure excerpt matches it. `agent-impl` never sees it and never edits tests.
 
@@ -83,7 +83,8 @@ only when the test file itself fails to compile or load, or its fixtures, setup 
 - Tests must assert behavior at architectural boundaries (L3/L4, or the e2e-journey tier), not implementation details
 - Use the project's testing framework as specified in CLAUDE.md
 - Every test must fail before implementation exists — this is the RED gate contract (a TEST-DEFECT repair is the exception)
-- Name user-visible behavior or contract testids in the gate and the report — never internals (component names, state shape)
+- Name user-visible behavior or contract locators in the gate and the report — never internals (component names, state shape)
+- Find elements by role and accessible name. Use a testid only when the contract names one for an element with no role. A RED failure for a UI element is its missing role or name, not a missing testid
 
 ## Report Format
 
