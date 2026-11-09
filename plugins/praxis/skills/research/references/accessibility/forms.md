@@ -1,15 +1,6 @@
-# Accessibility Reference: Forms
+# Forms
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/forms-specialist/references/labels-the-foundation.md`
-> - `skills/forms-specialist/references/validation-checklist.md`
-> - `skills/forms-specialist/references/multi-step-forms-wizards.md`
->
-> **Adapted:** reorganized for research (what to look for, requirements, failures, criteria wording). Reviewer output formats, severity rules, and framework fix code removed. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature has inputs, selects, checkboxes, radios, search fields, or a multi-step flow. Authentication has its own rules in `cognitive.md`. Custom selects and autocompletes are in `composite-widgets.md`.
 

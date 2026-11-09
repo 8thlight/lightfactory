@@ -1,14 +1,6 @@
-# Accessibility Reference: Language and Text Direction
+# Language and Text Direction
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/i18n-accessibility/SKILL.md`
-> - `skills/alt-text-headings/SKILL.md` (the Language Attributes section)
->
-> **Adapted:** reorganized for research. Removed: the three-phase audit process and the output contract. This upstream source is short, so most of it is kept. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature ships in more than one language, supports a right-to-left language, or mixes languages in one view.
 

@@ -1,13 +1,6 @@
-# Accessibility Reference: Dialogs and Modals
+# Dialogs and Modals
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/modal-specialist/references/non-negotiable-rules.md`
->
-> **Adapted:** reorganized for research (what to look for, requirements, failures, criteria wording). Code samples shortened to the structures a plan must name. The upstream MCP summary says focus always lands on the Close button. That conflicts with this file's source, so the scenario table below follows the source. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature adds a modal, alert dialog, confirmation prompt, drawer, sheet, or popover that covers the page.
 

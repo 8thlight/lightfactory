@@ -1,16 +1,6 @@
-# Accessibility Reference: Mobile Principles (Platform-Neutral)
+# Mobile Principles (Platform-Neutral)
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/kb-mobile-accessibility/SKILL.md` (the touch target table and the testing tool sections)
-> - `skills/mobile-accessibility/SKILL.md` (the manual testing section)
-> - `skills/mobile-accessibility/references/phase-1-react-native-and-expo-auditing.md` (touch targets, focus management, reading order, grouping, TalkBack and Switch Access)
-> - `skills/wcag-guide/references/complete-wcag-2-2-aa-success-criteria-reference.md` (the 1.3.4, 2.5.1, 2.5.2, 2.5.4, 2.5.7, and 2.5.8 entries)
->
-> **Adapted:** most upstream mobile material is API reference for React Native, SwiftUI, UIKit, and Compose (property names, role tables, fix code), and it is left out on purpose. What is kept here is the part that does not depend on a language or framework. When the project's stack is known, read the platform's own accessibility documentation for property names. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature is a native or cross-platform mobile app, or a web app used mostly on phones and tablets. Web criteria still apply to mobile web (see `citing-wcag.md`).
 

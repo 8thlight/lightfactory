@@ -1,14 +1,6 @@
-# Accessibility Reference: Video, Audio, and Media Players
+# Video, Audio, and Media Players
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/kb-media-accessibility/SKILL.md`
-> - `skills/alt-text-headings/references/video-and-audio.md` (the Video and Audio section)
->
-> **Adapted:** reorganized for research. Removed: caption file samples, HTML samples, the severity table, and reviewer output rules. Style-guide values are kept but labeled as such, because upstream states WCAG sets none of them. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature plays, records, streams, or embeds video or audio, or builds a player.
 

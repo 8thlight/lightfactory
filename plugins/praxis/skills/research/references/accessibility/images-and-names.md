@@ -1,17 +1,6 @@
-# Accessibility Reference: Images, Icons, and Accessible Names
+# Images, Icons, and Accessible Names
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/alt-text-headings/references/alternative-text-the-rules.md`
-> - `skills/alt-text-headings/SKILL.md` (the `<picture>`, CSS background, form image button, and icon font sections)
-> - `skills/alt-text-headings/references/video-and-audio.md` (the figure and figcaption section)
-> - `skills/aria-specialist/references/landmark-and-region-overuse.md` (the Accessible Names and Descriptions section)
-> - `skills/text-quality-reviewer/references/detection-rules.md`
->
-> **Adapted:** merged three upstream areas (alt text, accessible names, bad-name detection) into one file for research. Detection rules are condensed to the patterns a person can grep for. Fix code and severity labels removed. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature shows images, icons, SVGs, or icon-only controls, or when control names come from data or translations.
 

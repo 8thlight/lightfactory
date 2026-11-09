@@ -1,14 +1,6 @@
-# Accessibility Reference: Acceptance Criteria and Testing Split
+# Acceptance Criteria and Testing Split
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/kb-testing-strategy/SKILL.md` (acceptance criteria template, automated versus manual coverage, testing decision tree, screen reader matrix)
-> - `mcp-server/server-core.js` (the `general` entry of the `GUIDELINES` constant)
->
-> **Adapted:** the story template is reshaped into criteria the plan can place in a test spec. Removed: CI gate and regression sections, per-reader keystroke quick references, and the secondary browser list. Added: the `[auto]` and `[manual]` split and the evidence format, which are praxis conventions and not upstream content.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this once per UI feature, after the pattern files. It sets the baseline that applies to any UI, and how criteria are split so each lands in a test or in recorded evidence.
 

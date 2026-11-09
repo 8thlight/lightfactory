@@ -1,14 +1,6 @@
-# Accessibility Reference: Cognitive Load, Authentication, and Timeouts
+# Cognitive Load, Authentication, and Timeouts
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/kb-cognitive-accessibility/SKILL.md`
-> - `skills/forms-specialist/references/combobox-autocomplete-pattern.md` (the Accessible Authentication section)
->
-> **Adapted:** condensed from 313 lines. Removed: severity scoring, the reading-level formula and syllable rules, code samples, and reviewer integration notes. Kept: the criteria, what to check, and the failure patterns. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature has login or sign-up, multi-step input, a session timeout, or user-facing messages. Most of these checks are manual or have no axe rule, so the plan must carry them as out-of-repo evidence unless a test is written.
 

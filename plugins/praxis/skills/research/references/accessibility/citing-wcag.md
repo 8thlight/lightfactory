@@ -1,22 +1,12 @@
-# Accessibility Reference: Citing WCAG and Other Sources
+# Citing WCAG and Other Sources
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `docs/standards/citation-policy.md`
-> - `docs/standards/wcag.md`
-> - `skills/wcag-guide/references/common-wcag-misconceptions.md`
-> - `skills/a11y-core/schemas/wcag22-criteria.json` (the criteria list below is generated from this file)
->
-> **Adapted:** the policy is rewritten for research reports, with no agent registry or fingerprint rules. Upstream's AA-by-default and finding-score framing is removed, because praxis sets no default level. The criteria list is a markdown table of the JSON, with names and levels unchanged. The JSON states it was verified against the 12 December 2024 Recommendation on 27 October 2026.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this before writing any accessibility finding or criterion that cites a standard. The criteria list at the end is the check for an invented or mislabeled number.
 
 ## Source hierarchy
 
-When sources disagree, the higher tier wins. State both and say which you followed.
+When sources disagree, the higher tier wins. State both and say which you followed. Links for each tier are in `standards-and-docs.md`.
 
 | Tier | Source type | Examples |
 |---|---|---|

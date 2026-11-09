@@ -1,15 +1,6 @@
-# Accessibility Reference: Keyboard and Focus
+# Keyboard and Focus
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/keyboard-navigator/references/arrow-key-patterns.md`
-> - `skills/keyboard-navigator/references/tab-order.md`
-> - `mcp-server/server-core.js` (the `navigation` entry of the `GUIDELINES` constant)
->
-> **Adapted:** reorganized for research (what to look for, requirements, failures, criteria wording). Code samples removed except the one structure a plan must name. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this for any interactive UI. It matters most when the feature adds a composite widget (tabs, menu, listbox, tree, toolbar, grid), routes between pages in a single-page app, or adds and removes items dynamically.
 

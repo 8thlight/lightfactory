@@ -1,14 +1,6 @@
-# Accessibility Reference: Tables and Data Grids
+# Tables and Data Grids
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/tables-data-specialist/references/simple-data-tables.md`
-> - `skills/tables-data-specialist/references/responsive-tables.md`
->
-> **Adapted:** reorganized for research (what to look for, requirements, failures, criteria wording). Full markup examples reduced to the rules a plan must name. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature displays tabular data, adds sorting, or adds a grid with editable cells or row actions.
 

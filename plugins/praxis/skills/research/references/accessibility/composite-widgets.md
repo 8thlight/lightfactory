@@ -1,17 +1,8 @@
-# Accessibility Reference: Tabs, Accordion, Carousel, Combobox, Menu
+# Tabs, Accordion, Carousel, Combobox, Menu
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `mcp-server/server-core.js` (the `tabs`, `accordion`, `carousel`, and `combobox` entries of the `GUIDELINES` constant)
-> - `skills/forms-specialist/references/combobox-autocomplete-pattern.md`
-> - `skills/keyboard-navigator/references/arrow-key-patterns.md` (menu item behavior)
->
-> **Adapted:** the upstream has no dedicated file for tabs, accordion, carousel, or menu. The first three come from short summary entries and were expanded only where the combobox file or the APG statements it cites support it. Menu guidance here is limited to the arrow-key and disabled-item rules in the keyboard file. For anything beyond this, a research agent falls back to the W3C APG and says so. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
-Read this when the feature adds a custom widget that has no native HTML equivalent. Prefer the native element (`<select>`, `<details>`, `<button>`) when it meets the need. Keyboard rules shared by all of these are in `keyboard-and-focus.md`.
+Read this when the feature adds a custom widget that has no native HTML equivalent. Prefer the native element (`<select>`, `<details>`, `<button>`) when it meets the need. Keyboard rules shared by all of these are in `keyboard-and-focus.md`. Guidance for tabs, accordion, and carousel is short. For more, cite the W3C APG and say so in the report.
 
 ## What to look for in the codebase
 

@@ -1,17 +1,6 @@
-# Accessibility Reference: Color, Contrast, Focus Appearance, Size, and Motion
+# Color, Contrast, Focus Appearance, Size, and Motion
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/contrast-master/references/color-independence.md`
-> - `skills/contrast-master/references/user-preference-media-queries-prefers.md`
-> - `skills/contrast-master/references/validation-checklist.md`
-> - `skills/wcag-guide/references/complete-wcag-2-2-aa-success-criteria-reference.md` (the 1.4.13 Content on Hover or Focus entry)
-> - `skills/wcag-guide/references/common-wcag-misconceptions.md` (the disabled controls entry)
->
-> **Adapted:** condensed from about 400 lines. Removed: CSS and JavaScript samples, framework notes, and reviewer output rules. Kept: the numbers, the exceptions, and what to grep for. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature adds or changes colors, themes, focus styles, small controls, animation, tooltips, or layout that must survive zoom.
 

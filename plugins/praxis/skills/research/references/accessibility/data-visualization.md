@@ -1,14 +1,6 @@
-# Accessibility Reference: Charts, Graphs, and Dashboards
+# Charts, Graphs, and Dashboards
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/kb-data-visualization-accessibility/SKILL.md`
-> - `skills/data-visualization-accessibility/SKILL.md`
->
-> **Adapted:** reorganized for research. Removed: the HTML and JavaScript samples, the library code blocks, and reviewer output rules. Library notes are kept as one line each and were current at retrieval, so confirm against the project's installed version. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature draws a chart, graph, map, heatmap, or dashboard. Basic image alt text is in `images-and-names.md`, and tables in `tables.md`.
 
@@ -47,7 +39,7 @@ Read this when the feature draws a chart, graph, map, heatmap, or dashboard. Bas
 
 **Responsive.** Charts reflow at 400% zoom, pointer targets are at least 24 by 24 CSS px, and text scales.
 
-**Library notes** (as of upstream's retrieval)
+**Library notes** (as of upstream's retrieval, so confirm against the project's installed version)
 - Highcharts: load its accessibility module. Without it the chart lacks keyboard navigation and announcements. Its data table view needs the exporting modules.
 - Chart.js: draws to canvas, so there are no DOM nodes. It needs `role="img"` and an `aria-label`, or a fallback table, and custom keyboard navigation.
 - D3: draws SVG with no accessibility built in. Add roles, names, focus, and keys yourself.

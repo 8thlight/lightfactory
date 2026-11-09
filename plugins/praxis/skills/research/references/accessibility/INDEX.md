@@ -28,3 +28,4 @@ Read this file first. It routes the research accessibility agent to per-pattern 
 | Native or cross-platform mobile app, or a phone-first web app | `mobile.md` |
 | Every UI feature | `criteria-template.md` |
 | Any finding or criterion that cites a standard | `citing-wcag.md` |
+| A reference file has no answer, or you need the exact wording of a spec, a tutorial, platform docs, or a law | `standards-and-docs.md` (links) |

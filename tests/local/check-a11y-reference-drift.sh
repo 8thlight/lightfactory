@@ -5,8 +5,8 @@
 #
 # Usage: check-a11y-reference-drift.sh <path-to-upstream-clone> [upstream-ref]
 #
-# For each file in plugins/praxis/skills/research/references/accessibility/, reads
-# the "Upstream commit" and the "Upstream files" lines from its source block, then
+# For each section of plugins/praxis/skills/research/references/accessibility/PROVENANCE.md,
+# reads the "Upstream commit" line and the "Upstream files" list, then
 # asks the clone which of those files changed between the pinned commit and
 # upstream-ref (default: upstream/main, falling back to origin/main, then HEAD).
 #
@@ -16,7 +16,7 @@
 set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly REF_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)/plugins/praxis/skills/research/references/accessibility"
+readonly PROVENANCE_FILE="$(cd "${SCRIPT_DIR}/../.." && pwd)/plugins/praxis/skills/research/references/accessibility/PROVENANCE.md"
 
 if [[ $# -lt 1 ]]; then
     echo "usage: $0 <path-to-upstream-clone> [upstream-ref]" >&2
@@ -46,15 +46,29 @@ echo
 DRIFTED=0
 CHECKED=0
 
-for file in "${REF_DIR}"/*.md; do
-    name="$(basename "${file}")"
-    pinned="$(sed -n 's/^> \*\*Upstream commit:\*\* `\([0-9a-f]\{7,40\}\)`.*/\1/p' "${file}" | head -n 1)"
-    paths="$(sed -n 's/^> - `\([^`]*\)`.*/\1/p' "${file}")"
+if [[ ! -f "${PROVENANCE_FILE}" ]]; then
+    echo "error: ${PROVENANCE_FILE} not found" >&2
+    exit 2
+fi
 
-    # Files with no source block (INDEX.md and README.md) have nothing to check.
-    if [[ -z "${pinned}" || -z "${paths}" ]]; then
-        continue
-    fi
+# One record per "## name" section: name, pinned commit, upstream paths (tab-separated,
+# paths joined by newlines encoded as ";").
+records="$(awk '
+    function flush() { if (name != "" && pinned != "" && paths != "") print name "\t" pinned "\t" paths }
+    /^## / { flush(); name = substr($0, 4); pinned = ""; paths = ""; next }
+    match($0, /^- Upstream commit: `[0-9a-f]+`/) {
+        s = substr($0, RSTART, RLENGTH); sub(/^- Upstream commit: `/, "", s); sub(/`$/, "", s); pinned = s; next
+    }
+    match($0, /^  - `[^`]*`/) {
+        s = substr($0, RSTART, RLENGTH); sub(/^  - `/, "", s); sub(/`$/, "", s)
+        paths = (paths == "" ? s : paths ";" s); next
+    }
+    END { flush() }
+' "${PROVENANCE_FILE}")"
+
+while IFS=$'\t' read -r name pinned paths_joined; do
+    [[ -z "${name}" ]] && continue
+    paths="${paths_joined//;/$'\n'}"
     CHECKED=$(( CHECKED + 1 ))
 
     if ! git -C "${CLONE}" cat-file -e "${pinned}^{commit}" 2>/dev/null; then
@@ -78,11 +92,11 @@ for file in "${REF_DIR}"/*.md; do
     else
         echo "ok       ${name} (pinned ${pinned:0:7})"
     fi
-done
+done <<< "${records}"
 
 echo
 if [[ ${CHECKED} -eq 0 ]]; then
-    echo "error: no reference files with a source block found in ${REF_DIR}" >&2
+    echo "error: no sections with an upstream commit and file list found in ${PROVENANCE_FILE}" >&2
     exit 2
 fi
 if [[ ${DRIFTED} -eq 0 ]]; then

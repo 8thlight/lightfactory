@@ -1,13 +1,6 @@
-# Accessibility Reference: Live Regions and Status Messages
+# Live Regions and Status Messages
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/live-region-controller/references/politeness-levels.md`
->
-> **Adapted:** condensed from 321 lines to the choices a plan must make (which role, when to announce, what not to do). Long code samples removed. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when content changes without a page load: search or filter results, saved or failed states, toasts, loading and progress, chat, timers, and counters (WCAG 4.1.3 Status Messages).
 

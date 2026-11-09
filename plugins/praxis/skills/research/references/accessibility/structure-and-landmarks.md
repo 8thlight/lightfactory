@@ -1,16 +1,6 @@
-# Accessibility Reference: Headings, Page Titles, and Landmarks
+# Headings, Page Titles, and Landmarks
 
-> **Source repo:** Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents)
-> **Upstream commit:** `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
-> **Retrieved:** 2026-11-09
-> **License:** MIT, Copyright (c) 2026 Taylor Arndt
-> **Upstream files:**
-> - `skills/alt-text-headings/references/video-and-audio.md` (the Heading Structure section)
-> - `skills/alt-text-headings/SKILL.md` (document outline, page titles, language, and landmark structure sections)
-> - `skills/alt-text-headings/references/validation-checklist.md`
-> - `skills/aria-specialist/references/landmark-and-region-overuse.md` (everything before the Accessible Names section)
->
-> **Adapted:** reorganized for research (what to look for, requirements, failures, criteria wording). Markup examples removed except where a rule is easier to see than to state. Criteria wording is new.
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
 
 Read this when the feature adds a page, a route, a layout, or a section of a long page.
 
