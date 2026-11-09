@@ -14,8 +14,15 @@ Every reference file here except `INDEX.md`, `README.md`, `PROVENANCE.md`, `LICE
   - `docs/standards/citation-policy.md`
   - `docs/standards/wcag.md`
   - `skills/wcag-guide/references/common-wcag-misconceptions.md`
-  - `skills/a11y-core/schemas/wcag22-criteria.json` (the criteria list in `citing-wcag.md` is generated from this file)
-- Adapted: the policy is rewritten for research reports, with no agent registry or fingerprint rules. Upstream's AA-by-default and finding-score framing is removed, because praxis sets no default level. The criteria list is a markdown table of the JSON, with names and levels unchanged. The JSON states it was verified against the 12 December 2024 Recommendation on 27 October 2026.
+- Adapted: the policy is rewritten for research reports, with no agent registry or fingerprint rules. Upstream's finding-score framing is removed. The default target (WCAG 2.2 AA, overridable by the project) is a praxis convention. The criteria list lives in `wcag-criteria-list.md`.
+
+## wcag-criteria-list.md
+
+- Upstream commit: `a538edc9edfb98cdd8bae96d6b79542874b478f7` (main, 2026-11-07)
+- Retrieved: 2026-11-09
+- Upstream files:
+  - `skills/a11y-core/schemas/wcag22-criteria.json`
+- Adapted: a markdown table of the JSON, with names and levels unchanged, split out of `citing-wcag.md` so the rules part loads without the list. The JSON states it was verified against the 12 December 2024 Recommendation on 27 October 2026.
 
 ## cognitive.md
 

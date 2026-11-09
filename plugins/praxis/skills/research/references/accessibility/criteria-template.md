@@ -74,6 +74,6 @@ Existing component changed:
 
 ## Questions for the research report
 
-- Which target WCAG level does the project state? Do not assume one. If none is stated, say so.
+- Which target WCAG level and version does the project state, and where? If none is stated, the target is WCAG 2.2 AA. Mark it as the default.
 - Which of axe, Playwright, or Testing Library does the project already run, and in which tier?
 - Which criteria in this feature are `[manual]`?
