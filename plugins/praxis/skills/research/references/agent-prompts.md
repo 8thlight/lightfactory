@@ -109,7 +109,9 @@ Instructions:
 - Target: use the WCAG version and level the project states (CLAUDE.md, linked docs, the ticket), and say where it came from. If none is stated, the target is WCAG 2.2 AA, marked as the default
 - Cite the file and the requirement behind each finding. Follow citing-wcag.md: no source, no claim, and cite the WCAG version the project is held to
 - Run no audits or scanners. Nothing is built at research time
-- Return exactly this format and nothing longer
+- Read each reference file on its own with Read, not several in one command
+- Add no advice outside the format. `[manual]` items are optional checks
+- Your whole reply is the report below, under 30 lines. No preamble and no other headings
 
 Report format:
 
@@ -117,7 +119,7 @@ Report format:
 
 **Verdict:** Applies | Not applicable: {reason}
 **Target:** {WCAG version and level with its source, or "default: WCAG 2.2 AA (none stated)"}
-**UI test tooling:** {tools and the tier each runs in, or "none found"}
+**UI test tooling:** {existing tools and the tier each runs in, or "none found". Suggest none.}
 **Patterns in scope:** {patterns, noting any with no reference file}
 
 **Requirements:**
@@ -145,4 +147,4 @@ When combining codebase and web findings during Step 4 (Synthesize):
 - **Promote/Demote:** Low-confidence web findings corroborated by codebase evidence become Medium or High. High-confidence web findings contradicted by codebase constraints get flagged as contested.
 - **Open Questions:** Low-confidence findings with no codebase corroboration become Open Questions for the user to resolve
 - **Reuse:** Merge every explorer's reuse candidates into the template's `### Reuse candidates`, one entry per entry point. `/plan-tasks` requires each phase that mirrors one to call it or say why not, so don't drop a candidate because it looks awkward to call — say why in **Call it, or why not**
-- **Accessibility:** copy the accessibility agent's output into the template's `### Accessibility` as returned. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.
+- **Accessibility:** copy the accessibility agent's output into the template's `### Accessibility` trimmed to its shape. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.

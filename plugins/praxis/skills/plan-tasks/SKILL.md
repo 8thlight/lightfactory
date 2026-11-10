@@ -59,7 +59,7 @@ Check for research artifact:
 Glob: .light/sessions/*-research.md
 ```
 
-If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section (see [accessibility.md](references/accessibility.md)).
+If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section and read [accessibility.md](references/accessibility.md) before step 3.
 
 If no research artifact, create an inline summary (condensed):
 - Identify relevant files

@@ -286,7 +286,7 @@ From `praxis:technical-project-manager` (`mode: plan`). Every row names the phas
 - {or "All reuse candidates are called or refactored" / "No reuse candidates"}
 
 ### Accessibility
-{UI work only. Omit this heading for non-UI plans.}
+{UI work. For non-UI plans, write only `Not applicable: {reason}`.}
 - **Target:** {WCAG version and level with its source, or "default: WCAG 2.2 AA (none stated)"}
 - **Patterns in scope:** {patterns, and the phase and tier each criterion landed in}
 - **Optional manual checks:** {what to check and how, or "none"}

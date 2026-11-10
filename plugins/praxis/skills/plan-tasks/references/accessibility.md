@@ -6,7 +6,7 @@ How `/plan-tasks` turns accessibility into acceptance criteria for UI work. The 
 
 - The research artifact's `### Accessibility` verdict says it applies.
 - With no research artifact, check the request and the files in scope for UI words (page, form, screen, component, modal) or UI files (components, templates, styles).
-- Otherwise it is not applicable. Omit the `### Accessibility` heading and add no criteria.
+- Otherwise it is not applicable. Write `Not applicable: {reason}` under `### Accessibility` and add no criteria.
 
 ## Where the Requirements Come From
 
@@ -30,7 +30,7 @@ In step 3, write them into `## Acceptance Criteria` before running `technical-pr
 
 ## Ordering with the TPM
 
-The TPM reads the draft's acceptance criteria. Do not add a Risks & Mitigations row for a requirement that is already a criterion. When merging the TPM's in-repo mitigations into the criteria, skip any that duplicate one.
+The TPM reads the draft's acceptance criteria. Do not add a Risks & Mitigations row for a requirement that is already a criterion. When merging the TPM's in-repo mitigations into the criteria, skip any that duplicate one. In the TPM's prompt, say that accessibility requirements are already criteria and `[manual]` checks are optional, so it adds no accessibility risk row and lists no manual checks as mitigations.
 
 ## Anti-Patterns to Avoid
 
