@@ -102,10 +102,10 @@ Reference folder: [{a11y_refs_dir}]
 
 Instructions:
 - Identify the interaction patterns in scope from the feature and the UI files it touches
-- Read [{a11y_refs_dir}]/INDEX.md first. Then read every file whose row matches a pattern in scope, not only the closest one, plus criteria-template.md and citing-wcag.md. Open wcag-criteria-list.md only to check an SC number
+- Read [{a11y_refs_dir}]/INDEX.md first. Then read every file whose row matches a pattern in scope, not only the closest one, plus criteria-template.md and citing-wcag.md. Grep wcag-criteria-list.md for an SC number, for example `grep -n "^| 2.5.8" wcag-criteria-list.md`. Do not read it whole
 - If the folder is missing or no row matches a pattern, use your own knowledge, cite W3C APG or WCAG, and say in the report that no reference file existed
 - For a native or cross-platform mobile app, mobile.md holds only platform-neutral principles. Read that platform's accessibility documentation for property and role names, and say so in the report
-- Check existing UI code for current accessibility patterns (semantic elements, roles, names, focus handling) and for UI test tooling and the tier it runs in
+- Use the codebase context above for UI test tooling and target sources. Read only the UI files it names, for current accessibility patterns (semantic elements, roles, names, focus handling)
 - Target: use the WCAG version and level the project states (CLAUDE.md, linked docs, the ticket), and say where it came from. If none is stated, the target is WCAG 2.2 AA, marked as the default
 - Cite the file and the requirement behind each finding. Follow citing-wcag.md: no source, no claim, and cite the WCAG version the project is held to
 - Run no audits or scanners. Nothing is built at research time
@@ -147,4 +147,4 @@ When combining codebase and web findings during Step 4 (Synthesize):
 - **Promote/Demote:** Low-confidence web findings corroborated by codebase evidence become Medium or High. High-confidence web findings contradicted by codebase constraints get flagged as contested.
 - **Open Questions:** Low-confidence findings with no codebase corroboration become Open Questions for the user to resolve
 - **Reuse:** Merge every explorer's reuse candidates into the template's `### Reuse candidates`, one entry per entry point. `/plan-tasks` requires each phase that mirrors one to call it or say why not, so don't drop a candidate because it looks awkward to call — say why in **Call it, or why not**
-- **Accessibility:** copy the accessibility agent's output into the template's `### Accessibility` trimmed to its shape. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.
+- **Accessibility:** copy the accessibility agent's report into the template's `### Accessibility` as returned. Edit only the Target line, and only when you read a source the agent did not. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.

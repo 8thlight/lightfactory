@@ -12,6 +12,9 @@ Read this once per UI feature, after the pattern files. It sets the baseline tha
 - `<html lang>` is set, and each page has a descriptive `<title>`.
 - Text contrast is 4.5:1, or 3:1 for large text and UI components.
 - Information is never carried by color alone.
+- Focus is visible, and no `outline: none` without a replacement (2.4.7, `visual-and-motion.md`).
+- Targets are at least 24 by 24 CSS px (2.5.8, `visual-and-motion.md`).
+- An error or result region is in the DOM before it updates and is never `display: none`. Only errors use `role="alert"` (4.1.3, `live-regions.md`).
 - Motion respects `prefers-reduced-motion`.
 - Text resizes to 200% without loss, and content reflows at 320 CSS px wide, about 400% zoom, without horizontal scrolling (1.4.4, 1.4.10).
 

@@ -15,7 +15,7 @@ Read this file first. It routes the agent to per-pattern reference files.
 | Inputs, selects, checkboxes, radios, search, multi-step forms | `forms.md` |
 | Modal, alert dialog, drawer, sheet, popover | `dialogs.md` |
 | Data tables, sortable tables, editable grids | `tables.md` |
-| Toasts, status messages, loading, progress, chat, counters | `live-regions.md` |
+| Toasts, status messages, form errors, submit results, loading, progress, chat, counters | `live-regions.md` |
 | Tab order, arrow-key widgets, route changes, deletes | `keyboard-and-focus.md` |
 | Tabs, accordion, carousel, combobox, menu | `composite-widgets.md` |
 | Login, sign-up, timeouts, error copy, multi-step data entry | `cognitive.md` |

@@ -50,7 +50,7 @@ Every reference file here except `INDEX.md`, `README.md`, `PROVENANCE.md`, `LICE
 - Upstream files:
   - `skills/kb-testing-strategy/SKILL.md` (acceptance criteria template, automated versus manual coverage, testing decision tree, screen reader matrix)
   - `mcp-server/server-core.js` (the `general` entry of the `GUIDELINES` constant)
-- Adapted: the story template is reshaped into criteria the plan can place in a test spec. Removed: CI gate and regression sections, per-reader keystroke quick references, and the secondary browser list. Added: the `[auto]` and `[manual]` split and the optional manual check format, which are praxis conventions and not upstream content.
+- Adapted: the story template is reshaped into criteria the plan can place in a test spec. Removed: CI gate and regression sections, per-reader keystroke quick references, and the secondary browser list. Added: the `[auto]` and `[manual]` split and the optional manual check format, which are praxis conventions and not upstream content. Also added: three baseline pointers (focus visible, target size, error and result regions), each linking to the file that owns the full rule.
 
 ## data-visualization.md
 

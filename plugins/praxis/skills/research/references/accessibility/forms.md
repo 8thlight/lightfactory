@@ -30,7 +30,7 @@ Read this when the feature has inputs, selects, checkboxes, radios, search field
 - Each error names the specific problem and how to fix it, and is not conveyed by color alone.
 - Errors are linked to their field with `aria-describedby`, and the field has `aria-invalid="true"`.
 - On submit with errors, focus moves to an error summary or the first invalid field.
-- Validation does not fire on every keystroke. Inline messages are announced without interrupting typing.
+- Validation does not fire on every keystroke. Inline messages are announced without interrupting typing. Error and result regions follow `live-regions.md`.
 - Use `aria-disabled` instead of `disabled` when the control must stay focusable.
 
 **Submit and keyboard**

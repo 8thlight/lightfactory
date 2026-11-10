@@ -5,13 +5,13 @@ How `/plan-tasks` turns accessibility into acceptance criteria for UI work. The 
 ## When It Applies
 
 - The research artifact's `### Accessibility` verdict says it applies.
-- With no research artifact, check the request and the files in scope for UI words (page, form, screen, component, modal) or UI files (components, templates, styles).
+- With no research artifact, or one with no `### Accessibility` section, check the request and the files in scope for UI words (page, form, screen, component, modal) or UI files (components, templates, styles).
 - Otherwise it is not applicable. Write `Not applicable: {reason}` under `### Accessibility` and add no criteria.
 
 ## Where the Requirements Come From
 
 - **Research artifact exists:** write criteria from its `### Accessibility` section. It carries each requirement tagged `[auto]` or `[manual]`, the baseline items that apply, the target, and the UI test tooling and tier. Do not read the reference files unless the section is thin for a pattern in scope.
-- **Research skipped:** read [INDEX.md](../../research/references/accessibility/INDEX.md) and use its "Pattern in scope" table. Read every file whose row matches, not only the closest one (a login form matches `forms.md`, `cognitive.md`, and `keyboard-and-focus.md`). Also read `criteria-template.md`, and `citing-wcag.md` when a criterion cites a standard. Do not restate the pattern list here.
+- **Research skipped, or no `### Accessibility` section:** read [INDEX.md](../../research/references/accessibility/INDEX.md) and use its "Pattern in scope" table. Read every file whose row matches, not only the closest one. A form also matches `live-regions.md` when it shows errors or results, and `visual-and-motion.md` when it adds styles or controls. Cite only files you read. Also read `criteria-template.md`, and `citing-wcag.md` when a criterion cites a standard. Do not restate the pattern list here.
 - **No row matches:** use your own knowledge, cite W3C APG or WCAG, and say in the plan that no reference file existed. For a native or cross-platform mobile app, `mobile.md` holds only platform-neutral principles. Read that platform's accessibility documentation for property and role names, and note it in the plan.
 
 ## Target
