@@ -92,7 +92,7 @@ Based on the chosen depth, decompose the scope into:
 
 **CRITICAL: Dispatch ALL agents in a SINGLE message using multiple Task tool calls with `run_in_background: true`.**
 
-Three agent types, the third only when the UI check fires (read [agent-prompts.md](references/agent-prompts.md) and build each prompt from its template):
+Three agent types, the third only when the UI check fires (read [agent-prompts.md](references/agent-prompts.md), and [agent-prompts-accessibility.md](references/agent-prompts-accessibility.md) when the UI check fires, and build each prompt from its template):
 
 **Codebase Explorer** (subagent_type: `Explore`)
 - Receives one investigation area

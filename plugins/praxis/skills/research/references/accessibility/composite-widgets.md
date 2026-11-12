@@ -42,14 +42,6 @@ A combobox is an input with a popup (listbox, grid, tree, or dialog) that helps 
 - Up and Down move between items. A disabled item stays focusable and carries `aria-disabled="true"`. See `keyboard-and-focus.md`.
 - No further upstream guidance. Research should cite the W3C APG menu and menu button patterns and say that the reference has no file for it.
 
-## Common failures
-
-- Tabs where every tab is a Tab stop.
-- Accordion toggle that is a `div`, or an `aria-expanded` that does not change.
-- Auto-rotating carousel with no stop control.
-- Combobox using `aria-owns`, or moving DOM focus into the list.
-- Result count never announced.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -60,7 +52,3 @@ A combobox is an input with a popup (listbox, grid, tree, or dialog) that helps 
 | Tab leaves the widget in one press | `[auto]` |
 | A screen reader announces state changes and the combobox result count | `[manual]` |
 | The widget makes sense when its purpose is announced without sight | `[manual]` |
-
-## Questions for the research report
-
-- Does the project's component library already cover this widget? If so, which accessibility behavior does it provide, and which does the feature still owe?

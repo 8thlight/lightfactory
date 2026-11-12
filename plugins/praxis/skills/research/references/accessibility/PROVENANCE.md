@@ -4,6 +4,8 @@ For maintainers. The research accessibility agent does not read this file. This 
 
 Every reference file here except `INDEX.md`, `README.md`, `PROVENANCE.md`, `LICENSE-community-access.md`, and `standards-and-docs.md` is an adaptation of material from Community-Access/accessibility-agents (https://github.com/Community-Access/accessibility-agents). The upstream license is MIT, and its text is in `LICENSE-community-access.md`. Criteria wording in each file is new and is not upstream content.
 
+Local change, 2026-11-12: the `## Questions for the research report` and `## Common failures` sections were removed from the pattern files. The research agent is told to add no advice outside its report format, so the questions section had no reader. Each failure bullet restated a requirement already in the same file, so the section only added reading cost and competed for space in a capped report. Two failures with no matching requirement were rewritten as requirement bullets (a focus indicator replacement in `keyboard-and-focus.md`, table markup for tabular data in `tables.md`).
+
 `tests/local/check-a11y-reference-drift.sh` reads this file. Keep each section's heading, `Upstream commit` line, and `Upstream files` list in the format below.
 
 ## citing-wcag.md

@@ -44,16 +44,7 @@ Read this for any interactive UI. It matters most when the feature adds a compos
 - Route change in a single-page app: move focus to the new page content, usually the H1 or main with `tabindex="-1"`, so the new page is announced. Never leave focus on the link that was clicked.
 - Content the user triggered: move focus to it or announce it. Content that appears on its own: announce it with a live region and do not take focus (see `live-regions.md`).
 - Deleting a list item: focus goes to the next item, or the previous if the last was deleted, or to the list or a heading if the list is now empty. Focus must never be lost.
-
-## Common failures
-
-- `tabindex` above 0.
-- Focus outline removed with no replacement.
-- Arrow keys do nothing in a tab list or menu, so every item is a Tab stop.
-- Tab cycles inside a widget instead of leaving it.
-- Route change leaves focus at the top of the document or on the old link.
-- Focus lost after a delete.
-- Disabled items inside a composite skipped by arrow keys.
+- Never remove a focus indicator without a visible replacement. See `visual-and-motion.md`.
 
 ## Criteria wording
 
@@ -65,8 +56,3 @@ Read this for any interactive UI. It matters most when the feature adds a compos
 | No element has `tabindex` above 0 | `[auto]` |
 | Focus is visible on every focusable element | `[manual]` |
 | Tab order matches the visual order across the full page | `[manual]` |
-
-## Questions for the research report
-
-- Does a library in the project already implement roving tabindex for this widget?
-- Does the router move focus on navigation today?

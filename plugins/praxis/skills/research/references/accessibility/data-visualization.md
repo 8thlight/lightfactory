@@ -45,15 +45,6 @@ Read this when the feature draws a chart, graph, map, heatmap, or dashboard. Bas
 - D3: draws SVG with no accessibility built in. Add roles, names, focus, and keys yourself.
 - Recharts: `accessibilityLayer` adds keyboard navigation and basic ARIA. It is on by default in Recharts 3 and opt-in in 2.x. Add a data table anyway.
 
-## Common failures
-
-- A canvas chart with no label or table.
-- Series told apart by color alone.
-- Hover-only tooltips with no keyboard path.
-- Interactive charts built on `role="application"`.
-- Chart image with a one-word alt text.
-- A dashboard where Tab walks through every data point.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -63,8 +54,3 @@ Read this when the feature draws a chart, graph, map, heatmap, or dashboard. Bas
 | Series are distinguishable without color | `[manual]` |
 | The summary states the main takeaway, not only the chart type | `[manual]` |
 | A screen reader announces chart type, title, and a point's value in a useful order | `[manual]` |
-
-## Questions for the research report
-
-- Is the chart library canvas or SVG based, and does it ship an accessibility option the project has turned off?
-- Can the table alternative come from the same data the chart draws?

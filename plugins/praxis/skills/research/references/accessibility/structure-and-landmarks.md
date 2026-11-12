@@ -39,17 +39,6 @@ Read this when the feature adds a page, a route, a layout, or a section of a lon
 - A skip link ("Skip to main content") is the first focusable element and its target can take focus (`tabindex="-1"` on `main`).
 - Language: `<html lang>` is mandatory (3.1.1). See `internationalization.md`.
 
-## Common failures
-
-- More than one H1, or none.
-- Heading levels picked by font size.
-- Generic headings, or headings that are empty.
-- The same title on every route, or a title that never updates.
-- `role="region"` on blocks inside `<main>`.
-- `aria-label` on a section that says something different from its heading.
-- Two `<nav>` elements with no names.
-- No skip link.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -60,8 +49,3 @@ Read this when the feature adds a page, a route, a layout, or a section of a lon
 | A skip link is the first focusable element and moves focus to main | `[auto]` |
 | The heading outline reads as a table of contents for the page | `[manual]` |
 | Headings and titles describe their content to someone who cannot see the layout | `[manual]` |
-
-## Questions for the research report
-
-- Does a shared layout own the landmarks, or does each page build its own?
-- Does the router set the title and move focus on navigation? (Focus is in `keyboard-and-focus.md`.)

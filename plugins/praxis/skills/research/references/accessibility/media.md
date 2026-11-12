@@ -44,16 +44,6 @@ Read this when the feature plays, records, streams, or embeds video or audio, or
 **Live captioning**
 - 1.2.4 requires captions for live audio in synchronized media. Options are a human captioner (CART), automatic captions, or a hybrid, with human review recommended. Push live text into an `aria-live="polite"` container.
 
-## Common failures
-
-- Prerecorded video with no captions, or captions never reviewed.
-- Visual-only information with no description.
-- Custom player whose controls are `div`s with no keyboard support.
-- Volume slider or seek bar unusable by keyboard.
-- Autoplay with no control.
-- Audio-only content with no transcript.
-- Captions more than about 2 seconds out of sync, or speakers not identified.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -65,8 +55,3 @@ Read this when the feature plays, records, streams, or embeds video or audio, or
 | Caption text is accurate, in sync, and names speakers | `[manual]` |
 | Audio description conveys the visual information a listener needs | `[manual]` |
 | A screen reader announces player state changes | `[manual]` |
-
-## Questions for the research report
-
-- Who creates and reviews captions, transcripts, and descriptions, and is that in scope for the feature?
-- Is the player native, a library, or custom, and which of its controls are keyboard-operable today?

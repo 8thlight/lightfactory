@@ -59,12 +59,16 @@ Check for research artifact:
 Glob: .light/sessions/*-research.md
 ```
 
-If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section and read [accessibility.md](references/accessibility.md) before step 3.
+If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section.
 
 If no research artifact, create an inline summary (condensed):
 - Identify relevant files
 - Note existing patterns
 - List integration points
+
+### 1b. Accessibility (UI work)
+
+If the request, the research artifact, or the files in scope mention a page, form, screen, component, modal, dialog, or styles, read [accessibility.md](references/accessibility.md) now. It says where the requirements come from and how they become criteria in step 3. Skip this step only when none of those words apply, and say so under Constraints.
 
 ### 2. Define Plan Scope
 
@@ -187,29 +191,7 @@ What would you like to do?
 
 ## Test Specifications at Boundaries
 
-Test specs in the plan MUST be behavioral descriptions, not tool-specific code. The agents executing `/implement` will consult the project's CLAUDE.md for testing tools and patterns.
-
-### L3 Core Tests (Property/Invariant)
-
-Describe invariant properties that must hold:
-- **Good:** "Splitting a total into N parts preserves the total"
-- **Bad:** Code snippet using a specific testing library
-
-### L3 Feature Tests (Behavioral)
-
-Describe behavior at the use case boundary:
-- **Good:** "Creating an order returns success with an order ID and correct total"
-- **Bad:** `expect(mockRepository.create).toHaveBeenCalledWith(...)`
-
-### L4 HTTP Tests (Contract)
-
-Describe the HTTP contract:
-- **Good:** "POST /orders returns 201 with `{ id, total }` on success, 400 with `{ error }` on validation failure"
-- **Bad:** Testing internal handler implementation details
-
-See [template.md](references/template.md) for detailed guidelines.
-
-For detailed L3/L4 testing guidelines including property-based tests and architectural anti-patterns, see [boundary-testing.md](../tdd/references/boundary-testing.md).
+Test specs in the plan MUST be behavioral descriptions, not tool-specific code. The agents executing `/implement` will consult the project's CLAUDE.md for testing tools and patterns. Good and bad examples for each layer (L3 Core, L3 Feature, L4 HTTP) are in [test-specifications.md](references/test-specifications.md).
 
 ## Agent Context Blocks
 

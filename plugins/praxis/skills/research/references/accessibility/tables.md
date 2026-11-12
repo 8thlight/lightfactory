@@ -13,6 +13,7 @@ Read this when the feature displays tabular data, adds sorting, or adds a grid w
 ## Requirements
 
 **Simple data tables**
+- Tabular data is marked up as a `<table>`, or has equivalent table roles on every part, not a bare `div` grid.
 - `<caption>` is the table's name and is the first child of `<table>`.
 - Header cells are `<th>`, never styled `<td>`. Use `scope="col"` and `scope="row"` explicitly, even with one header row.
 - `thead`, `tbody`, and `tfoot` carry no accessibility meaning. They are for styling and print.
@@ -35,16 +36,6 @@ Read this when the feature displays tabular data, adds sorting, or adds a grid w
 - Stacked cards: each cell shows its header. Changing `display` on table elements can drop table semantics, so restore them with explicit roles and test with a screen reader. `display: none` on `thead` hides headers from screen readers too.
 - Priority columns: hide with `display: none`, which also removes them for assistive technology. Never use `aria-hidden` alone.
 
-## Common failures
-
-- A `div` grid with no table roles.
-- Header cells that are `td`s, or `th`s with no `scope`.
-- No caption or accessible name.
-- Sort state shown only by an icon.
-- `role="grid"` on a read-only table.
-- Row actions named only "Edit" or "Delete".
-- A scrollable wrapper keyboard users cannot focus.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -57,8 +48,3 @@ Read this when the feature displays tabular data, adds sorting, or adds a grid w
 | A screen reader reads each cell with its row and column header | `[manual]` |
 | Sorting is announced by a screen reader | `[manual]` |
 | The table is usable at 400% zoom without losing headers | `[manual]` |
-
-## Questions for the research report
-
-- Does the existing grid component render semantic table markup, or only look like one?
-- Does the feature need only display, or also sort, select, or edit?

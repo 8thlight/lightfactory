@@ -44,17 +44,6 @@ WCAG does not require honoring these queries as such, but they are the practical
 - **Reduced transparency:** give translucent and frosted backgrounds a solid fallback.
 - Handle combinations, such as dark with more contrast.
 
-## Common failures
-
-- Focus outline removed with no replacement.
-- A sticky header that covers the focused field.
-- Meaning carried by color alone, in status text, errors, links, or charts.
-- Dark theme made by inversion with ratios never re-checked.
-- Icon buttons smaller than 24 px with no spacing.
-- Fixed-height text boxes that clip under text spacing overrides.
-- Layout that scrolls sideways at 400% zoom.
-- Animation that ignores the reduced-motion setting.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -68,8 +57,3 @@ WCAG does not require honoring these queries as such, but they are the practical
 | With text spacing overrides applied, no content is clipped or lost | `[manual]` |
 | At 400% zoom (320 CSS px), content reflows without horizontal scrolling | `[manual]` |
 | In a forced-colors theme, every control and icon is still visible | `[manual]` |
-
-## Questions for the research report
-
-- Does the project have a token or theme system that already encodes contrast, and was it checked?
-- Which preference queries does the codebase already honor?

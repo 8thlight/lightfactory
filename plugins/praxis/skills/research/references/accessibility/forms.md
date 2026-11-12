@@ -48,18 +48,6 @@ Read this when the feature has inputs, selects, checkboxes, radios, search field
 - Use `<search>`, or `<form role="search">` where `<search>` is unavailable. Do not also name the inner form, which would create a second landmark.
 - The input has a label (visually hidden is acceptable). A live region announces the result count, debounced to 500 ms or more for live search.
 
-## Common failures
-
-- Placeholder as the only label.
-- Error text not linked with `aria-describedby`, or no `aria-invalid`.
-- Radio or checkbox groups without `fieldset` and `legend`.
-- Styled custom inputs that lose native keyboard behavior.
-- Submit control built from a `div` or `a`.
-- No focus move after failed validation, so the user never learns errors exist.
-- Missing `autocomplete` on identity and payment fields.
-- Required state shown only by an asterisk's color.
-- Tab order broken by CSS positioning that differs from DOM order.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -72,8 +60,3 @@ Read this when the feature has inputs, selects, checkboxes, radios, search field
 | Error text says what is wrong and how to fix it | `[manual]` |
 | Errors and step changes are announced by a screen reader | `[manual]` |
 | Label wording is clear to a first-time user | `[manual]` |
-
-## Questions for the research report
-
-- Is there one shared field component, or does each form wire its own labels and errors?
-- What does the project already use to test forms (role-based queries, axe, Playwright)?

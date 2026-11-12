@@ -29,14 +29,6 @@ Read this when the feature ships in more than one language, supports a right-to-
 - A right-to-left label with a left-to-right value needs `dir="ltr"` on the input.
 - `type="email"`, `type="url"`, and `type="tel"` fields are always left-to-right.
 
-## Common failures
-
-- `lang` hard-coded to `en` while the content is not English.
-- Mixed-language text read in the wrong accent.
-- A right-to-left locale that keeps a left-to-right layout, with icons not mirrored.
-- Physical CSS properties that break the layout when direction changes.
-- Mixed-direction text that reorders punctuation or numbers.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -47,7 +39,3 @@ Read this when the feature ships in more than one language, supports a right-to-
 | Mixed-direction text and form values render in the correct order | `[manual]` |
 | A screen reader pronounces each language correctly | `[manual]` |
 | Directional icons are mirrored and non-directional ones are not | `[manual]` |
-
-## Questions for the research report
-
-- Which locales are supported or planned, and is any right-to-left? If only one language, record "not applicable" for direction and keep the `lang` check.

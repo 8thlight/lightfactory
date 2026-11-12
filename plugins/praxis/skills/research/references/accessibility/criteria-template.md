@@ -74,9 +74,3 @@ Existing component changed:
   layout or order        -> reading order and focus order
   dependency update      -> regression scan
 ```
-
-## Questions for the research report
-
-- Which target WCAG level and version does the project state, and where? If none is stated, the target is WCAG 2.2 AA. Mark it as the default.
-- Which of axe, Playwright, or Testing Library does the project already run, and in which tier?
-- Which criteria in this feature are `[manual]`?

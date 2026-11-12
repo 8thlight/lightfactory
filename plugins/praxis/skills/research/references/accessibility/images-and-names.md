@@ -55,15 +55,6 @@ Read this when the feature shows images, icons, SVGs, or icon-only controls, or 
 | Name that does not contain the visible text | visible "Settings", `aria-label="Manage your profile"` |
 | Raw or unloaded data | `[object Object]`, `undefined`, a "0 items" name where zero makes no sense |
 
-## Common failures
-
-- Missing `alt`, so the screen reader reads the filename.
-- Decorative images with descriptive alt text.
-- Icon-only buttons with no name.
-- SVGs with neither a title nor `aria-hidden`.
-- Icon fonts announced as private-use characters.
-- Names built from data fields that can be empty.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -75,8 +66,3 @@ Read this when the feature shows images, icons, SVGs, or icon-only controls, or 
 | Each control's name contains its visible text | `[auto]` |
 | Alt text conveys the image's purpose in this context | `[manual]` |
 | Long descriptions for complex images say what a sighted user takes from them | `[manual]` |
-
-## Questions for the research report
-
-- Where do image and control names come from, and what happens when the source is empty?
-- Does the project's image or icon component enforce an alt or label?

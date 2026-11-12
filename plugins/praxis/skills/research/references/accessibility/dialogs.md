@@ -37,16 +37,6 @@ Do not always focus the Close button.
 - Confirmations use `role="alertdialog"`.
 - The trigger is a `<button>`. Mark a dialog modal only when code blocks the outside content and styling obscures it.
 
-## Common failures
-
-- Focus stays on the trigger or the page behind after open.
-- Focus is lost to the top of the page after close.
-- Tab reaches elements behind the overlay.
-- Escape does nothing, or closes without returning focus.
-- Dialog built from `div`s with no role or name.
-- H1 inside the dialog.
-- `aria-describedby` pointing at a complex body.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -58,8 +48,3 @@ Do not always focus the Close button.
 | The dialog has an accessible name from its title | `[auto]` |
 | The page behind is not reachable by keyboard or screen reader | `[manual]` |
 | A screen reader announces the dialog name and role on open | `[manual]` |
-
-## Questions for the research report
-
-- Does the project use native `<dialog>` or a library, and does that library already handle focus return and inertness?
-- Are there existing destructive confirmations that set a precedent for the focus target?

@@ -52,15 +52,6 @@ A usable error message names the field and the exact problem, says why, gives a 
 - Moving or blinking content that lasts over 5 seconds has a pause or stop control (2.2.2 A). Nothing flashes more than three times a second (2.3.1 A).
 - Reading level is advisory (3.1.5 AAA). Consumer content aims at grade 8 or below.
 
-## Common failures
-
-- Paste disabled on a password field.
-- Transcription-only CAPTCHA.
-- The same address entered on two steps.
-- Session ends with no warning.
-- Error shown only as a red border.
-- "Search" on one page and "Find" on another for the same control.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -71,7 +62,3 @@ A usable error message names the field and the exact problem, says why, gives a 
 | Each error states the problem in text and how to fix it | `[manual]` |
 | Wording is plain, consistent, and free of unexplained jargon | `[manual]` |
 | A person can complete the task without recalling data from another screen | `[manual]` |
-
-## Questions for the research report
-
-- Does the feature touch authentication, a timeout, or a multi-step form? If none, record "not applicable" for this file.

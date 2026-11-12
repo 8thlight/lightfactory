@@ -35,15 +35,6 @@ If unsure, use polite. Assertive interrupts the screen reader.
 - For loading over about 2 seconds, announce that loading started and finished. For progress, announce milestones, not every percent.
 - For chat or streaming output, do not make the streaming transcript live. Keep it `aria-live="off"` and announce each completed turn through a small visually hidden status region outside it.
 
-## Common failures
-
-- Content injected with a freshly created live region.
-- Assertive used for routine updates.
-- Focus moved to a toast.
-- A region removed from the accessibility tree by `display: none`.
-- Every keystroke or percent announced.
-- Streaming text in a live log that re-reads whole entries.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -54,8 +45,3 @@ If unsure, use polite. Assertive interrupts the screen reader.
 | Rapid updates produce one announcement after the debounce | `[auto]` |
 | A screen reader announces the message once, at the right time, without interrupting | `[manual]` |
 | Announcement wording is short and says what changed | `[manual]` |
-
-## Questions for the research report
-
-- Does an announcer already exist that the feature can reuse?
-- Which changes in the feature are results of a user action, and which arrive on their own?

@@ -58,16 +58,6 @@ A control can look small and still meet the size by padding its pressable area. 
 - VoiceOver does not run in the iOS Simulator. Test it on a device. Test TalkBack on an Android device too.
 - Component tests use role-and-name queries from the project's test library. End-to-end tools match on the accessible label.
 
-## Common failures
-
-- Icon-only buttons with no name.
-- Pressable areas under the platform minimum.
-- A swipe or long press as the only way to do something.
-- A list row that takes three swipes to read one phrase.
-- A custom modal that lets the screen reader reach the screen behind it.
-- Focus left behind after a navigation.
-- Orientation locked with no reason.
-
 ## Criteria wording
 
 | Criterion | Check |
@@ -79,8 +69,3 @@ A control can look small and still meet the size by padding its pressable area. 
 | After a navigation or modal opens, the screen reader lands on the new content | `[manual]` |
 | A screen reader on a physical device, VoiceOver and TalkBack, completes the main task | `[manual]` |
 | The screen works in both orientations | `[manual]` |
-
-## Questions for the research report
-
-- Which platform and UI toolkit does the feature use, and does the project wrap its pressable components?
-- Is there a device lab or only simulators, since VoiceOver needs a device?

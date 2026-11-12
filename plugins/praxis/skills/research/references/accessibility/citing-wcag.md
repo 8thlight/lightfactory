@@ -42,8 +42,3 @@ When sources disagree, the higher tier wins. State both and say which you follow
 - "We will add accessibility at the end." Upstream calls retrofitting far more expensive because it can force changes to DOM order, state, and structure. Its "10 to 100 times" figure is the upstream's own estimate and is not sourced there, so do not repeat it as a fact.
 - "Disabled controls need no accessibility." They are exempt from contrast, but users still need to know they exist and why they are disabled.
 - "We target mobile, so WCAG does not apply." It applies to all web content, and touch target size, orientation, and gesture alternatives matter more there.
-
-## Questions for the research report
-
-- Which WCAG version and level does the project, contract, or law require, and where is that written down?
-- Which test tool version is installed, and which criteria does it have no rule for?
