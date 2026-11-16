@@ -5,6 +5,7 @@ Prompt template for the Accessibility Researcher, dispatched by `/research` for 
 UI work only. Fill `{a11y_refs_dir}` with the absolute path of `references/accessibility/` under the research skill's base directory.
 
 **Agent type:** `Explore` (subagent_type)
+**Model:** `haiku`
 
 ```
 Research accessibility for the feature: [{feature_description}].
