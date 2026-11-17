@@ -20,6 +20,7 @@ Instructions:
 - If the folder is missing or no row matches a pattern, use your own knowledge, cite W3C APG or WCAG, and say in the report that no reference file existed
 - For a native or cross-platform mobile app, mobile.md holds only platform-neutral principles. Read that platform's accessibility documentation for property and role names, and say so in the report
 - Use the codebase context above for UI test tooling and target sources. Read only the UI files it names, for current accessibility patterns (semantic elements, roles, names, focus handling)
+- Report a gap in a shared component only if you confirmed it by reading how its rendered output is built (including what its library supplies). Otherwise tag the line `unverified, confirm in a test`
 - Target: use the WCAG version and level the project states (CLAUDE.md, linked docs, the ticket), and say where it came from. If none is stated, the target is WCAG 2.2 AA, marked as the default
 - Cite the file and the requirement behind each finding. Follow citing-wcag.md: no source, no claim, and cite the WCAG version the project is held to
 - Run no audits or scanners. Nothing is built at research time

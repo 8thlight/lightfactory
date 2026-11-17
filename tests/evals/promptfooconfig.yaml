@@ -65,6 +65,9 @@ tests:
         GIVEN: A project with multiple modules. Research scope implies at least 2 codebase areas and 1 web topic.
 
         TASK: research how to add a webhooks system — look at the existing event system and find best practices
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty.
     assert:
       - type: llm-rubric
         value: |
