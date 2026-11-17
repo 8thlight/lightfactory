@@ -221,7 +221,7 @@ functional:
       tooling Testing Library in component tests and Playwright journeys; requirements: error message
       associated with its field [auto], submit button operable by keyboard [auto], error announced
       clearly by a screen reader [manual]. The feature has a validation phase and a login form UI phase.
-    when: "draft .light/2026-11-09-add-login-form-research.md"
+    when: "plan tasks from .light/2026-11-09-add-login-form-research.md"
     then:
       - "Each [auto] requirement is an acceptance criterion in the test spec of the UI phase, at a named tier"
       - "The keyboard criterion is routed to the e2e-journey fragment or another browser tier"
@@ -274,7 +274,7 @@ functional:
       A research artifact whose ### Accessibility section says: Verdict Applies; target WCAG 2.2 AA stated in
       CLAUDE.md; tooling Testing Library in component tests, no browser runner; requirements: submit button has
       role button and accessible name "Place order" [auto], quantity field has a programmatic label [auto].
-    when: "draft .light/2026-11-09-add-checkout-button-research.md"
+    when: "plan tasks from .light/2026-11-09-add-checkout-button-research.md"
     then:
       - "Both requirements are acceptance criteria in the component-test phase's test spec"
       - "Neither is tagged [manual] and no e2e-journey tier is introduced"
@@ -287,7 +287,7 @@ functional:
     given: |
       A project with Testing Library component tests and a research artifact describing a checkout page
       with a "Place order" submit button and a quantity field.
-    when: "draft .light/2026-11-09-add-checkout-button-research.md"
+    when: "plan tasks from .light/2026-11-09-add-checkout-button-research.md"
     then:
       - "The Interface contract names the button by role and accessible name and the field by its label"
       - "The RED gate signature expects the missing role and name as the failure"
