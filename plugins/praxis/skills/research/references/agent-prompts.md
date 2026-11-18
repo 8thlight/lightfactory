@@ -5,6 +5,7 @@ Prompt templates for the two explorer types dispatched during research. The Acce
 ## Codebase Explorer
 
 **Agent type:** `Explore` (subagent_type)
+**Model:** `haiku`
 
 ```
 Investigate [{investigation_area}] in the codebase for the feature: [{feature_description}].
@@ -45,6 +46,7 @@ Report format:
 ## Web Researcher
 
 **Agent type:** `general-purpose` (subagent_type)
+**Model:** `haiku`
 
 ```
 Research [{research_topic}] for the feature: [{feature_description}].
