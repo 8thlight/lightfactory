@@ -596,7 +596,7 @@ tests:
         announced clearly by a screen reader [manual] (live-regions.md). The feature has a core
         validation phase and a login form UI phase.
 
-        TASK: draft .light/2026-11-09-add-login-form-research.md
+        TASK: plan tasks from .light/2026-11-09-add-login-form-research.md
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -688,7 +688,7 @@ tests:
         accessible name "Place order" [auto] (images-and-names.md); the quantity field has a
         programmatic label [auto] (forms.md).
 
-        TASK: draft .light/2026-11-09-add-checkout-button-research.md
+        TASK: plan tasks from .light/2026-11-09-add-checkout-button-research.md
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -711,7 +711,7 @@ tests:
         artifact exists at .light/2026-11-09-add-checkout-button-research.md describing a checkout page
         with a "Place order" submit button and a quantity field.
 
-        TASK: draft .light/2026-11-09-add-checkout-button-research.md
+        TASK: plan tasks from .light/2026-11-09-add-checkout-button-research.md
     assert:
       - type: llm-rubric
         value: |
