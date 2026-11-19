@@ -1,0 +1,41 @@
+# Accessibility
+
+How `/plan-tasks` turns accessibility into acceptance criteria for UI work. The criteria ride the existing chain: test spec, RED gate, VALIDATE, and the final plan check. No new agent or gate.
+
+## When It Applies
+
+- The research artifact's `### Accessibility` verdict says it applies.
+- With no research artifact, or one with no `### Accessibility` section, check the request and the files in scope for UI words (page, form, screen, component, modal) or UI files (components, templates, styles).
+- Otherwise it is not applicable. Write `Not applicable: {reason}` under `### Accessibility` and add no criteria.
+
+## Where the Requirements Come From
+
+- **Research artifact exists:** write criteria from its `### Accessibility` section. It carries each requirement tagged `[auto]` or `[manual]`, the baseline items that apply, the target, and the UI test tooling and tier. Baseline items are requirements, not background. Then, for each reference file the section cites, read only that file's `## Criteria wording` table (for example `grep -A 20 '^## Criteria wording' {file}`), under [INDEX.md](../../research/references/accessibility/INDEX.md)'s folder. Each `[auto]` row that applies to the feature becomes a criterion, worded as the row words it. Each `[manual]` row that applies goes under Constraints. The research section tells you which rows apply and what the codebase already does. Do not read the rest of the file.
+- **Research skipped, or no `### Accessibility` section:** read [INDEX.md](../../research/references/accessibility/INDEX.md) and use its "Pattern in scope" table. For every file whose row matches, not only the closest one, read its `## Requirements` (or topic) sections and its `## Criteria wording` table, one file per Read call, and skip `## What to look for in the codebase`. A form also matches `live-regions.md` when it shows errors or results, and `visual-and-motion.md` when it adds styles or controls. Cite only files you read. Also read `criteria-template.md` whole, and `citing-wcag.md` when a criterion cites a standard. Do not restate the pattern list here.
+- **A shared component blocks a requirement and the ticket forbids changing it:** propose the smallest local alternative first (a status region inside the new component, a name set on the new element) as the recommended option, and record the shared gap as a separate issue. Offer 'accept the gap' second, and only when no local alternative exists.
+- **No row matches:** use your own knowledge, cite W3C APG or WCAG, and say in the plan that no reference file existed. For a native or cross-platform mobile app, `mobile.md` holds only platform-neutral principles. Read that platform's accessibility documentation for property and role names, and note it in the plan.
+
+## Target
+
+Use the research target. With no research, use the level or version the project states (CLAUDE.md, a linked doc, the ticket, or a law it answers to), else WCAG 2.2 AA. Say which in `### Accessibility`, and mark the default.
+
+## Writing the Criteria
+
+In step 3, write them into `## Acceptance Criteria` before running `technical-project-manager`.
+
+- **Split** a requirement line that holds several behaviours into one criterion per behaviour before routing. Each gets its own RED signature.
+- **Route** each `[auto]` criterion to the test spec of the phase that delivers the UI it covers, at the lowest tier where the project already runs UI tests (Phase tiers in SKILL.md). Name and role checks run wherever those tests run, such as a component test with Testing Library. Keyboard paths, focus movement, and whole-page automated scans need a browser, so they go in the `e2e-journey` fragment for that surface. Database and repository phases hold no UI. A criterion with no runnable tier in this project (for example a keyboard path where the browser tier needs a backend) becomes `[manual]` and goes under Constraints. Do not drop it. Only a project with no UI test setup makes every criterion `[manual]`.
+- **Describe behavior, not tool calls:** "no automated accessibility violations on the surface", "focus returns to the trigger after Escape".
+- **RED gate signature:** for each routed criterion, write what a correct failure looks like, following "Authoring the RED gate signature" in SKILL.md. Examples: no element with role `button` and name "Place order"; after Escape, focus is not on the trigger; the scan lists a violation on the form. A setup error or a timeout on a different step is a wrong-reason RED. This is how `agent-test` gets the guidance.
+- **RED gate profile:** a project that wants stricter accessibility RED rules adds a `RED gate` section to a UI rule file under `.claude/rules/`. The existing lookup copies it.
+- **`[manual]` checks** are optional. List them under Constraints → Accessibility only, in the format in `criteria-template.md`. They are not acceptance criteria or risk rows, and `/implement` does not carry them.
+
+## Ordering with the TPM
+
+The TPM reads the draft's acceptance criteria. Do not add a Risks & Mitigations row for a requirement that is already a criterion. When merging the TPM's in-repo mitigations into the criteria, skip any that duplicate one. In the TPM's prompt, say that accessibility requirements are already criteria and `[manual]` checks are optional, so it adds no accessibility risk row and lists no manual checks as mitigations.
+
+## Anti-Patterns to Avoid
+
+- **Don't route a criterion to a phase with no UI**
+- **Don't turn a `[manual]` check into an acceptance criterion**
+- **Don't add a criterion the TPM also lists as a mitigation**

@@ -19,9 +19,10 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Check | Type | Assertion |
 |-------|------|-----------|
 | Artifact path | `file-exists` | `.light/\d{4}-\d{2}-\d{2}-[a-z0-9-]+-research.md` |
-| Sections | `section-present` | `^## Summary`, `^## Relevant Files`, `^## Existing Patterns`, `^### Reuse candidates`, `^## Web Research`, `^## Open Questions`, `^## Next Steps` |
+| Sections | `section-present` | `^## Summary`, `^## Relevant Files`, `^## Existing Patterns`, `^### Reuse candidates`, `^### Accessibility`, `^## Web Research`, `^## Open Questions`, `^## Next Steps` |
 | Confidence levels | `string-match` | Each web finding line matches `\*\*(High\|Medium\|Low)\*\*` |
 | Line count | `quantitative` | `150 <= line_count <= 250` |
+| Accessibility section | `string-match` | `^### Accessibility` always present: full section (verdict, target, tooling, patterns, tagged requirements) for UI work, one-line `Not applicable: {reason}` for non-UI |
 
 ## plan-tasks
 
@@ -31,6 +32,7 @@ Grading rubric for Category A skills. All checks are automatable via filesystem 
 | Sections | `section-present` | `^## Goal`, `^## Acceptance Criteria`, `^## Files to Create`, `^## Files to Modify`, `^## Implementation Phases`, `^## Rollout Phases`, `^## Risks & Mitigations`, `^## Constraints`, `^## Out of Scope` |
 | Agent Context blocks | `string-match` | `^#### Agent Context` present; each block contains `Files to`, `Test spec`, `Test command`, `RED gate`, `GREEN gate`, `Architectural constraints` |
 | Tracker fallback | `section-present` | `^## Inline Task Graph` (only when task tracker unavailable) |
+| Accessibility section | `section-present` | `^### Accessibility` (only for UI work; omitted entirely for non-UI plans, with no accessibility criteria) |
 | Line count | `quantitative` | `150 <= line_count <= 300` |
 
 ## implement

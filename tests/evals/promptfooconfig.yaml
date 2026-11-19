@@ -29,6 +29,10 @@ tests:
         GIVEN: A project with a .light/ directory. No prior research artifacts exist.
 
         TASK: research how authentication is implemented in this codebase before I add OAuth support
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: ".light/"
@@ -42,6 +46,8 @@ tests:
         value: "## Existing Patterns"
       - type: icontains
         value: "### Reuse candidates"
+      - type: icontains
+        value: "### Accessibility"
       - type: icontains
         value: "## Web Research"
       - type: icontains
@@ -59,6 +65,9 @@ tests:
         GIVEN: A project with multiple modules. Research scope implies at least 2 codebase areas and 1 web topic.
 
         TASK: research how to add a webhooks system — look at the existing event system and find best practices
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty.
     assert:
       - type: llm-rubric
         value: |
@@ -98,6 +107,10 @@ tests:
         GIVEN: A project where the feature involves an external library or pattern not present in the codebase.
 
         TASK: research best practices for implementing rate limiting before I add it to the API
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
     assert:
       - type: icontains
         value: "## Web Research"
@@ -186,6 +199,91 @@ tests:
             3 = Clean stop — no further tool calls after next-steps output was presented
 
           Return: PASS or FAIL, total score (e.g. "10/12"), one sentence per dimension.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+  # research-08: UI request records an Accessibility section with matched reference files
+  - description: "[research-08] UI request: Accessibility section applies, cites matching reference files"
+    vars:
+      prompt: |
+        GIVEN: A web app with a React frontend and Testing Library component tests. No accessibility
+        target is stated in CLAUDE.md or any linked doc.
+
+        TASK: research adding a login form with email, password, and an error message on failed sign-in
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: icontains
+        value: "forms.md"
+      - type: icontains
+        value: "cognitive.md"
+      - type: icontains
+        value: "keyboard-and-focus.md"
+      - type: llm-rubric
+        value: |
+          Evaluate the research output's `### Accessibility` section for a UI request.
+          PASS if all of the following hold:
+          - The verdict says accessibility applies.
+          - The target is WCAG 2.2 AA and is marked as the default because none was stated.
+          - The existing UI test tooling (Testing Library) and its tier are recorded.
+          - Requirements are tagged [auto] or [manual] and cite a reference file.
+          - An Accessibility Researcher was dispatched in the same parallel dispatch as the other agents.
+          FAIL if any item is missing.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+  # research-09: Pattern with no reference file falls back to own knowledge and says so
+  - description: "[research-09] Pattern with no reference file: report says so and cites W3C APG or WCAG"
+    vars:
+      prompt: |
+        GIVEN: A web app with a React frontend. No accessibility target is stated.
+
+        TASK: research adding a rich text editor to the comment box
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: llm-rubric
+        value: |
+          The accessibility reference folder has no file for a rich text editor.
+          PASS if the Accessibility section says no reference file existed for the editor pattern, cites
+          W3C APG or WCAG for its requirements, and still gives a verdict of applies.
+          FAIL if it cites a reference file for the editor as though one existed, or cites no standard.
+    metadata:
+      skill: research
+      grading: llm-judge
+
+  # research-10: Non-UI request gets a one-line verdict and no accessibility agent
+  - description: "[research-10] Non-UI request: one-line Not applicable verdict, no accessibility agent"
+    vars:
+      prompt: |
+        GIVEN: A backend service with no UI files. A nightly job writes order data to storage.
+
+        TASK: research adding a CSV export job for order data
+
+        INSTRUCTIONS FOR THIS RUN: Treat the project described above as real and work from that
+        description, even though the working directory is empty. Do not run agents in the background.
+        Wait for every agent to finish, write the research artifact, and then reply.
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: icontains
+        value: "Not applicable"
+      - type: llm-rubric
+        value: |
+          PASS if the `### Accessibility` section is a single line of the form "Not applicable: {reason}",
+          has no target, tooling, patterns, or requirements lines, and no Accessibility Researcher agent
+          was dispatched.
+          FAIL if an accessibility agent was dispatched or the section carries more than the one-line verdict.
     metadata:
       skill: research
       grading: llm-judge
@@ -481,6 +579,254 @@ tests:
             3 = Fragment 1's gate names the testid/locator expected to time out; fragment 2's gate predicts every earlier stage (including fragment 1's) passing and its own new stage failing on a named testid/locator; preflight lists no service, or states none is needed because webServer is runner-managed
 
           Return: PASS or FAIL, total score (e.g. "12/12"), one sentence per dimension.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-10: UI plan routes criteria, lists manual checks as optional, no duplicates
+  - description: "[plan-tasks-10] UI plan: criteria routed to a tier, manual check optional, no duplicate criteria"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. A research artifact exists at
+        .light/sessions/2026-11-09-add-login-form-research.md. The working directory starts empty, so
+        before you plan, write the artifact below to that path exactly as given. It stands in for a
+        research session that already ran. Then run the task. Its ### Accessibility section says:
+        Verdict: Applies. Target: default: WCAG 2.2 AA (none stated). UI test tooling: Testing Library
+        in component tests, Playwright journeys. Patterns in scope: forms, keyboard and focus.
+        Requirements: the error message is associated with its field [auto] (forms.md); the submit
+        button is reachable and operable by keyboard [auto] (keyboard-and-focus.md); the error is
+        announced clearly by a screen reader [manual] (live-regions.md). The feature has a core
+        validation phase and a login form UI phase.
+
+        ARTIFACT:
+        # Add login form - Research
+
+        **Date:** 2026-11-09
+        **Status:** Research Complete
+        **Depth:** Standard
+
+        ## Summary
+
+        The app has no login form. Credential checking exists as a pure function and a use case. This
+        feature adds a validation phase for the form fields and a login form UI phase.
+
+        ## Relevant Files
+
+        ### Core Layer (Pure Functions)
+        - `src/core/auth/validate-credentials.ts` - checks email format and password length, returns a result object
+
+        ### Features Layer (Use Cases)
+        - `src/features/auth/log-in.ts` - calls the credential check and the session repository
+
+        ### UI
+        - `src/ui/forms/SignUpForm.tsx` - existing form to follow for field layout and error display
+
+        ### Tests
+        - `tests/unit/core/auth/validate-credentials.test.ts` - unit test pattern
+        - `tests/component/SignUpForm.test.tsx` - Testing Library component test pattern
+        - `tests/e2e/sign-up.spec.ts` - Playwright journey pattern
+
+        ## Existing Patterns
+
+        ### Pattern 1: Result object validation
+        **Used in:** `src/core/auth/validate-credentials.ts`
+        **How it works:** returns `{ ok, errors }` and never throws
+        **Applicable to new feature:** yes, the form shows `errors` next to each field
+
+        ### Reuse candidates
+
+        None found.
+
+        ## Constraints & Considerations
+
+        - Test commands: `npm test` for unit and component tests, `npx playwright test` for journeys *(codebase)*
+
+        ### Accessibility
+
+        **Verdict:** Applies
+        **Target:** default: WCAG 2.2 AA (none stated)
+        **UI test tooling:** Testing Library in component tests, Playwright journeys
+        **Patterns in scope:** forms, keyboard and focus
+
+        **Requirements:**
+        - forms: the error message is associated with its field `[auto]` *(forms.md)*
+        - keyboard and focus: the submit button is reachable and operable by keyboard `[auto]` *(keyboard-and-focus.md)*
+        - live regions: the error is announced clearly by a screen reader `[manual]` *(live-regions.md)*
+
+        ## Open Questions
+
+        - None.
+
+        TASK: plan tasks from .light/sessions/2026-11-09-add-login-form-research.md
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: llm-rubric
+        value: |
+          You are evaluating the accessibility handling in a plan.
+          PASS if all of the following hold:
+          - Each [auto] requirement is an acceptance criterion in the test spec of the UI phase, at a named tier.
+          - The keyboard criterion is in the e2e-journey fragment or another browser tier.
+          - The [manual] announcement check appears under Constraints, in the `### Accessibility` section, as an optional check.
+          - The [manual] check is not an acceptance criterion and not a row in Risks & Mitigations.
+          - No requirement appears twice in Acceptance Criteria.
+          FAIL if any item is missing.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-11: No stated target means WCAG 2.2 AA, marked as the default
+  - description: "[plan-tasks-11] No stated target: plan states WCAG 2.2 AA and marks it as the default"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. A research artifact exists at
+        .light/2026-11-09-add-login-form-research.md. Its ### Accessibility section says:
+        Verdict: Applies. Target: default: WCAG 2.2 AA (none stated). UI test tooling: Testing Library
+        in component tests. Requirements: every form field has a programmatic label [auto] (forms.md).
+
+        TASK: draft .light/2026-11-09-add-login-form-research.md
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: regex
+        value: "WCAG 2\\.2"
+      - type: icontains
+        value: "default"
+    metadata:
+      skill: plan-tasks
+      grading: code
+
+  # plan-tasks-12: Non-UI plan omits the Accessibility heading and adds no criteria
+  - description: "[plan-tasks-12] Non-UI plan: no Accessibility heading, no accessibility criteria"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. A research artifact exists at
+        .light/2026-11-09-add-csv-export-research.md. Its ### Accessibility section says:
+        Not applicable: backend batch job with no UI.
+
+        TASK: draft .light/2026-11-09-add-csv-export-research.md
+    assert:
+      - type: not-icontains
+        value: "### Accessibility"
+      - type: llm-rubric
+        value: |
+          PASS if the plan has no accessibility acceptance criteria, no accessibility rows in Risks &
+          Mitigations, and no accessibility test specs or RED gate signatures.
+          FAIL if any accessibility criterion, risk row, or test appears.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-13: Research skipped, plan-tasks runs the UI check inline
+  - description: "[plan-tasks-13] Research skipped: plan runs the UI check inline and adds Accessibility"
+    vars:
+      prompt: |
+        GIVEN: A web app with a React frontend and Testing Library component tests. No research
+        artifact exists. No accessibility target is stated anywhere.
+
+        TASK: plan the implementation of a login form with email, password, and an error message
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: llm-rubric
+        value: |
+          PASS if the plan has an `### Accessibility` section that identifies the login form as UI work
+          without a research artifact, states WCAG 2.2 AA marked as the default, and turns at least one
+          accessibility requirement into an acceptance criterion in a UI phase's test spec.
+          FAIL if the section is missing, or the plan treats the request as non-UI.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-14: Testing Library only, name and role criteria stay [auto] in the component phase
+  - description: "[plan-tasks-14] Testing Library, no browser runner: name and role criteria are [auto] in the component phase"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory. A research artifact exists at
+        .light/2026-11-09-add-checkout-button-research.md. Its ### Accessibility section says:
+        Verdict: Applies. Target: WCAG 2.2 AA, stated in CLAUDE.md. UI test tooling: Testing Library
+        in component tests, no browser runner. Requirements: the submit button has role button and
+        accessible name "Place order" [auto] (images-and-names.md); the quantity field has a
+        programmatic label [auto] (forms.md).
+
+        TASK: plan tasks from .light/2026-11-09-add-checkout-button-research.md
+    assert:
+      - type: icontains
+        value: "### Accessibility"
+      - type: llm-rubric
+        value: |
+          PASS if both requirements are acceptance criteria in the component-test phase's test spec,
+          neither is tagged [manual], no e2e-journey tier is introduced, and the phase's RED gate signature
+          names the missing role and accessible name (or label) as the expected failure.
+          FAIL if either criterion is [manual], is routed to a browser tier, or the RED gate signature
+          does not name a role or accessible name.
+    metadata:
+      skill: plan-tasks
+      grading: llm-judge
+
+  # plan-tasks-15: Interface contract is role and accessible name, not a testid
+  - description: "[plan-tasks-15] UI phase interface contract and RED gate use role and accessible name, not testids"
+    vars:
+      prompt: |
+        GIVEN: A project with a .light/ directory and Testing Library component tests. A research
+        artifact exists at .light/sessions/2026-11-09-add-checkout-button-research.md describing a
+        checkout page with a "Place order" submit button and a quantity field. The working directory
+        starts empty, so before you plan, write the artifact below to that path exactly as given. It
+        stands in for a research session that already ran. Then run the task.
+
+        ARTIFACT:
+        # Add checkout button - Research
+
+        **Date:** 2026-11-09
+        **Status:** Research Complete
+        **Depth:** Standard
+
+        ## Summary
+
+        The checkout page shows an order summary and no way to submit. This feature adds a quantity
+        field and a "Place order" submit button that creates the order through the existing use case.
+
+        ## Relevant Files
+
+        ### Features Layer (Use Cases)
+        - `src/features/orders/create-order.ts` - creates an order from a cart and a quantity
+
+        ### UI
+        - `src/ui/checkout/CheckoutPage.tsx` - renders the order summary, the new form goes here
+        - `src/ui/forms/SignUpForm.tsx` - existing form to follow for field layout
+
+        ### Tests
+        - `tests/component/CheckoutPage.test.tsx` - Testing Library component test pattern
+        - `tests/unit/features/orders/create-order.test.ts` - use case test pattern
+
+        ## Existing Patterns
+
+        ### Pattern 1: Controlled form with a submit handler
+        **Used in:** `src/ui/forms/SignUpForm.tsx`
+        **How it works:** local state per field, one `onSubmit` that calls a use case
+        **Applicable to new feature:** yes
+
+        ### Reuse candidates
+
+        None found.
+
+        ## Constraints & Considerations
+
+        - Test commands: `npm test` runs unit and component tests with Testing Library and jsdom. There is no browser test runner *(codebase)*
+        - The quantity must be a whole number of at least 1 *(codebase)*
+
+        ## Open Questions
+
+        - None.
+
+        TASK: plan tasks from .light/sessions/2026-11-09-add-checkout-button-research.md
+    assert:
+      - type: llm-rubric
+        value: |
+          PASS if the UI phase's Interface contract names the submit button by role and accessible name
+          (for example button "Place order") and the quantity field by its label, and its RED gate
+          signature expects the missing role and name as the failure.
+          FAIL if the contract or RED gate names a testid for an element that has a role, or names no locator.
     metadata:
       skill: plan-tasks
       grading: llm-judge

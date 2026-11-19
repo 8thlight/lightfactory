@@ -1,6 +1,6 @@
 # Agent Prompt Templates
 
-Prompt templates for the two agent types dispatched during research. Use these as the basis for Task tool prompts, filling in the bracketed placeholders.
+Prompt templates for the two explorer types dispatched during research. The Accessibility Researcher's template is in [agent-prompts-accessibility.md](agent-prompts-accessibility.md), read for UI work only. Use these as the basis for Task tool prompts, filling in the bracketed placeholders.
 
 ## Codebase Explorer
 
@@ -106,3 +106,4 @@ When combining codebase and web findings during Step 4 (Synthesize):
 - **Promote/Demote:** Low-confidence web findings corroborated by codebase evidence become Medium or High. High-confidence web findings contradicted by codebase constraints get flagged as contested.
 - **Open Questions:** Low-confidence findings with no codebase corroboration become Open Questions for the user to resolve
 - **Reuse:** Merge every explorer's reuse candidates into the template's `### Reuse candidates`, one entry per entry point. `/plan-tasks` requires each phase that mirrors one to call it or say why not, so don't drop a candidate because it looks awkward to call — say why in **Call it, or why not**
+- **Accessibility:** copy the accessibility agent's report into the template's `### Accessibility` as returned. Edit only the Target line, and only when you read a source the agent did not. Where a codebase explorer found UI test tooling the accessibility agent missed, add it.

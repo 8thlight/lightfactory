@@ -59,12 +59,16 @@ Check for research artifact:
 Glob: .light/sessions/*-research.md
 ```
 
-If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving).
+If research artifact exists, read it and summarize findings inline in the plan. The plan should be self-contained — a reader should not need to go back to the research artifact. Carry its `### Reuse candidates` into planning — see [rollout-and-reuse.md](references/rollout-and-reuse.md#reuse-before-re-deriving). For UI work, also carry its `### Accessibility` section.
 
 If no research artifact, create an inline summary (condensed):
 - Identify relevant files
 - Note existing patterns
 - List integration points
+
+### 1b. Accessibility (UI work)
+
+If the request, the research artifact, or the files in scope mention a page, form, screen, component, modal, dialog, or styles, read [accessibility.md](references/accessibility.md) now. It says where the requirements come from and how they become criteria in step 3. Skip this step only when none of those words apply, and say so under Constraints.
 
 ### 2. Define Plan Scope
 
@@ -93,7 +97,7 @@ Write the plan to `.light/sessions/{topic}-plan.md`. This is the planning output
   - **Agent Context block** (file paths, test command, gates, constraints)
 - **RED Gate Profiles** — per test phase, the rule file whose `RED gate` section was copied (see RED gate profile lookup), or "none — generic"
 - **Rollout Phases** and **Risks & Mitigations** — written last, by `praxis:technical-project-manager` (`mode: plan`; required for new features and epics); each mitigation names the phase group (`P{N}-{Name}`) that delivers it, and each in-repo one becomes an acceptance criterion — see [rollout-and-reuse.md](references/rollout-and-reuse.md)
-- **Constraints & Considerations** — Architectural, testing, performance, security, reuse
+- **Constraints & Considerations** — Architectural, testing, performance, security, reuse, accessibility (UI work, see [accessibility.md](references/accessibility.md))
 - **Out of Scope** — Explicitly deferred features
 
 See [template.md](references/template.md) for the complete template with Agent Context block reference.
@@ -134,7 +138,7 @@ phase shape is in [template.md](references/template.md):
   Preflight and RED gate profile, and every implementation file in the fragment; stages
   1..K must pass.
 - A stage's RED shows earlier stages passing and stage K failing on the predicted
-  testid. The agreed contract testids go into the Implement context (Interface contract)
+  locator. The agreed contract locators go into the Implement context (Interface contract)
   of the phase that builds them.
 
 For content or configuration projects with no application code, use flat `[no-test]` phases ordered by dependency. The TDD phase ordering above applies to application code projects.
@@ -187,29 +191,7 @@ What would you like to do?
 
 ## Test Specifications at Boundaries
 
-Test specs in the plan MUST be behavioral descriptions, not tool-specific code. The agents executing `/implement` will consult the project's CLAUDE.md for testing tools and patterns.
-
-### L3 Core Tests (Property/Invariant)
-
-Describe invariant properties that must hold:
-- **Good:** "Splitting a total into N parts preserves the total"
-- **Bad:** Code snippet using a specific testing library
-
-### L3 Feature Tests (Behavioral)
-
-Describe behavior at the use case boundary:
-- **Good:** "Creating an order returns success with an order ID and correct total"
-- **Bad:** `expect(mockRepository.create).toHaveBeenCalledWith(...)`
-
-### L4 HTTP Tests (Contract)
-
-Describe the HTTP contract:
-- **Good:** "POST /orders returns 201 with `{ id, total }` on success, 400 with `{ error }` on validation failure"
-- **Bad:** Testing internal handler implementation details
-
-See [template.md](references/template.md) for detailed guidelines.
-
-For detailed L3/L4 testing guidelines including property-based tests and architectural anti-patterns, see [boundary-testing.md](../tdd/references/boundary-testing.md).
+Test specs in the plan MUST be behavioral descriptions, not tool-specific code. The agents executing `/implement` will consult the project's CLAUDE.md for testing tools and patterns. Good and bad examples for each layer (L3 Core, L3 Feature, L4 HTTP) are in [test-specifications.md](references/test-specifications.md).
 
 ## Agent Context Blocks
 
@@ -222,7 +204,7 @@ Every implementation phase with tests MUST include an `#### Agent Context` subse
 - **RED gate / GREEN gate** — observable success criteria
 - **Architectural constraints** — boundaries the agent must respect, plus **Reuse** when the phase must call an existing implementation ([Reuse Before Re-deriving](references/rollout-and-reuse.md#reuse-before-re-deriving))
 - **Tier** — on each test phase and in its Write Tests context; for `e2e-journey` also runner, build target and preflight
-- **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and testids or shapes it must expose
+- **Acceptance criterion / Interface contract** (Implement contexts) — the criterion the phase serves, and the locators (role and accessible name, testid only for an element with no role) or shapes it must expose
 
 **Authoring the RED gate signature:** The RED gate field tells `agent-test` what a
 *correct* initial failure looks like for this phase — so it can distinguish the
@@ -234,9 +216,9 @@ CLAUDE.md), consult it to describe the expected failure in that framework's term
 no such guidance exists, describe the expected failure behaviorally (which assertion
 fails and why) and `agent-test` falls back to a generic at-assertion vs.
 before-assertion check. Write the signature from the acceptance criterion and the agreed
-interface contract (e.g. testids), naming user-visible behavior or contract testids,
+interface contract (e.g. role and accessible name), naming user-visible behavior or contract locators,
 never internals. For `e2e-journey` phases it names the locator/step expected to fail
-(e.g. "earlier steps pass; waiting for `{testid}` times out") — a timeout elsewhere is a
+(e.g. "earlier steps pass; waiting for `{role and name}` times out") — a timeout elsewhere is a
 wrong-reason RED. The signature goes only into the write-tests context, never
 `agent-impl`'s or `agent-remediate`'s.
 

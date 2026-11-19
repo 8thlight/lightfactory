@@ -72,6 +72,7 @@ functional:
       - "File contains section: ## Relevant Files"
       - "File contains section: ## Existing Patterns"
       - "File contains section: ### Reuse candidates"
+      - "File contains section: ### Accessibility (full section for UI work, one-line verdict for non-UI)"
       - "File contains section: ## Web Research"
       - "File contains section: ## Open Questions"
       - "File contains section: ## Next Steps"
@@ -155,3 +156,45 @@ functional:
       - "AskUserQuestion message briefly explains what Quick vs Standard vs Deep would investigate"
       - "Skill waits for user response before proceeding to agent dispatch"
     notes: "Tests that ambiguous signals (external lib = Standard/Deep, but 'figure out' is vague) trigger a clarification"
+
+  - id: research-08
+    description: UI request records an Accessibility section that applies and cites matching reference files
+    grading: llm-judge
+    given: |
+      A web app with a React frontend and Testing Library component tests. No accessibility target
+      is stated in CLAUDE.md or any linked doc.
+    when: "research adding a login form with email, password, and an error message on failed sign-in"
+    then:
+      - "File contains section: ### Accessibility with verdict Applies"
+      - "Target is WCAG 2.2 AA, marked as the default because none was stated"
+      - "UI test tooling (Testing Library) and its tier are recorded"
+      - "Report cites forms.md, cognitive.md, and keyboard-and-focus.md"
+      - "Requirements are tagged [auto] or [manual]"
+      - "An Accessibility Researcher is dispatched in the same parallel message as the other agents"
+      - "File is approximately 150 to 250 lines (target ~200)"
+    notes: "Covers Review Focus 7 (default target) and the multi-file match rule"
+
+  - id: research-09
+    description: Pattern with no reference file falls back to own knowledge and says so
+    grading: llm-judge
+    given: |
+      A web app with a React frontend. No accessibility target is stated.
+    when: "research adding a rich text editor to the comment box"
+    then:
+      - "Accessibility section says no reference file existed for the editor pattern"
+      - "Requirements cite W3C APG or WCAG"
+      - "Verdict is Applies"
+    notes: "Covers Review Focus 5. Re-grep references/accessibility/ for the pattern before changing it"
+
+  - id: research-10
+    description: Non-UI request gets a one-line Not applicable verdict and no accessibility agent
+    grading: llm-judge
+    given: |
+      A backend service with no UI files. A nightly job writes order data to storage.
+    when: "research adding a CSV export job for order data"
+    then:
+      - "File contains section: ### Accessibility"
+      - "The section is one line: Not applicable: {reason}"
+      - "No target, tooling, patterns, or requirements lines"
+      - "No Accessibility Researcher agent is dispatched"
+    notes: "Covers Review Focus 1, research side"

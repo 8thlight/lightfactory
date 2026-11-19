@@ -55,6 +55,8 @@ Use this skill when:
 | Standard | 3-4 | 1-2 | Multiple codebase areas affected, some external patterns to validate |
 | Deep | 4-5 | 2-3 | Unfamiliar domain, new technology, multiple integration points |
 
+The Accessibility Researcher is extra to these counts. Quick runs dispatch it too when the UI check fires.
+
 **Choosing depth:** Infer the appropriate depth from the user's prompt using these signals:
 
 | Signal | Points toward |
@@ -84,11 +86,13 @@ Based on the chosen depth, decompose the scope into:
 - **Codebase investigation areas** (2-5 depending on depth)
 - **Web research topics** (0-3 depending on depth)
 
+**UI check:** part of scoping, not a separate phase. If the request touches UI (UI words such as page, form, screen, component, or modal, or UI files in scope), accessibility is in scope and step 2 adds the Accessibility Researcher. Otherwise write `Not applicable: {reason}` under the artifact's `### Accessibility` and dispatch no accessibility agent.
+
 ### 2. Dispatch Parallel Agents
 
 **CRITICAL: Dispatch ALL agents in a SINGLE message using multiple Task tool calls with `run_in_background: true`.**
 
-Two agent types — see [agent prompts](references/agent-prompts.md) for full templates:
+Three agent types, the third only when the UI check fires (read [agent-prompts.md](references/agent-prompts.md), and [agent-prompts-accessibility.md](references/agent-prompts-accessibility.md) when the UI check fires, and build each prompt from its template):
 
 **Codebase Explorer** (subagent_type: `Explore`)
 - Receives one investigation area
@@ -99,6 +103,11 @@ Two agent types — see [agent prompts](references/agent-prompts.md) for full te
 - Receives one research topic + feature context
 - Uses WebSearch/WebFetch to consult 2-4 sources
 - Reports findings with **High/Medium/Low** confidence levels
+
+**Accessibility Researcher** (subagent_type: `Explore`, UI work only)
+- Receives the feature context and `{a11y_refs_dir}`, the absolute path of `references/accessibility/` under this skill's base directory
+- Reads `INDEX.md` there, then the files for the patterns in scope, and checks existing UI code for accessibility patterns and test tooling
+- Reports in the shape of the template's `### Accessibility`
 
 ### 3. Collect Agent Results
 

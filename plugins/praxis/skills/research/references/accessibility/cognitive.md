@@ -1,0 +1,64 @@
+# Cognitive Load, Authentication, and Timeouts
+
+> Provenance and license: `PROVENANCE.md`, `LICENSE-community-access.md`.
+
+Read this when the feature has login or sign-up, multi-step input, a session timeout, or user-facing messages. Most of these checks are manual or have no axe rule, so the plan lists them as optional manual checks unless a test is written.
+
+## What to look for in the codebase
+
+- Login, password reset, and verification-code inputs. Look for `onpaste` handlers, blocked autofill, and CAPTCHA components.
+- Multi-step flows that ask for the same data twice.
+- Session expiry timers and auto-logout code.
+- Error and help copy that lives in one place or is scattered through components.
+
+## Authentication (3.3.8 AA, 3.3.9 AAA)
+
+Authentication must not require a cognitive function test (memorizing, transcribing, solving a puzzle) unless an alternative exists.
+
+- Never block paste in password fields, and never block password managers. Use `autocomplete="current-password"`, `new-password`, `username`, and `one-time-code` as they apply.
+- Offer a show/hide password toggle.
+- Offer an alternative where possible: passkeys, biometrics, social login, or an email magic link.
+- A verification-code input must accept paste.
+- A CAPTCHA that asks for transcription is a cognitive test, and an audio CAPTCHA that must be transcribed does not count as an alternative. Provide a non-cognitive alternative. Object-recognition CAPTCHAs pass at AA but not at AAA.
+- A security question that needs exact recall fails.
+
+## Redundant entry (3.3.7 A)
+
+Information already given in the same session is not asked for again, except where it is security-essential (password confirmation) or may have gone stale (a new address versus the current one).
+
+- Offer "same as shipping" on billing. Pre-fill name and email from earlier steps. Do not re-ask a date of birth.
+
+## Timeouts (2.2.1 A)
+
+- A session or form that expires warns at least 20 seconds before expiry, and lets the user extend it at least ten times or turn the limit off.
+- Warn about data loss from inactivity at the start of a session (2.2.6 AAA).
+
+## Errors and guidance
+
+| Criterion | What to check |
+|---|---|
+| 3.3.1 A | The error is stated in text, not only by color. |
+| 3.3.2 A | Format requirements and required fields are shown before the error, not only after. |
+| 3.3.3 AA | The error suggests a correction where it is safe to do so. |
+| 3.3.4 AA | Legal, financial, and data actions have a review, confirmation, or undo step. |
+
+A usable error message names the field and the exact problem, says why, gives a specific example or format, and is neutral or supportive in tone. "Email must include @, for example name@company.com" passes. "Invalid input" and "You entered the wrong password" fail.
+
+## Clarity and consistency
+
+- Headings and labels describe their content (2.4.6 AA). "Section 1" and "Details" do not.
+- Navigation keeps the same order across pages (3.2.3 AA). The same function has the same name everywhere (3.2.4 AA).
+- Instructional text uses short sentences (about 25 words or fewer), the active voice, no double negatives, and one term per concept ("sign in" or "log in", not both).
+- Moving or blinking content that lasts over 5 seconds has a pause or stop control (2.2.2 A). Nothing flashes more than three times a second (2.3.1 A).
+- Reading level is advisory (3.1.5 AAA). Consumer content aims at grade 8 or below.
+
+## Criteria wording
+
+| Criterion | Check |
+|---|---|
+| Password and code inputs accept paste and password-manager fill | `[auto]` |
+| A step does not re-ask for data collected earlier in the same flow | `[auto]` |
+| A session warning appears before expiry and offers to extend | `[auto]` |
+| Each error states the problem in text and how to fix it | `[manual]` |
+| Wording is plain, consistent, and free of unexplained jargon | `[manual]` |
+| A person can complete the task without recalling data from another screen | `[manual]` |
