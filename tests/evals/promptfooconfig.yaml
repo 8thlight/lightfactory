@@ -588,7 +588,9 @@ tests:
     vars:
       prompt: |
         GIVEN: A project with a .light/ directory. A research artifact exists at
-        .light/2026-11-09-add-login-form-research.md. Its ### Accessibility section says:
+        .light/sessions/2026-11-09-add-login-form-research.md. The working directory starts empty, so
+        before you plan, write the artifact below to that path exactly as given. It stands in for a
+        research session that already ran. Then run the task. Its ### Accessibility section says:
         Verdict: Applies. Target: default: WCAG 2.2 AA (none stated). UI test tooling: Testing Library
         in component tests, Playwright journeys. Patterns in scope: forms, keyboard and focus.
         Requirements: the error message is associated with its field [auto] (forms.md); the submit
@@ -596,7 +598,66 @@ tests:
         announced clearly by a screen reader [manual] (live-regions.md). The feature has a core
         validation phase and a login form UI phase.
 
-        TASK: plan tasks from .light/2026-11-09-add-login-form-research.md
+        ARTIFACT:
+        # Add login form - Research
+
+        **Date:** 2026-11-09
+        **Status:** Research Complete
+        **Depth:** Standard
+
+        ## Summary
+
+        The app has no login form. Credential checking exists as a pure function and a use case. This
+        feature adds a validation phase for the form fields and a login form UI phase.
+
+        ## Relevant Files
+
+        ### Core Layer (Pure Functions)
+        - `src/core/auth/validate-credentials.ts` - checks email format and password length, returns a result object
+
+        ### Features Layer (Use Cases)
+        - `src/features/auth/log-in.ts` - calls the credential check and the session repository
+
+        ### UI
+        - `src/ui/forms/SignUpForm.tsx` - existing form to follow for field layout and error display
+
+        ### Tests
+        - `tests/unit/core/auth/validate-credentials.test.ts` - unit test pattern
+        - `tests/component/SignUpForm.test.tsx` - Testing Library component test pattern
+        - `tests/e2e/sign-up.spec.ts` - Playwright journey pattern
+
+        ## Existing Patterns
+
+        ### Pattern 1: Result object validation
+        **Used in:** `src/core/auth/validate-credentials.ts`
+        **How it works:** returns `{ ok, errors }` and never throws
+        **Applicable to new feature:** yes, the form shows `errors` next to each field
+
+        ### Reuse candidates
+
+        None found.
+
+        ## Constraints & Considerations
+
+        - Test commands: `npm test` for unit and component tests, `npx playwright test` for journeys *(codebase)*
+
+        ### Accessibility
+
+        **Verdict:** Applies
+        **Target:** default: WCAG 2.2 AA (none stated)
+        **UI test tooling:** Testing Library in component tests, Playwright journeys
+        **Patterns in scope:** forms, keyboard and focus
+
+        **Requirements:**
+        - forms: the error message is associated with its field `[auto]` *(forms.md)*
+        - keyboard and focus: the submit button is reachable and operable by keyboard `[auto]` *(keyboard-and-focus.md)*
+        - live regions: the error is announced clearly by a screen reader `[manual]` *(live-regions.md)*
+
+        ## Open Questions
+
+        - None.
+
+        TASK: plan tasks from .light/sessions/2026-11-09-add-login-form-research.md
     assert:
       - type: icontains
         value: "### Accessibility"
@@ -708,10 +769,57 @@ tests:
     vars:
       prompt: |
         GIVEN: A project with a .light/ directory and Testing Library component tests. A research
-        artifact exists at .light/2026-11-09-add-checkout-button-research.md describing a checkout page
-        with a "Place order" submit button and a quantity field.
+        artifact exists at .light/sessions/2026-11-09-add-checkout-button-research.md describing a
+        checkout page with a "Place order" submit button and a quantity field. The working directory
+        starts empty, so before you plan, write the artifact below to that path exactly as given. It
+        stands in for a research session that already ran. Then run the task.
 
-        TASK: plan tasks from .light/2026-11-09-add-checkout-button-research.md
+        ARTIFACT:
+        # Add checkout button - Research
+
+        **Date:** 2026-11-09
+        **Status:** Research Complete
+        **Depth:** Standard
+
+        ## Summary
+
+        The checkout page shows an order summary and no way to submit. This feature adds a quantity
+        field and a "Place order" submit button that creates the order through the existing use case.
+
+        ## Relevant Files
+
+        ### Features Layer (Use Cases)
+        - `src/features/orders/create-order.ts` - creates an order from a cart and a quantity
+
+        ### UI
+        - `src/ui/checkout/CheckoutPage.tsx` - renders the order summary, the new form goes here
+        - `src/ui/forms/SignUpForm.tsx` - existing form to follow for field layout
+
+        ### Tests
+        - `tests/component/CheckoutPage.test.tsx` - Testing Library component test pattern
+        - `tests/unit/features/orders/create-order.test.ts` - use case test pattern
+
+        ## Existing Patterns
+
+        ### Pattern 1: Controlled form with a submit handler
+        **Used in:** `src/ui/forms/SignUpForm.tsx`
+        **How it works:** local state per field, one `onSubmit` that calls a use case
+        **Applicable to new feature:** yes
+
+        ### Reuse candidates
+
+        None found.
+
+        ## Constraints & Considerations
+
+        - Test commands: `npm test` runs unit and component tests with Testing Library and jsdom. There is no browser test runner *(codebase)*
+        - The quantity must be a whole number of at least 1 *(codebase)*
+
+        ## Open Questions
+
+        - None.
+
+        TASK: plan tasks from .light/sessions/2026-11-09-add-checkout-button-research.md
     assert:
       - type: llm-rubric
         value: |
