@@ -8,7 +8,7 @@ A Claude Code plugin providing skills for agentic engineering patterns and pract
 
 ```
 /plugin marketplace add 8thlight/lightfactory
-/plugin install lightfactory@praxis
+/plugin install praxis@lightfactory
 ```
 
 After installation, skills are available as `praxis:skill-name` and activate automatically when relevant to your task.
@@ -21,7 +21,7 @@ git clone https://github.com/8thlight/lightfactory
 
 ```
 /plugin marketplace add /path/to/lightfactory
-/plugin install lightfactory@praxis
+/plugin install praxis@lightfactory
 ```
 
 ### Update
